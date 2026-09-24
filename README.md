@@ -162,3 +162,6 @@ pytest -v -s tests/
 python PackagePro/tools/validate_conformance.py data/PS-04.db
 ```
 *(Returns `PASS` with 100% schema compliance)*
+=======
+# kv-hack2026-codeblooded
+KogniVera Hackathon 2026 — CodeBlooded
