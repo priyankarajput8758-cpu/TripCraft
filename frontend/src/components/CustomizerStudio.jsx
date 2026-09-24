@@ -398,36 +398,44 @@ export default function CustomizerStudio({
                 </div>
 
                 {/* If custom market hotel is active for stay group */}
-                {isHotelGroup && selectedMarketHotel && (
-                  <div className="p-4 rounded-2xl bg-amber-50 border-2 border-amber-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-black text-amber-950">
-                          {selectedMarketHotel.name}
-                        </span>
-                        <span className="text-[10px] bg-amber-200 text-amber-900 font-bold px-2 py-0.5 rounded-full">
-                          Live Market Hotel
-                        </span>
+                {isHotelGroup && selectedMarketHotel && (() => {
+                  const marketHotelRooms = Math.ceil(numTravelers / 2);
+                  const ratePerNight = parseFloat(selectedMarketHotel.rate_per_night || 0);
+                  const totalMarketCost = ratePerNight * durationNights * marketHotelRooms;
+
+                  return (
+                    <div className="p-4 rounded-2xl bg-amber-50 border-2 border-amber-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-black text-amber-950">
+                            {selectedMarketHotel.name}
+                          </span>
+                          <span className="text-[10px] bg-amber-200 text-amber-900 font-bold px-2 py-0.5 rounded-full">
+                            Live Market Hotel Added
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-amber-900 font-medium">
+                          {marketHotelRooms} Room{marketHotelRooms > 1 ? 's' : ''} (up to 2 guests/room) • {durationNights} nights @ {currencySymbol}{ratePerNight.toLocaleString('en-IN')}/room/night
+                          <strong className="block text-amber-950 font-bold mt-0.5">
+                            Additional Hotel Total: {currencySymbol}{totalMarketCost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </strong>
+                        </p>
                       </div>
-                      <p className="text-[11px] text-amber-800">
-                        {durationNights} nights stay @ ₹{parseFloat(selectedMarketHotel.rate_per_night || 0).toLocaleString('en-IN')}/night
-                        (Total: ₹{(parseFloat(selectedMarketHotel.rate_per_night || 0) * durationNights).toLocaleString('en-IN')})
-                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedMarketHotel(null)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 font-bold text-xs rounded-xl transition-all cursor-pointer shrink-0 shadow-xs"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        <span>Remove Live Stay</span>
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedMarketHotel(null)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 font-bold text-xs rounded-xl transition-all cursor-pointer shrink-0 shadow-xs"
-                    >
-                      <RotateCcw className="w-3 h-3" />
-                      <span>Revert to Standard Hotel</span>
-                    </button>
-                  </div>
-                )}
+                  );
+                })()}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {items.map((item) => {
-                    const isSelected = !selectedMarketHotel && currentSelectedId === item.component_id;
+                    const isSelected = currentSelectedId === item.component_id;
                     const itemDelta = parseFloat(item.price_delta || '0');
                     const relativeDelta = itemDelta - baseDelta;
                     const itemTitle = item.title || item.name || 'Component Option';
@@ -644,19 +652,25 @@ export default function CustomizerStudio({
                 </div>
               )}
 
-              {selectedMarketHotel && (
-                <div className="flex justify-between text-amber-900 font-bold bg-amber-50 p-2.5 rounded-xl border border-amber-200">
-                  <div className="space-y-0.5">
-                    <span className="block">Live Stay: {selectedMarketHotel.name}</span>
-                    <span className="text-[10px] text-amber-700 font-normal">
-                      {durationNights} Nights @ {currencySymbol}{parseFloat(selectedMarketHotel.rate_per_night || 0).toLocaleString('en-IN')}/night
+              {selectedMarketHotel && (() => {
+                const rooms = Math.ceil(numTravelers / 2);
+                const rate = parseFloat(selectedMarketHotel.rate_per_night || 0);
+                const totalCost = rate * durationNights * rooms;
+
+                return (
+                  <div className="flex justify-between text-amber-900 font-bold bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+                    <div className="space-y-0.5">
+                      <span className="block">Live Stay: {selectedMarketHotel.name}</span>
+                      <span className="text-[10px] text-amber-700 font-normal">
+                        {rooms} Room{rooms > 1 ? 's' : ''} • {durationNights} Nights @ {currencySymbol}{rate.toLocaleString('en-IN')}/room/night
+                      </span>
+                    </div>
+                    <span className="font-mono">
+                      +{currencySymbol}{totalCost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
-                  <span className="font-mono">
-                    +{currencySymbol}{(parseFloat(selectedMarketHotel.rate_per_night || 0) * durationNights).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-              )}
+                );
+              })()}
 
               {selectedGuide ? (
                 <div className="flex justify-between text-blue-900 font-bold bg-blue-50 p-2.5 rounded-xl border border-blue-200">

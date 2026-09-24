@@ -143,6 +143,12 @@ export const api = {
     return await res.json();
   },
 
+  getSpotImage: async (spotName, category = null) => {
+    const catParam = category ? `&category=${encodeURIComponent(category)}` : '';
+    const res = await smartFetch(`/external/spot-image?query=${encodeURIComponent(spotName)}${catParam}`);
+    return await res.json();
+  },
+
   // AI Trip Builder & Architect
   buildAiTrip: async (payload) => {
     const res = await smartFetch('/ai/build-trip', {
