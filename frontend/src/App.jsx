@@ -19,13 +19,14 @@ import {
   Star,
   ArrowRight,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  AlertCircle
 } from 'lucide-react';
 
 export default function App() {
   const [packages, setPackages] = useState([]);
   const [selectedPackageId, setSelectedPackageId] = useState(null);
-  const [selectedPackageDetail, setSelectedPackageDetail] = useState(null);
+  const [packageDetailData, setPackageDetailData] = useState(null);
   const [cities, setCities] = useState([]);
   const [selectedCityId, setSelectedCityId] = useState('');
   const [selectedTheme, setSelectedTheme] = useState('');
@@ -38,14 +39,16 @@ export default function App() {
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [bookingData, setBookingData] = useState(null);
-  const [realWorldEnabled, setRealWorldEnabled] = useState(true);
+  const [realWorldEnabled, setRealWorldEnabled] = useState(false);
 
-  // Load cities once
+  // Load cities on mount
   useEffect(() => {
     async function loadCities() {
       try {
         const res = await api.getCities();
-        if (res.status === 'success') {
+        if (Array.isArray(res)) {
+          setCities(res);
+        } else if (res && Array.isArray(res.data)) {
           setCities(res.data);
         }
       } catch (err) {
@@ -66,18 +69,23 @@ export default function App() {
           language_bcp47: currentLanguage
         });
 
-        if (res.status === 'success') {
-          setPackages(res.data);
-          if (res.notice) {
-            setLanguageNotice(res.notice);
-          } else {
-            setLanguageNotice(null);
-          }
+        const pkgs = res?.packages || (Array.isArray(res) ? res : []);
+        setPackages(pkgs);
 
-          // Automatically select first package if none selected or if current selection not in list
-          if (res.data.length > 0 && (!selectedPackageId || !res.data.find(p => p.package_id === selectedPackageId))) {
-            setSelectedPackageId(res.data[0].package_id);
+        if (res?.language_notice) {
+          setLanguageNotice(res.language_notice);
+        } else {
+          setLanguageNotice(null);
+        }
+
+        // Auto-select first package if none selected or not in active filtered list
+        if (pkgs.length > 0) {
+          if (!selectedPackageId || !pkgs.some(p => p.package_id === selectedPackageId)) {
+            setSelectedPackageId(pkgs[0].package_id);
           }
+        } else {
+          setSelectedPackageId(null);
+          setPackageDetailData(null);
         }
       } catch (err) {
         console.error('Error loading packages:', err);
@@ -91,12 +99,15 @@ export default function App() {
   // Load full package detail when selectedPackageId changes
   useEffect(() => {
     async function loadDetail() {
-      if (!selectedPackageId) return;
+      if (!selectedPackageId) {
+        setPackageDetailData(null);
+        return;
+      }
       setLoadingDetail(true);
       try {
         const res = await api.getPackageDetail(selectedPackageId);
-        if (res.status === 'success') {
-          setSelectedPackageDetail(res.data);
+        if (res) {
+          setPackageDetailData(res);
         }
       } catch (err) {
         console.error('Error loading package detail:', err);
@@ -118,6 +129,8 @@ export default function App() {
     }
   };
 
+  const activePackage = packageDetailData?.package;
+
   return (
     <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col font-sans selection:bg-teal-500 selection:text-slate-950">
       {/* Top Navbar */}
@@ -132,7 +145,7 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
         {/* Language Fallback Notice if applicable */}
         {languageNotice && (
-          <div className="bg-amber-950/40 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-300 flex items-center justify-between">
+          <div className="bg-amber-950/40 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-300 flex items-center justify-between shadow-md">
             <div className="flex items-center space-x-2">
               <Globe className="w-4 h-4 text-amber-400 shrink-0" />
               <span>{languageNotice}</span>
@@ -140,15 +153,17 @@ export default function App() {
           </div>
         )}
 
-        {/* Catalog Selector Bar */}
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-3.5 shadow-lg">
+        {/* Catalog Selector Section */}
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4 shadow-lg">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center space-x-2">
               <Compass className="w-4 h-4 text-teal-400" />
-              <h2 className="text-xs font-bold text-white uppercase tracking-wider">
-                Explore Curated Tour Packages
+              <h2 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">
+                Prebuilt Curated Packages (Click to Customize)
               </h2>
-              <span className="text-[10px] text-slate-400">({packages.length} Available)</span>
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-medium">
+                {packages.length} Available
+              </span>
             </div>
 
             {/* Filter Dropdowns */}
@@ -156,12 +171,12 @@ export default function App() {
               <select
                 value={selectedCityId}
                 onChange={(e) => setSelectedCityId(e.target.value)}
-                className="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-teal-500"
+                className="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-teal-500 cursor-pointer"
               >
                 <option value="">All Destinations</option>
                 {cities.map((city) => (
                   <option key={city.city_id} value={city.city_id}>
-                    {city.name}
+                    {city.name} ({city.package_count || 0} tours)
                   </option>
                 ))}
               </select>
@@ -169,93 +184,106 @@ export default function App() {
               <select
                 value={selectedTheme}
                 onChange={(e) => setSelectedTheme(e.target.value)}
-                className="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-teal-500"
+                className="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-teal-500 cursor-pointer"
               >
                 <option value="">All Themes</option>
                 <option value="heritage">Heritage & Culture</option>
                 <option value="adventure">Adventure & Nature</option>
-                <option value="food">Culinary & Food</option>
+                <option value="food_trail">Food & Culinary</option>
                 <option value="wildlife">Wildlife Safari</option>
-                <option value="pilgrimage">Pilgrimage</option>
+                <option value="pilgrimage">Pilgrimage & Spiritual</option>
+                <option value="honeymoon">Honeymoon & Romantic</option>
               </select>
             </div>
           </div>
 
-          {/* Horizontal Package Cards Scroll / Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {packages.map((pkg) => {
-              const isSelected = selectedPackageId === pkg.package_id;
-              return (
-                <div
-                  key={pkg.package_id}
-                  onClick={() => setSelectedPackageId(pkg.package_id)}
-                  className={`p-3.5 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
-                    isSelected
-                      ? 'bg-teal-950/40 border-teal-500 ring-1 ring-teal-500/50 shadow-md shadow-teal-500/10'
-                      : 'bg-slate-800/40 border-slate-700/60 hover:bg-slate-800/80 hover:border-slate-600'
-                  }`}
-                >
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-teal-400 font-semibold uppercase tracking-wider">
-                        {pkg.theme}
-                      </span>
-                      <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-slate-500" />
-                        {pkg.duration_days}D
-                      </span>
+          {/* Package Cards Grid */}
+          {loadingPackages ? (
+            <div className="py-12 text-center text-xs text-slate-400 flex items-center justify-center space-x-2">
+              <div className="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+              <span>Fetching packages...</span>
+            </div>
+          ) : packages.length === 0 ? (
+            <div className="py-8 text-center text-xs text-slate-400 bg-slate-950/40 rounded-xl border border-slate-800 p-4">
+              No tour packages found matching the selected filters. Try choosing "All Destinations" or "All Themes".
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {packages.map((pkg) => {
+                const isSelected = selectedPackageId === pkg.package_id;
+                const pkgTitle = pkg.name || pkg.title || 'Tour Package';
+                return (
+                  <div
+                    key={pkg.package_id}
+                    onClick={() => setSelectedPackageId(pkg.package_id)}
+                    className={`p-3.5 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
+                      isSelected
+                        ? 'bg-teal-950/40 border-teal-500 ring-1 ring-teal-500/50 shadow-md shadow-teal-500/10'
+                        : 'bg-slate-800/40 border-slate-700/60 hover:bg-slate-800/80 hover:border-slate-600'
+                    }`}
+                  >
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-teal-400 font-semibold uppercase tracking-wider">
+                          {pkg.theme}
+                        </span>
+                        <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-slate-500" />
+                          {pkg.duration_days}D
+                        </span>
+                      </div>
+
+                      <h3 className="text-xs font-bold text-white line-clamp-1">
+                        {pkgTitle}
+                      </h3>
+                      <p className="text-[11px] text-slate-400 line-clamp-2">
+                        {pkg.description}
+                      </p>
                     </div>
 
-                    <h3 className="text-xs font-bold text-white line-clamp-1">
-                      {pkg.title}
-                    </h3>
-                    <p className="text-[11px] text-slate-400 line-clamp-2">
-                      {pkg.description}
-                    </p>
-                  </div>
-
-                  <div className="pt-2 mt-2 border-t border-slate-800/80 flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] text-slate-500 block">From</span>
-                      <span className="text-xs font-bold text-white font-mono">
-                        ₹{parseFloat(pkg.base_price).toLocaleString('en-IN')}
+                    <div className="pt-2 mt-2 border-t border-slate-800/80 flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] text-slate-500 block">From</span>
+                        <span className="text-xs font-bold text-white font-mono">
+                          ₹{parseFloat(pkg.base_price || 0).toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                      <span className={`text-[10px] font-semibold flex items-center gap-0.5 ${isSelected ? 'text-teal-400 font-bold' : 'text-slate-400'}`}>
+                        {isSelected ? 'Active Customizer' : 'Customize'} <ChevronRight className="w-3 h-3" />
                       </span>
                     </div>
-                    <span className={`text-[10px] font-semibold flex items-center gap-0.5 ${isSelected ? 'text-teal-400' : 'text-slate-500'}`}>
-                      {isSelected ? 'Selected' : 'Customize'} <ChevronRight className="w-3 h-3" />
-                    </span>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Dynamic Customization Studio for Selected Package */}
         {loadingDetail ? (
           <div className="py-16 text-center space-y-3">
             <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-xs text-slate-400">Loading customizer studio & components...</p>
+            <p className="text-xs text-slate-400">Loading package customizer studio & components...</p>
           </div>
-        ) : selectedPackageDetail ? (
+        ) : packageDetailData ? (
           <CustomizerStudio
-            packageData={selectedPackageDetail}
+            packageDetailData={packageDetailData}
             preferredLanguage={currentLanguage}
             onOpenBooking={handleOpenBooking}
           />
         ) : null}
 
         {/* Real-World External Supply Comparison (SerpAPI Google Hotels) */}
-        {realWorldEnabled && selectedPackageDetail && (
-          <RealWorldPanel cityName={selectedPackageDetail.city_name} />
+        {realWorldEnabled && activePackage && (
+          <RealWorldPanel cityName={activePackage.city_name || 'Bengaluru'} />
         )}
 
         {/* Leaflet & OpenTripMap Visual Exploration Map */}
-        {selectedPackageDetail && (
+        {activePackage && (
           <TripMap
-            cityName={selectedPackageDetail.city_name}
-            lat={selectedPackageDetail.city_lat}
-            lng={selectedPackageDetail.city_lng}
+            cityName={activePackage.city_name}
+            lat={parseFloat(activePackage.city_lat || 12.9716)}
+            lng={parseFloat(activePackage.city_lng || 77.5946)}
           />
         )}
       </main>

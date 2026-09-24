@@ -38,6 +38,9 @@ export default function BookingModal({
   const startDate = bookingDetails.startDate;
   const selectedComponents = bookingDetails.selectedComponents || {};
 
+  const pkgTitle = pkg?.name || pkg?.title || 'Custom Tour Itinerary';
+  const guideName = guide?.display_name || guide?.name;
+
   const handleConfirmBooking = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -48,27 +51,23 @@ export default function BookingModal({
 
     try {
       const payload = {
-        user_id: 'usr_guest_demo',
         package_id: pkg.package_id,
+        user_id: 'usr_guest_demo',
         selected_component_ids: componentIds,
+        idempotency_key: idempotencyKey,
         guide_id: guide?.guide_id || null,
         start_date: startDate,
-        duration_days: pkg.duration_days,
-        total_price: pricing?.total_price || pkg.base_price,
-        currency: 'INR',
-        num_travelers: parseInt(numTravelers),
-        lead_passenger_name: leadPassengerName,
-        lead_passenger_email: email,
-        lead_passenger_phone: phone,
-        special_requests: specialRequests,
-        idempotency_key: idempotencyKey
+        party_size: parseInt(numTravelers) || 2,
+        notes: `Passenger: ${leadPassengerName} (${email}, ${phone}). Requests: ${specialRequests || 'None'}`
       };
 
       const res = await api.createBooking(payload);
-      if (res.status === 'success') {
-        setBookingConfirmed(res.data);
+      if (res && res.booking_id) {
+        setBookingConfirmed(res);
+      } else if (res && res.detail) {
+        setError(res.detail);
       } else {
-        setError(res.detail || 'Could not complete booking reservation.');
+        setError('Could not complete booking reservation. Please try again.');
       }
     } catch (err) {
       console.error('Booking submission error:', err);
@@ -99,7 +98,7 @@ export default function BookingModal({
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -119,7 +118,7 @@ export default function BookingModal({
                   Reservation Successfully Confirmed!
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Confirmation Code: <span className="font-mono font-bold text-teal-400 text-sm">{bookingConfirmed.confirmation_code}</span>
+                  Booking ID: <span className="font-mono font-bold text-teal-400 text-xs">{bookingConfirmed.booking_id}</span>
                 </p>
               </div>
 
@@ -127,7 +126,7 @@ export default function BookingModal({
               <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 text-left text-xs space-y-2.5">
                 <div className="flex justify-between pb-2 border-b border-slate-800">
                   <span className="text-slate-400">Tour Package</span>
-                  <span className="font-semibold text-white">{pkg.title}</span>
+                  <span className="font-semibold text-white">{pkgTitle}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Travel Date</span>
@@ -140,7 +139,7 @@ export default function BookingModal({
                 {guide && (
                   <div className="flex justify-between">
                     <span className="text-slate-400">Assigned Guide</span>
-                    <span className="text-teal-400 font-medium">{guide.name} ({guide.specialisation})</span>
+                    <span className="text-teal-400 font-medium">{guideName} ({guide.specialisation})</span>
                   </div>
                 )}
                 <div className="flex justify-between pt-2 border-t border-slate-800">
@@ -153,12 +152,12 @@ export default function BookingModal({
 
               <div className="flex items-center justify-center space-x-2 text-xs text-slate-400 pt-2">
                 <ShieldCheck className="w-4 h-4 text-teal-400" />
-                <span>Idempotency token verified. Confirmation email dispatched.</span>
+                <span>Idempotency token verified. Versioned itinerary locked in database.</span>
               </div>
 
               <button
                 onClick={onClose}
-                className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-xl transition-all"
+                className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-xl transition-all cursor-pointer"
               >
                 Close & Return to Itinerary
               </button>
@@ -169,8 +168,8 @@ export default function BookingModal({
               {/* Trip Snapshot Banner */}
               <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between text-xs">
                 <div>
-                  <div className="font-bold text-white">{pkg.title}</div>
-                  <div className="text-slate-400 text-[11px]">{startDate} • {pkg.duration_days} Days • {guide ? `Guide: ${guide.name}` : 'Self-guided'}</div>
+                  <div className="font-bold text-white">{pkgTitle}</div>
+                  <div className="text-slate-400 text-[11px]">{startDate} • {pkg.duration_days} Days • {guide ? `Guide: ${guideName}` : 'Self-guided'}</div>
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-extrabold text-teal-400 font-mono">
@@ -267,7 +266,7 @@ export default function BookingModal({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-teal-500/20 active:scale-[0.99] transition-all flex items-center justify-center space-x-2"
+                className="w-full py-3 px-4 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-teal-500/20 active:scale-[0.99] transition-all flex items-center justify-center space-x-2 cursor-pointer"
               >
                 {loading ? (
                   <>
@@ -277,7 +276,7 @@ export default function BookingModal({
                 ) : (
                   <>
                     <CreditCard className="w-4 h-4" />
-                    <span>Confirm & Lock Package (₹{parseFloat(pricing?.total_price || pkg.base_price).toLocaleString('en-IN')})</span>
+                    <span>Confirm & Lock Package (₹{parseFloat(pricing?.total_price || pkg.base_price).toLocaleString('en-IN', { minimumFractionDigits: 2 })})</span>
                   </>
                 )}
               </button>

@@ -20,10 +20,14 @@ import {
 } from 'lucide-react';
 
 export default function CustomizerStudio({
-  packageData,
+  packageDetailData,
   preferredLanguage,
   onOpenBooking
 }) {
+  const pkg = packageDetailData?.package;
+  const components = packageDetailData?.components || [];
+  const initialSwapGroups = packageDetailData?.swap_groups || [];
+
   const [selectedComponents, setSelectedComponents] = useState({});
   const [selectedGuide, setSelectedGuide] = useState(null);
   const [startDate, setStartDate] = useState('2026-09-24');
@@ -32,21 +36,28 @@ export default function CustomizerStudio({
 
   // Group components by swap_group
   const swapGroups = useMemo(() => {
-    if (!packageData || !packageData.components) return {};
+    if (initialSwapGroups && initialSwapGroups.length > 0) {
+      const map = {};
+      for (const sg of initialSwapGroups) {
+        map[sg.swap_group] = sg.options || [];
+      }
+      return map;
+    }
+
     const groups = {};
-    for (const comp of packageData.components) {
-      const groupName = comp.swap_group || 'general';
+    for (const comp of components) {
+      const groupName = comp.swap_group || 'general_options';
       if (!groups[groupName]) {
         groups[groupName] = [];
       }
       groups[groupName].push(comp);
     }
     return groups;
-  }, [packageData]);
+  }, [initialSwapGroups, components]);
 
-  // Initial selection: default first item of each swap group
+  // Initial selection: select first item of each swap group
   useEffect(() => {
-    if (!packageData || !packageData.components) return;
+    if (!pkg) return;
     const initial = {};
     for (const [group, items] of Object.entries(swapGroups)) {
       if (items.length > 0) {
@@ -54,26 +65,27 @@ export default function CustomizerStudio({
       }
     }
     setSelectedComponents(initial);
-  }, [packageData, swapGroups]);
+    setSelectedGuide(null);
+  }, [pkg?.package_id, swapGroups]);
 
-  // Reprice whenever selected components, guide, or date changes
+  // Trigger live repricing strictly from scratch on every change
   useEffect(() => {
     async function triggerReprice() {
-      if (!packageData?.package_id) return;
+      if (!pkg?.package_id) return;
       const componentIds = Object.values(selectedComponents).filter(Boolean);
       setIsRepricing(true);
 
       try {
         const res = await api.reprice(
-          packageData.package_id,
+          pkg.package_id,
           componentIds,
           selectedGuide?.guide_id || null,
           startDate,
-          packageData.duration_days
+          pkg.duration_days
         );
 
-        if (res.status === 'success') {
-          setPricingResult(res.data);
+        if (res && res.total_price) {
+          setPricingResult(res);
         }
       } catch (err) {
         console.error('Reprice error:', err);
@@ -83,7 +95,7 @@ export default function CustomizerStudio({
     }
 
     triggerReprice();
-  }, [packageData?.package_id, selectedComponents, selectedGuide, startDate]);
+  }, [pkg?.package_id, selectedComponents, selectedGuide, startDate]);
 
   const handleSwap = (group, componentId) => {
     setSelectedComponents(prev => ({
@@ -94,13 +106,13 @@ export default function CustomizerStudio({
 
   const getGroupIcon = (group) => {
     const lower = group.toLowerCase();
-    if (lower.includes('hotel') || lower.includes('tier') || lower.includes('stay')) {
+    if (lower.includes('hotel') || lower.includes('tier') || lower.includes('stay') || lower.includes('room')) {
       return <Hotel className="w-4 h-4 text-amber-400" />;
     }
-    if (lower.includes('activity') || lower.includes('sightseeing') || lower.includes('trek')) {
+    if (lower.includes('activity') || lower.includes('sightseeing') || lower.includes('trek') || lower.includes('tour')) {
       return <Activity className="w-4 h-4 text-teal-400" />;
     }
-    if (lower.includes('transfer') || lower.includes('transport') || lower.includes('cab')) {
+    if (lower.includes('transfer') || lower.includes('transport') || lower.includes('cab') || lower.includes('flight')) {
       return <Car className="w-4 h-4 text-cyan-400" />;
     }
     return <Layers className="w-4 h-4 text-indigo-400" />;
@@ -112,6 +124,11 @@ export default function CustomizerStudio({
       .replace(/\b\w/g, c => c.toUpperCase());
   };
 
+  if (!pkg) return null;
+
+  const pkgTitle = pkg.name || pkg.title || 'Tour Customizer';
+  const durationNights = pkg.duration_nights || (pkg.duration_days ? pkg.duration_days - 1 : 1);
+
   return (
     <div className="space-y-6">
       {/* Top Banner: Package Overview & Date Picker */}
@@ -120,18 +137,23 @@ export default function CustomizerStudio({
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <span className="px-2.5 py-1 rounded-md bg-teal-500/10 text-teal-400 border border-teal-500/20 text-xs font-semibold uppercase tracking-wider">
-                {packageData?.theme || 'Curated Tour'}
+                {pkg.theme || 'Curated Tour'}
               </span>
               <span className="text-xs text-slate-400 flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5 text-slate-500" />
-                {packageData?.city_name || 'Destination'}
+                {pkg.city_name || 'Destination'}
               </span>
+              {pkg.difficulty && (
+                <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 uppercase font-medium">
+                  {pkg.difficulty}
+                </span>
+              )}
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              {packageData?.title || 'Tour Package Customization'}
+              {pkgTitle}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
-              {packageData?.description}
+            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+              {pkg.description}
             </p>
           </div>
 
@@ -158,14 +180,14 @@ export default function CustomizerStudio({
               </label>
               <div className="flex items-center space-x-1.5 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200">
                 <Clock className="w-3.5 h-3.5 text-teal-400" />
-                <span className="font-semibold">{packageData?.duration_days} Days / {packageData?.duration_days - 1} Nights</span>
+                <span className="font-semibold">{pkg.duration_days} Days / {durationNights} Nights</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Two-Column Layout: Swapper Studio (Left) & Price Summary (Right) */}
+      {/* Main Studio Grid: Swapper Studio (Left) & Price Summary (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Component Swap Groups & Guide Dimension (8 cols) */}
         <div className="lg:col-span-8 space-y-6">
@@ -206,6 +228,7 @@ export default function CustomizerStudio({
                   {items.map((item) => {
                     const isSelected = currentSelectedId === item.component_id;
                     const delta = parseFloat(item.price_delta || '0');
+                    const itemTitle = item.title || item.name || 'Component Option';
                     return (
                       <div
                         key={item.component_id}
@@ -219,10 +242,10 @@ export default function CustomizerStudio({
                         <div className="flex items-start justify-between">
                           <div className="space-y-1 pr-4">
                             <div className="text-xs font-semibold text-white">
-                              {item.name}
+                              {itemTitle}
                             </div>
-                            <div className="text-[11px] text-slate-400 line-clamp-2">
-                              {item.description}
+                            <div className="text-[11px] text-slate-400">
+                              {item.component_type ? `${item.component_type.toUpperCase()} • ` : ''}Day {item.day_index || 1}
                             </div>
                           </div>
 
@@ -236,14 +259,14 @@ export default function CustomizerStudio({
                         {/* Price Delta Tag */}
                         <div className="mt-3 pt-2 border-t border-slate-800 flex items-center justify-between text-[11px]">
                           <span className="text-slate-400">Price Adjustment:</span>
-                          <span className={`font-semibold ${
+                          <span className={`font-semibold font-mono ${
                             delta === 0
                               ? 'text-slate-400'
                               : delta > 0
                               ? 'text-amber-400'
                               : 'text-emerald-400'
                           }`}>
-                            {delta === 0 ? 'Included (Base)' : `${delta > 0 ? '+' : ''}₹${delta.toLocaleString('en-IN')}`}
+                            {delta === 0 ? 'Included (Base)' : `${delta > 0 ? '+' : ''}₹${delta.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`}
                           </span>
                         </div>
                       </div>
@@ -256,13 +279,14 @@ export default function CustomizerStudio({
 
           {/* Guide Dimension Selector with Mandatory Clash Refusal Flow (§2.2) */}
           <GuideSelector
-            packageId={packageData?.package_id}
-            cityId={packageData?.city_id}
+            packageId={pkg.package_id}
+            cityId={pkg.city_id}
             startDate={startDate}
-            durationDays={packageData?.duration_days || 1}
+            durationDays={pkg.duration_days || 1}
             selectedGuide={selectedGuide}
             onSelectGuide={setSelectedGuide}
             preferredLanguage={preferredLanguage}
+            availableGuides={packageDetailData?.available_guides || []}
           />
         </div>
 
@@ -288,17 +312,17 @@ export default function CustomizerStudio({
               {/* Base Price */}
               <div className="flex justify-between items-center text-slate-300">
                 <span>Base Package Price</span>
-                <span className="font-medium text-white">
-                  ₹{parseFloat(pricingResult?.base_price || packageData?.base_price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                <span className="font-medium text-white font-mono">
+                  ₹{parseFloat(pricingResult?.base_price || pkg.base_price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </span>
               </div>
 
               {/* Component Deltas Breakdown */}
-              {pricingResult?.components_breakdown?.map((item) => {
-                const delta = parseFloat(item.price_delta);
+              {pricingResult?.line_items?.map((item) => {
+                const delta = parseFloat(item.price_delta || '0');
                 return (
                   <div key={item.component_id} className="flex justify-between items-center text-slate-400 text-[11px] pl-2 border-l border-slate-800">
-                    <span className="truncate pr-2">{item.name}</span>
+                    <span className="truncate pr-2">{item.title}</span>
                     <span className={`font-mono ${delta > 0 ? 'text-amber-400' : delta < 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
                       {delta === 0 ? '₹0.00' : `${delta > 0 ? '+' : ''}₹${delta.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`}
                     </span>
@@ -307,32 +331,32 @@ export default function CustomizerStudio({
               })}
 
               {/* Guide Price Breakdown */}
-              {pricingResult?.guide_breakdown ? (
+              {pricingResult?.guide_detail ? (
                 <div className="pt-2 border-t border-slate-800/80 space-y-1.5">
                   <div className="flex justify-between items-center text-teal-300 text-xs font-medium">
-                    <span>Local Guide ({pricingResult.guide_breakdown.guide_name})</span>
+                    <span>Local Guide ({pricingResult.guide_detail.guide_name})</span>
                     <span className="font-mono font-semibold">
-                      +₹{parseFloat(pricingResult.guide_breakdown.total_guide_price).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      +₹{parseFloat(pricingResult.guide_detail.total_guide_cost).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                   <div className="text-[10px] text-slate-400 flex justify-between">
                     <span>Rate Calculation:</span>
                     <span>
-                      ₹{parseFloat(pricingResult.guide_breakdown.day_rate).toLocaleString('en-IN')} × {pricingResult.guide_breakdown.days} days
-                      {parseFloat(pricingResult.guide_breakdown.price_multiplier) > 1 ? ` × ${pricingResult.guide_breakdown.price_multiplier}x peak` : ''}
+                      ₹{parseFloat(pricingResult.guide_detail.day_rate).toLocaleString('en-IN')} × {pricingResult.guide_detail.days} days
+                      {parseFloat(pricingResult.guide_detail.price_multiplier || 1) > 1 ? ` × ${pricingResult.guide_detail.price_multiplier}x peak` : ''}
                     </span>
                   </div>
                 </div>
               ) : (
                 <div className="flex justify-between items-center text-slate-500 text-xs">
                   <span>Tour Guide</span>
-                  <span>Not Selected</span>
+                  <span>Not Selected (Self-guided)</span>
                 </div>
               )}
 
-              {/* GST / Taxes notice */}
-              <div className="flex justify-between items-center text-slate-400 text-[11px] pt-1">
-                <span>GST & Statutory Fees (5%)</span>
+              {/* Inclusions note */}
+              <div className="flex justify-between items-center text-slate-400 text-[11px] pt-1 border-t border-slate-800">
+                <span>GST & Statutory Taxes (5%)</span>
                 <span className="text-slate-300 font-mono">
                   Included in Total
                 </span>
@@ -346,11 +370,11 @@ export default function CustomizerStudio({
                   Total Final Price
                 </span>
                 <div className="text-right">
-                  <div className="text-2xl font-black text-white tracking-tight">
-                    ₹{parseFloat(pricingResult?.total_price || packageData?.base_price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  <div className="text-2xl font-black text-white tracking-tight font-mono">
+                    ₹{parseFloat(pricingResult?.total_price || pkg.base_price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </div>
                   <div className="text-[10px] text-slate-400">
-                    Inclusive of all customized components & taxes
+                    Calculated strictly in Decimal from scratch
                   </div>
                 </div>
               </div>
@@ -359,13 +383,13 @@ export default function CustomizerStudio({
             {/* Book Custom Trip CTA */}
             <button
               onClick={() => onOpenBooking({
-                package: packageData,
+                package: pkg,
                 pricing: pricingResult,
                 startDate,
                 selectedGuide,
                 selectedComponents
               })}
-              className="w-full py-3 px-4 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold text-sm rounded-xl shadow-lg shadow-teal-500/20 active:scale-[0.99] transition-all flex items-center justify-center space-x-2"
+              className="w-full py-3 px-4 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold text-sm rounded-xl shadow-lg shadow-teal-500/20 active:scale-[0.99] transition-all flex items-center justify-center space-x-2 cursor-pointer"
             >
               <span>Review & Book Custom Itinerary</span>
               <ArrowRight className="w-4 h-4" />
@@ -373,7 +397,7 @@ export default function CustomizerStudio({
 
             <div className="flex items-center justify-center space-x-1.5 text-[11px] text-slate-400">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Zero-float financial precision backed by tests</span>
+              <span>Zero-float financial precision backed by automated tests</span>
             </div>
           </div>
         </div>

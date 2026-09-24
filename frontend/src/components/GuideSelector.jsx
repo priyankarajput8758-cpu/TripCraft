@@ -21,17 +21,19 @@ export default function GuideSelector({
   durationDays,
   selectedGuide,
   onSelectGuide,
-  preferredLanguage
+  preferredLanguage,
+  availableGuides = []
 }) {
-  const [guides, setGuides] = useState([]);
+  const [guides, setGuides] = useState(availableGuides);
   const [loading, setLoading] = useState(false);
   const [availabilityCheck, setAvailabilityCheck] = useState(null);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [specialisationFilter, setSpecialisationFilter] = useState('');
 
-  // Fetch available guides when city or language changes
+  // Fetch or update available guides when city, language or specialisation changes
   useEffect(() => {
     async function loadGuides() {
+      if (!cityId) return;
       setLoading(true);
       try {
         const res = await api.getGuides({
@@ -39,11 +41,11 @@ export default function GuideSelector({
           language: preferredLanguage,
           specialisation: specialisationFilter || undefined
         });
-        if (res.status === 'success') {
-          setGuides(res.data);
-        }
+        const list = res?.guides || (Array.isArray(res) ? res : []);
+        setGuides(list.length > 0 ? list : availableGuides);
       } catch (err) {
         console.error('Error fetching guides:', err);
+        setGuides(availableGuides);
       } finally {
         setLoading(false);
       }
@@ -91,10 +93,10 @@ export default function GuideSelector({
   };
 
   const handleAcceptSubstitute = (substitute) => {
-    // Select substitute
+    if (!substitute) return;
     onSelectGuide({
       guide_id: substitute.guide_id,
-      name: substitute.name,
+      display_name: substitute.display_name || substitute.name,
       rating: substitute.rating,
       languages: substitute.languages,
       specialisation: substitute.specialisation,
@@ -103,9 +105,11 @@ export default function GuideSelector({
     });
   };
 
+  const guideDisplayName = selectedGuide?.display_name || selectedGuide?.name || 'Local Guide';
+
   return (
-    <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-4 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="flex items-center space-x-2.5">
           <div className="p-2 rounded-lg bg-teal-500/10 text-teal-400">
             <UserCheck className="w-5 h-5" />
@@ -127,10 +131,10 @@ export default function GuideSelector({
         <select
           value={specialisationFilter}
           onChange={(e) => setSpecialisationFilter(e.target.value)}
-          className="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-teal-500"
+          className="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-teal-500 cursor-pointer"
         >
           <option value="">All Specialisations</option>
-          <option value="heritage">Heritage</option>
+          <option value="heritage">Heritage & History</option>
           <option value="food">Food & Culinary</option>
           <option value="trekking">Trekking & Hiking</option>
           <option value="wildlife">Wildlife & Nature</option>
@@ -148,14 +152,17 @@ export default function GuideSelector({
           <select
             value={selectedGuide?.guide_id || ''}
             onChange={(e) => handleGuideChange(e.target.value)}
-            className="w-full bg-slate-800/90 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-teal-500"
+            className="w-full bg-slate-800/90 border border-slate-700 rounded-lg px-3 py-2 text-xs sm:text-sm text-slate-100 focus:outline-none focus:border-teal-500 cursor-pointer"
           >
             <option value="">No Guide (Self-Guided Tour)</option>
-            {guides.map((g) => (
-              <option key={g.guide_id} value={g.guide_id}>
-                {g.name} — {g.specialisation.toUpperCase()} (★ {g.rating}) • {g.languages} • ₹{parseFloat(g.day_rate).toLocaleString('en-IN')}/day
-              </option>
-            ))}
+            {guides.map((g) => {
+              const name = g.display_name || g.name;
+              return (
+                <option key={g.guide_id} value={g.guide_id}>
+                  {name} — {g.specialisation?.toUpperCase()} (★ {g.rating}) • {g.languages} • ₹{parseFloat(g.day_rate || 0).toLocaleString('en-IN')}/day
+                </option>
+              );
+            })}
           </select>
         </div>
 
@@ -164,7 +171,7 @@ export default function GuideSelector({
           {selectedGuide ? (
             <div className="space-y-1 text-xs">
               <div className="flex items-center justify-between">
-                <span className="font-semibold text-slate-100">{selectedGuide.name}</span>
+                <span className="font-semibold text-slate-100">{guideDisplayName}</span>
                 <span className="flex items-center text-amber-400 font-medium text-[11px]">
                   <Star className="w-3 h-3 fill-current mr-0.5" />
                   {selectedGuide.rating}
@@ -178,8 +185,8 @@ export default function GuideSelector({
                 <Languages className="w-3 h-3" />
                 Languages: {selectedGuide.languages}
               </div>
-              <div className="text-[11px] text-emerald-400 font-semibold pt-0.5">
-                Rate: ₹{parseFloat(selectedGuide.day_rate).toLocaleString('en-IN')}/day
+              <div className="text-[11px] text-emerald-400 font-semibold pt-0.5 font-mono">
+                Rate: ₹{parseFloat(selectedGuide.day_rate || 0).toLocaleString('en-IN')}/day
               </div>
             </div>
           ) : (
@@ -208,7 +215,7 @@ export default function GuideSelector({
                   Guide Confirmed Available
                 </div>
                 <p className="text-slate-300">
-                  {selectedGuide?.name} is 100% available for all {durationDays} days starting {startDate}.
+                  {guideDisplayName} is 100% available for all {durationDays} days starting {startDate}.
                   {availabilityCheck.price_multiplier && parseFloat(availabilityCheck.price_multiplier) > 1 && (
                     <span className="text-amber-300 ml-1">
                       (Peak date rate multiplier: {availabilityCheck.price_multiplier}x applied)
@@ -251,7 +258,7 @@ export default function GuideSelector({
                   <div className="flex items-center justify-between pt-1">
                     <div>
                       <div className="text-xs font-semibold text-white">
-                        {availabilityCheck.substitute_guide.name}
+                        {availabilityCheck.substitute_guide.display_name || availabilityCheck.substitute_guide.name}
                       </div>
                       <div className="text-[11px] text-slate-400">
                         ★ {availabilityCheck.substitute_guide.rating} • {availabilityCheck.substitute_guide.specialisation} • {availabilityCheck.substitute_guide.languages}
@@ -259,10 +266,10 @@ export default function GuideSelector({
                     </div>
 
                     <div className="text-right">
-                      <div className="text-xs font-bold text-white">
+                      <div className="text-xs font-bold text-white font-mono">
                         ₹{parseFloat(availabilityCheck.substitute_guide.day_rate).toLocaleString('en-IN')}/day
                       </div>
-                      <div className={`text-[11px] font-semibold ${
+                      <div className={`text-[11px] font-semibold font-mono ${
                         parseFloat(availabilityCheck.substitute_guide.price_delta) >= 0 ? 'text-amber-400' : 'text-emerald-400'
                       }`}>
                         Delta: {parseFloat(availabilityCheck.substitute_guide.price_delta) >= 0 ? '+' : ''}₹{parseFloat(availabilityCheck.substitute_guide.price_delta).toLocaleString('en-IN')}
@@ -272,9 +279,9 @@ export default function GuideSelector({
 
                   <button
                     onClick={() => handleAcceptSubstitute(availabilityCheck.substitute_guide)}
-                    className="w-full mt-2 py-2 px-3 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold text-xs rounded-lg flex items-center justify-center space-x-1.5 shadow-md shadow-teal-500/10 active:scale-[0.99] transition-all"
+                    className="w-full mt-2 py-2 px-3 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold text-xs rounded-lg flex items-center justify-center space-x-1.5 shadow-md shadow-teal-500/10 active:scale-[0.99] transition-all cursor-pointer"
                   >
-                    <span>Accept Substitute ({availabilityCheck.substitute_guide.name}) & Reprice</span>
+                    <span>Accept Substitute ({availabilityCheck.substitute_guide.display_name || availabilityCheck.substitute_guide.name}) & Reprice</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>

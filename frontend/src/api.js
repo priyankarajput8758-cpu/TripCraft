@@ -38,8 +38,8 @@ export const api = {
     return res.json();
   },
 
-  // Pricing
-  reprice: async (packageId, selectedComponentIds, guideId = null, startDate = null, durationDays = null) => {
+  // Pricing (reprice strictly from scratch)
+  reprice: async (packageId, selectedComponentIds = [], guideId = null, startDate = null, durationDays = null) => {
     const res = await fetch(`${API_BASE}/pricing/reprice`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -54,7 +54,7 @@ export const api = {
     return res.json();
   },
 
-  // Guides Availability & Substitute
+  // Guides Availability & Substitute Check (§2.2 Mandatory Enhancement)
   checkGuideAvailability: async (guideId, startDate, durationDays = 1, packageId = null, cityId = null, preferredLang = null) => {
     const res = await fetch(`${API_BASE}/guides/check-availability`, {
       method: 'POST',
@@ -81,12 +81,19 @@ export const api = {
     return res.json();
   },
 
-  // AI Assistant
+  // AI Assistant (Grounded Gemini Trip Builder)
   buildAiTrip: async (payload) => {
     const res = await fetch(`${API_BASE}/ai/build-trip`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        user_prompt: payload.user_prompt || payload.prompt,
+        destination_city_id: payload.destination_city_id || payload.city_id || null,
+        max_budget: payload.max_budget || payload.budget || payload.budget_max || null,
+        duration_days: payload.duration_days || payload.duration ? parseInt(payload.duration_days || payload.duration) : null,
+        preferred_language: payload.preferred_language || payload.language || null,
+        interests: payload.interests || null
+      })
     });
     return res.json();
   },
