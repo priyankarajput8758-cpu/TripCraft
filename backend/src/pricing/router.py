@@ -16,6 +16,8 @@ class RepriceRequest(BaseModel):
     start_date: Optional[str] = Field(None, description="Trip start date (YYYY-MM-DD)")
     duration_days: Optional[int] = Field(None, description="Custom trip duration in days")
     num_travelers: Optional[int] = Field(1, ge=1, description="Number of travelers")
+    market_hotel_rate: Optional[float] = Field(None, description="Optional live market hotel rate per night")
+    market_hotel_name: Optional[str] = Field(None, description="Optional live market hotel name")
 
 @router.post("/reprice")
 def reprice_package(req: RepriceRequest):
@@ -29,7 +31,9 @@ def reprice_package(req: RepriceRequest):
             guide_id=req.guide_id,
             start_date=req.start_date,
             duration_days=req.duration_days,
-            num_travelers=req.num_travelers or 1
+            num_travelers=req.num_travelers or 1,
+            market_hotel_rate=req.market_hotel_rate,
+            market_hotel_name=req.market_hotel_name
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

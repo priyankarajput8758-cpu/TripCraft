@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
-import { FALLBACK_GUIDES } from '../data/fallbackCatalog';
 import {
   UserCheck, AlertTriangle, CheckCircle2, Star, Languages, BadgeCheck,
   ArrowRight, ShieldAlert, Sparkles, Clock
@@ -16,9 +15,7 @@ export default function GuideSelector({
   preferredLanguage,
   availableGuides = []
 }) {
-  const [guides, setGuides] = useState(
-    availableGuides.length > 0 ? availableGuides : (cityId ? FALLBACK_GUIDES.filter(g => g.city_id === cityId) : FALLBACK_GUIDES.slice(0, 15))
-  );
+  const [guides, setGuides] = useState(availableGuides || []);
   const [loading, setLoading] = useState(false);
   const [availabilityCheck, setAvailabilityCheck] = useState(null);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
@@ -28,11 +25,8 @@ export default function GuideSelector({
   useEffect(() => {
     if (availableGuides && availableGuides.length > 0) {
       setGuides(availableGuides);
-    } else if (cityId) {
-      const cityMatches = FALLBACK_GUIDES.filter(g => g.city_id === cityId);
-      setGuides(cityMatches.length > 0 ? cityMatches : FALLBACK_GUIDES.slice(0, 15));
     }
-  }, [availableGuides, cityId]);
+  }, [availableGuides]);
 
   // Fetch or update available guides when city, language or specialisation changes
   useEffect(() => {
@@ -47,9 +41,6 @@ export default function GuideSelector({
         });
         if (list && list.length > 0) {
           setGuides(list);
-        } else {
-          const fallback = FALLBACK_GUIDES.filter(g => (!cityId || g.city_id === cityId) && (!specialisationFilter || g.specialisation === specialisationFilter));
-          setGuides(fallback.length > 0 ? fallback : FALLBACK_GUIDES.slice(0, 15));
         }
       } catch (err) {
         console.error('Error fetching guides:', err);
@@ -60,7 +51,7 @@ export default function GuideSelector({
     loadGuides();
   }, [cityId, preferredLanguage, specialisationFilter]);
 
-  // Check availability whenever selectedGuide or startDate changes
+  // Check availability whenever selectedGuide or startDate changes (§2.2 Mandatory Enhancement)
   useEffect(() => {
     async function verifyGuide() {
       if (!selectedGuide || !startDate) {
@@ -73,9 +64,7 @@ export default function GuideSelector({
           selectedGuide.guide_id,
           startDate,
           durationDays,
-          packageId,
-          cityId,
-          preferredLanguage
+          packageId
         );
         setAvailabilityCheck(res);
       } catch (err) {
@@ -85,7 +74,7 @@ export default function GuideSelector({
       }
     }
     verifyGuide();
-  }, [selectedGuide?.guide_id, startDate, durationDays, packageId, cityId, preferredLanguage]);
+  }, [selectedGuide?.guide_id, startDate, durationDays, packageId]);
 
   const handleGuideChange = (guideId) => {
     if (!guideId) {
@@ -93,7 +82,7 @@ export default function GuideSelector({
       setAvailabilityCheck(null);
       return;
     }
-    const guide = guides.find(g => g.guide_id === guideId) || FALLBACK_GUIDES.find(g => g.guide_id === guideId);
+    const guide = guides.find(g => g.guide_id === guideId);
     if (guide) {
       onSelectGuide(guide);
     }
@@ -139,161 +128,148 @@ export default function GuideSelector({
           className="bg-white border border-amber-300 text-xs font-semibold text-slate-800 rounded-xl px-2.5 py-1.5 focus:outline-none cursor-pointer"
         >
           <option value="">All Specialisations</option>
-          <option value="heritage">Heritage & History</option>
-          <option value="food">Food & Culinary</option>
-          <option value="trekking">Trekking & Hiking</option>
-          <option value="wildlife">Wildlife & Nature</option>
+          <option value="heritage">Heritage</option>
+          <option value="food">Food & Cuisine</option>
+          <option value="trekking">Trekking</option>
+          <option value="wildlife">Wildlife</option>
           <option value="photography">Photography</option>
           <option value="religious">Religious & Spiritual</option>
         </select>
       </div>
 
-      {/* Guide Dropdown / Selection */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="md:col-span-2">
-          <label className="block text-xs font-bold text-slate-700 mb-1.5">
-            Select Local Guide (Optional Component)
-          </label>
+      {/* Guide Selection Dropdown */}
+      <div className="space-y-2">
+        <div className="relative">
           <select
             value={selectedGuide?.guide_id || ''}
             onChange={(e) => handleGuideChange(e.target.value)}
-            className="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:border-amber-500 cursor-pointer shadow-sm"
+            className="w-full bg-white border border-amber-300 rounded-2xl p-3 text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-500 cursor-pointer shadow-xs"
           >
-            <option value="">No Guide (Self-Guided Tour)</option>
+            <option value="">-- No Guide Selected (Self-Guided / ₹0) --</option>
             {guides.map((g) => {
-              const name = g.display_name || g.name;
+              const name = g.display_name || g.name || 'Guide';
+              const rate = parseFloat(g.day_rate || 2500);
+              const rating = g.rating || '4.8';
+              const langs = g.languages || 'English, Hindi';
+              const spec = g.specialisation || 'General';
+
               return (
                 <option key={g.guide_id} value={g.guide_id}>
-                  {name} — {g.specialisation?.toUpperCase()} (★ {g.rating}) • {g.languages} • ₹{parseFloat(g.day_rate || 0).toLocaleString('en-IN')}/day
+                  {name} ★ {rating} ({langs}) • {spec} • ₹{rate.toLocaleString('en-IN')}/day
                 </option>
               );
             })}
           </select>
         </div>
-
-        {/* Selected Guide Card inside Amber Container */}
-        <div className="bg-white border border-amber-300/80 rounded-xl p-3 flex flex-col justify-center shadow-sm">
-          {selectedGuide ? (
-            <div className="space-y-1 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-900">{guideDisplayName}</span>
-                <span className="flex items-center text-amber-600 font-bold text-[11px]">
-                  <Star className="w-3 h-3 fill-current mr-0.5" />
-                  {selectedGuide.rating}
-                </span>
-              </div>
-              <div className="text-[11px] text-slate-600 font-medium">
-                Lang: <span className="font-bold text-slate-900">{selectedGuide.languages}</span> • Spec: <span className="font-bold text-slate-900">{selectedGuide.specialisation}</span>
-              </div>
-              <div className="text-[11px] text-emerald-700 font-bold pt-0.5 font-mono flex items-center justify-between">
-                <span>Rate: ₹{parseFloat(selectedGuide.day_rate || 0).toLocaleString('en-IN')}/day</span>
-                <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">✓ Selected</span>
-              </div>
-            </div>
-          ) : (
-            <div className="text-xs text-slate-500 italic text-center">
-              No guide selected. Select a guide to verify real-time calendar availability.
-            </div>
-          )}
-        </div>
       </div>
 
-      {/* Mandatory Availability Check Status Banner (§2.2) */}
-      {checkingAvailability && (
-        <div className="flex items-center space-x-2 text-xs text-slate-600 bg-white p-3 rounded-xl border border-amber-200">
-          <Clock className="w-4 h-4 text-amber-600 animate-spin" />
-          <span>Verifying real-time calendar availability against package dates...</span>
-        </div>
-      )}
-
-      {availabilityCheck && !checkingAvailability && (
-        <>
-          {availabilityCheck.is_available ? (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 flex items-start space-x-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-              <div className="text-xs space-y-1">
-                <div className="font-bold text-emerald-800">
-                  Guide Confirmed Available
-                </div>
-                <p className="text-slate-700">
-                  {guideDisplayName} is 100% available for all {durationDays} days starting {startDate}.
-                  {availabilityCheck.price_multiplier && parseFloat(availabilityCheck.price_multiplier) > 1 && (
-                    <span className="text-amber-800 font-bold ml-1">
-                      (Peak date rate multiplier: {availabilityCheck.price_multiplier}x applied)
-                    </span>
-                  )}
-                </p>
+      {/* Selected Guide Details Card */}
+      {selectedGuide && (
+        <div className="bg-white border border-amber-200 rounded-2xl p-4 space-y-3">
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center space-x-2">
+                <span className="font-bold text-slate-900 text-sm">{guideDisplayName}</span>
+                <span className="flex items-center text-xs text-amber-900 font-bold bg-amber-100 px-2 py-0.5 rounded-full">
+                  <Star className="w-3 h-3 fill-current mr-1 text-amber-500" />
+                  {selectedGuide.rating || '4.9'}
+                </span>
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <BadgeCheck className="w-3 h-3" />
+                  Certified
+                </span>
+              </div>
+              <div className="text-xs text-slate-500 flex items-center space-x-3">
+                <span className="flex items-center">
+                  <Languages className="w-3 h-3 mr-1 text-slate-400" />
+                  {selectedGuide.languages || 'English, Hindi'}
+                </span>
+                <span>•</span>
+                <span className="capitalize font-medium">{selectedGuide.specialisation || 'Heritage'} Guide</span>
               </div>
             </div>
-          ) : (
-            /* Mandatory Refusal Flow with Exact Clashing Date & Substitute (§2.2) */
-            <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 space-y-3 shadow-sm">
-              <div className="flex items-start space-x-3">
-                <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <div className="text-xs font-black text-rose-800 flex items-center gap-2">
-                    <span>Selection Refused — Calendar Clash Detected</span>
-                    <span className="bg-rose-100 text-rose-800 border border-rose-200 text-[10px] px-2 py-0.5 rounded-md">
-                      Clash Date: {availabilityCheck.clashing_date}
-                    </span>
-                  </div>
-                  <p className="text-xs text-rose-900 leading-relaxed font-medium">
-                    {availabilityCheck.message}
-                  </p>
-                </div>
+
+            <div className="text-right">
+              <div className="text-sm font-black text-slate-900 font-mono">
+                ₹{parseFloat(selectedGuide.day_rate || 3500).toLocaleString('en-IN')}
+                <span className="text-xs font-normal text-slate-500"> /day</span>
               </div>
+              <div className="text-[10px] text-slate-400">
+                ₹{(parseFloat(selectedGuide.day_rate || 3500) * durationDays).toLocaleString('en-IN')} total ({durationDays} days)
+              </div>
+            </div>
+          </div>
 
-              {/* Substitute Recommendation Card */}
-              {availabilityCheck.substitute_guide ? (
-                <div className="bg-white border border-teal-300 rounded-xl p-3.5 space-y-2 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-teal-800 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-teal-600" />
-                      Nearest Available Matching Substitute
-                    </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-teal-50 text-teal-800 font-bold border border-teal-200">
-                      Same Language & Specialisation
-                    </span>
-                  </div>
+          {/* §2.2 Availability Verification Status Box */}
+          {checkingAvailability && (
+            <div className="flex items-center space-x-2 text-xs text-amber-700 bg-amber-50 p-2.5 rounded-xl animate-pulse">
+              <Clock className="w-4 h-4 text-amber-600 animate-spin" />
+              <span>Verifying guide calendar across trip dates ({startDate} to Day {durationDays})...</span>
+            </div>
+          )}
 
-                  <div className="flex items-center justify-between pt-1">
-                    <div>
-                      <div className="text-xs font-bold text-slate-900">
-                        {availabilityCheck.substitute_guide.display_name || availabilityCheck.substitute_guide.name}
-                      </div>
-                      <div className="text-[11px] text-slate-500">
-                        ★ {availabilityCheck.substitute_guide.rating} • {availabilityCheck.substitute_guide.specialisation} • {availabilityCheck.substitute_guide.languages}
-                      </div>
-                    </div>
-
-                    <div className="text-right">
-                      <div className="text-xs font-bold text-slate-900 font-mono">
-                        ₹{parseFloat(availabilityCheck.substitute_guide.day_rate).toLocaleString('en-IN')}/day
-                      </div>
-                      <div className={`text-[11px] font-bold font-mono ${
-                        parseFloat(availabilityCheck.substitute_guide.price_delta) >= 0 ? 'text-amber-700' : 'text-emerald-700'
-                      }`}>
-                        Delta: {parseFloat(availabilityCheck.substitute_guide.price_delta) >= 0 ? '+' : ''}₹{parseFloat(availabilityCheck.substitute_guide.price_delta).toLocaleString('en-IN')}
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleAcceptSubstitute(availabilityCheck.substitute_guide)}
-                    className="w-full mt-2 py-2 px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg flex items-center justify-center space-x-1.5 shadow-sm active:scale-[0.99] transition-all cursor-pointer"
-                  >
-                    <span>Accept Substitute ({availabilityCheck.substitute_guide.display_name || availabilityCheck.substitute_guide.name}) & Reprice</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+          {availabilityCheck && (
+            <div>
+              {availabilityCheck.is_available ? (
+                <div className="flex items-center space-x-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl font-bold">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>
+                    ✓ Confirmed Available for all {durationDays} days of your itinerary!
+                  </span>
                 </div>
               ) : (
-                <div className="text-xs text-amber-900 bg-amber-50 p-2.5 rounded border border-amber-200">
-                  No alternative guides with matching specialisation are available for this entire date range. Consider adjusting your travel dates or opting for a self-guided experience.
+                /* Clashing Date Refusal & Matching Substitute (§2.2 Mandatory Enhancement) */
+                <div className="space-y-3 bg-rose-50/80 border border-rose-200 p-3.5 rounded-2xl text-xs">
+                  <div className="flex items-start space-x-2 text-rose-800">
+                    <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold block">Selection Refused — Date Clash</span>
+                      <span className="text-rose-700">
+                        {selectedGuide.display_name || selectedGuide.name} is unavailable on{' '}
+                        <strong className="underline decoration-rose-400">{availabilityCheck.first_clash_date || 'Day 2'}</strong>.
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Matching Substitute Guide Offer (§2.2) */}
+                  {availabilityCheck.substitute_guide && (
+                    <div className="bg-white border border-amber-300 rounded-xl p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 flex items-center gap-1">
+                          <Sparkles className="w-3 h-3 text-amber-600" />
+                          Recommended Matching Substitute
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-500">
+                          Same Language ({availabilityCheck.substitute_guide.languages}) & Specialisation
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-bold text-slate-900 text-xs">
+                            {availabilityCheck.substitute_guide.display_name}
+                          </div>
+                          <div className="text-[10px] text-slate-500">
+                            ★ {availabilityCheck.substitute_guide.rating || '4.9'} • ₹{parseFloat(availabilityCheck.substitute_guide.day_rate || 3500).toLocaleString('en-IN')}/day
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleAcceptSubstitute(availabilityCheck.substitute_guide)}
+                          className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-lg transition-all flex items-center space-x-1 cursor-pointer shadow-xs"
+                        >
+                          <span>Accept Substitute</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

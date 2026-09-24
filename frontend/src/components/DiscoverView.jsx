@@ -4,7 +4,6 @@ import {
   Utensils, Plane, Bot, ArrowRight, ShieldCheck, Compass
 } from 'lucide-react';
 import { t } from '../i18n';
-import { FALLBACK_PACKAGES } from '../data/fallbackCatalog';
 
 const THEMES_CONFIG = [
   { id: 'all',        key: 'theme_all',        icon: Sparkles },
@@ -25,6 +24,16 @@ const THEME_BADGES = {
   food_trail: { labelKey: 'theme_all',        bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
 };
 
+const THEME_FALLBACK_IMAGES = {
+  adventure: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80',
+  honeymoon: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80',
+  pilgrimage: 'https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=600&q=80',
+  family: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=600&q=80',
+  heritage: 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=600&q=80',
+  wildlife: 'https://images.unsplash.com/photo-1561731216-c3a4d99437d5?auto=format&fit=crop&w=600&q=80',
+  food_trail: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80',
+};
+
 export default function DiscoverView({
   packages = [],
   selectedPackageId,
@@ -36,15 +45,12 @@ export default function DiscoverView({
 }) {
   const [activeTheme, setActiveTheme] = useState('all');
 
-  const displayPackages = (packages && packages.length > 0) ? packages : FALLBACK_PACKAGES;
-
   const filteredPackages = activeTheme === 'all'
-    ? displayPackages
-    : displayPackages.filter(p => p.theme === activeTheme || p.theme?.includes(activeTheme));
+    ? packages
+    : packages.filter(p => p.theme === activeTheme || p.theme?.includes(activeTheme));
 
   // Homepage displays a curated set of up to 8 featured packages across themes
   const curatedPackages = filteredPackages.slice(0, 8);
-
   const handleExplore = onExploreCatalog || onStartBuild;
 
   return (
@@ -68,148 +74,153 @@ export default function DiscoverView({
 
         <div className="relative z-10 max-w-3xl space-y-5">
           {/* Eyebrow badge with solid plane symbol */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#84D175]/20 border border-[#84D175]/40 text-[#84D175] text-xs font-bold backdrop-blur-md">
-            <Plane className="w-3.5 h-3.5 text-[#84D175]" />
-            <span>{t('next_gen_travel', language)}</span>
+          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-[#84D175]/20 border border-[#84D175]/40 text-[#84D175] text-xs font-bold tracking-wide backdrop-blur-sm">
+            <span className="text-sm">✈</span>
+            <span>{t('hero_eyebrow', language)}</span>
           </div>
 
-          {/* Title */}
-          <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-            {t('build_trip_title', language)}
+          <h1 className="text-3xl sm:text-5xl font-black text-[#FFF8D2] tracking-tight leading-tight">
+            {t('hero_headline', language)}
           </h1>
 
-          {/* Subtitle */}
-          <p className="text-slate-200 text-sm sm:text-base leading-relaxed max-w-2xl font-medium">
-            {t('hero_subtitle', language)}
+          <p className="text-sm sm:text-base text-[#D3E8D0] leading-relaxed max-w-2xl font-normal">
+            {t('hero_subheadline', language)}
           </p>
 
-          {/* Buttons */}
           <div className="flex flex-wrap items-center gap-3 pt-2">
             <button
-              onClick={onOpenAiBuild}
-              className="flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-sm shadow-xl shadow-[#84D175]/30 transition-all active:scale-95 cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4 text-[#1a2e1a]" />
-              <span>{t('build_with_ai', language)}</span>
-            </button>
-            <button
               onClick={handleExplore}
-              className="flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 text-white font-bold text-sm transition-all cursor-pointer backdrop-blur-sm"
+              className="px-6 py-3 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-xs sm:text-sm transition-all shadow-lg shadow-[#84D175]/25 flex items-center space-x-2 active:scale-95 cursor-pointer"
             >
-              <Compass className="w-4 h-4 text-[#84D175]" />
               <span>{t('explore_packages', language)}</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
+
+            {onOpenAiBuild && (
+              <button
+                onClick={onOpenAiBuild}
+                className="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-[#FFF8D2] font-black text-xs sm:text-sm border border-white/20 transition-all backdrop-blur-sm flex items-center space-x-2 active:scale-95 cursor-pointer"
+              >
+                <Bot className="w-4 h-4 text-[#84D175]" />
+                <span>{t('ai_trip_builder', language)}</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* ── 2. Curated Packages by Theme ── */}
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-black text-[#1a2e1a] tracking-tight">
-              {t('curated_by_theme', language)}
+      {/* ── 2. Theme Filter Tabs ── */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h2 className="text-xl sm:text-2xl font-black text-[#1a2e1a] tracking-tight">
+              {t('curated_packages', language)}
             </h2>
-            <p className="text-xs text-[#4a5e4a] mt-0.5 font-medium">
-              {t('curated_subtitle', language)}
+            <p className="text-xs sm:text-sm text-[#4a5e4a] font-medium">
+              {t('curated_packages_sub', language)}
             </p>
           </div>
+
+          {handleExplore && (
+            <button
+              onClick={handleExplore}
+              className="text-xs font-black text-[#3C8B30] hover:text-[#2D6A24] flex items-center gap-1 transition-all cursor-pointer"
+            >
+              <span>{t('view_all_packages', language)}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
-        {/* Theme Pills Row */}
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {THEMES_CONFIG.map((tItem) => {
-            const IconComponent = tItem.icon;
-            const isSelected = activeTheme === tItem.id;
+        {/* Theme pill buttons */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+          {THEMES_CONFIG.map(({ id, key, icon: Icon }) => {
+            const isActive = activeTheme === id;
             return (
               <button
-                key={tItem.id}
-                onClick={() => setActiveTheme(tItem.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                  isSelected
-                    ? 'bg-[#84D175] text-[#1a2e1a] shadow-md shadow-[#84D175]/25'
-                    : 'bg-white/85 border border-[#84D175]/30 text-[#1a2e1a] hover:bg-[#FFF8D2] shadow-sm'
+                key={id}
+                onClick={() => setActiveTheme(id)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  isActive
+                    ? 'bg-[#84D175] text-[#1a2e1a] shadow-md shadow-[#84D175]/25 border border-[#67C456]'
+                    : 'bg-white/80 text-[#2D6A24] border border-[#84D175]/30 hover:bg-[#84D175]/15 hover:border-[#84D175]/50'
                 }`}
               >
-                <IconComponent className="w-4 h-4 text-[#1a2e1a]" />
-                <span>{t(tItem.key, language)}</span>
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#1a2e1a]' : 'text-[#3C8B30]'}`} />
+                <span>{t(key, language)}</span>
               </button>
             );
           })}
         </div>
+      </div>
 
-        {/* Packages Cards Grid */}
+      {/* ── 3. Curated Package Grid (8 Featured Items) ── */}
+      <div className="space-y-4">
         {curatedPackages.length === 0 ? (
-          <div className="bg-white/80 border border-[#84D175]/30 rounded-2xl p-10 text-center text-[#4a5e4a] text-xs font-medium">
-            {t('no_packages_found', language)}
+          <div className="py-12 text-center space-y-3 bg-white/60 rounded-3xl border border-[#84D175]/30 p-6">
+            <Compass className="w-8 h-8 text-[#3C8B30] mx-auto opacity-60" />
+            <p className="text-sm font-bold text-[#1a2e1a]">No packages found for this theme filter.</p>
+            <button
+              onClick={() => setActiveTheme('all')}
+              className="text-xs text-[#3C8B30] font-bold underline cursor-pointer"
+            >
+              Click "All Themes" to view all
+            </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {curatedPackages.map((pkg) => {
               const isSelected = selectedPackageId === pkg.package_id;
-              const badgeConfig = THEME_BADGES[pkg.theme];
-              const badgeLabel = badgeConfig ? t(badgeConfig.labelKey, language).toUpperCase() : (pkg.theme || 'TOUR').toUpperCase();
-              const badgeBg = badgeConfig?.bg || 'bg-[#84D175] text-[#1a2e1a] font-bold';
-              const price = parseFloat(pkg.base_price || 0);
-
-              const defaultImages = {
-                adventure: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80',
-                honeymoon: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80',
-                pilgrimage: 'https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=600&q=80',
-                family: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=600&q=80',
-                heritage: 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=600&q=80',
-                wildlife: 'https://images.unsplash.com/photo-1561731216-c3a4d99437d5?auto=format&fit=crop&w=600&q=80',
-                food_trail: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80',
-              };
-              const imageUrl = pkg.image_url || defaultImages[pkg.theme] || defaultImages.adventure;
-              const displayTitle = pkg.title_translated || pkg.title || pkg.name;
-              const displayCity = pkg.city_name_translated || pkg.city_name || 'Goa, India';
+              const badge = THEME_BADGES[pkg.theme] || { labelKey: 'theme_all', bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' };
+              const price = parseFloat(pkg.base_price || 32000);
+              const heroImg = pkg.hero_image || THEME_FALLBACK_IMAGES[pkg.theme] || THEME_FALLBACK_IMAGES.adventure;
+              const rawTitle = pkg.name || pkg.title || 'Tour Package';
+              const displayTitle = rawTitle.replace(/^[—\-\s]+|[—\-\s]+$/g, '').trim();
 
               return (
                 <div
                   key={pkg.package_id}
-                  className={`group rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden cursor-pointer ${
-                    isSelected
-                      ? 'bg-white border-[#84D175] ring-2 ring-[#84D175]/30 shadow-xl'
-                      : 'bg-white/90 border-[#84D175]/20 hover:border-[#84D175]/60 hover:shadow-xl'
-                  }`}
                   onClick={() => onSelectPackage(pkg.package_id)}
+                  className={`group relative rounded-2xl overflow-hidden border transition-all duration-300 flex flex-col justify-between cursor-pointer hover:shadow-xl hover:-translate-y-1 ${
+                    isSelected
+                      ? 'border-[#84D175] bg-white ring-2 ring-[#84D175]/40 shadow-lg'
+                      : 'border-[#84D175]/30 bg-white/80 hover:bg-white hover:border-[#84D175]'
+                  }`}
                 >
-                  {/* Image Header */}
-                  <div className="relative h-36 w-full overflow-hidden bg-[#0C2D45]">
+                  {/* Card Media Header */}
+                  <div className="relative h-40 overflow-hidden bg-slate-100">
                     <img
-                      src={imageUrl}
-                      alt={displayTitle}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
+                      src={heroImg}
+                      alt={pkg.hero_alt || displayTitle}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0C2D45]/85 via-transparent to-black/20 p-3 flex flex-col justify-between">
-                      <div className="flex items-center justify-between">
-                        <span className={`text-[10px] font-black px-2.5 py-0.5 rounded uppercase tracking-wider ${badgeBg}`}>
-                          {badgeLabel}
-                        </span>
-                        <span className="text-[11px] text-white font-bold bg-[#0C2D45]/60 backdrop-blur-sm px-2 py-0.5 rounded-md flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-[#84D175]" />
-                          {pkg.duration_days}D
-                        </span>
-                      </div>
-                      <div className="text-xs font-semibold text-white flex items-center gap-1 drop-shadow-sm">
-                        <MapPin className="w-3.5 h-3.5 text-[#84D175]" />
-                        {displayCity}
-                      </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+
+                    {/* Theme Badge */}
+                    <div className="absolute top-2.5 left-2.5">
+                      <span className={`text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs ${badge.bg}`}>
+                        {t(badge.labelKey, language)}
+                      </span>
+                    </div>
+
+                    {/* City Location Tag */}
+                    <div className="absolute bottom-2.5 left-2.5 flex items-center space-x-1 text-white text-xs font-bold drop-shadow">
+                      <MapPin className="w-3.5 h-3.5 text-[#84D175]" />
+                      <span>{pkg.city_name || 'India'}</span>
                     </div>
                   </div>
 
                   {/* Card Body */}
                   <div className="p-4 space-y-3 flex-1 flex flex-col justify-between bg-white/90">
                     <div className="space-y-2">
-                      <h3 className="font-bold text-[#1a2e1a] text-base leading-snug group-hover:text-[#3C8B30] transition-colors">
+                      <h3 className="font-bold text-[#1a2e1a] text-base leading-snug group-hover:text-[#3C8B30] transition-colors line-clamp-2">
                         {displayTitle}
                       </h3>
                       <div className="text-xs text-[#4a5e4a] font-medium">
                         {pkg.duration_days || 5} {t('days', language)} • {Math.max(1, (pkg.duration_days || 5) - 1)} {t('nights', language)}
                       </div>
                       <div className="flex flex-wrap gap-1.5 pt-1">
-                        {(pkg.tags || ['Customizable', 'Sightseeing']).map((tagItem, idx) => (
+                        {(pkg.tags || ['Customizable', 'Verified Hotels']).map((tagItem, idx) => (
                           <span key={idx} className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#FFF8D2] text-[#3C8B30] border border-[#84D175]/30">
                             {tagItem}
                           </span>
@@ -249,57 +260,11 @@ export default function DiscoverView({
           </div>
           <button
             onClick={handleExplore}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] text-xs font-black transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
+            className="px-5 py-2.5 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-xs transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer shrink-0"
           >
-            <span>{t('explore_all_packages', language)}</span>
+            <span>{t('browse_catalog_btn', language)}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
-        </div>
-      </div>
-
-      {/* ── 3. Recommended for You ── */}
-      <div className="rounded-2xl bg-[#84D175]/10 border border-[#84D175]/30 p-5 space-y-4 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-xl bg-[#84D175] text-[#1a2e1a] shadow-sm">
-              <Bot className="w-5 h-5 text-[#1a2e1a]" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-[#1a2e1a]">{t('recommended_for_you', language)}</h3>
-                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#84D175]/20 text-[#3C8B30] font-bold border border-[#84D175]/30">
-                  {t('personalized_badge', language)}
-                </span>
-              </div>
-              <p className="text-xs text-[#4a5e4a] mt-0.5 font-medium">
-                {t('recommended_subtitle', language)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {displayPackages.slice(0, 3).map((pkgItem) => {
-            const title = pkgItem.title_translated || pkgItem.title || pkgItem.name;
-            const price = parseFloat(pkgItem.base_price || 35000);
-            return (
-              <div
-                key={pkgItem.package_id}
-                onClick={() => onSelectPackage(pkgItem.package_id)}
-                className="bg-white/80 border border-[#84D175]/25 hover:border-[#84D175] rounded-xl p-3.5 flex items-center justify-between cursor-pointer transition-all shadow-sm hover:shadow-md"
-              >
-                <div>
-                  <div className="text-xs font-bold text-[#1a2e1a] line-clamp-1">{title}</div>
-                  <div className="text-[11px] text-[#4a5e4a] mt-0.5 capitalize">
-                    {pkgItem.theme || 'Curated'} • {pkgItem.duration_days || 4} {t('days', language)}
-                  </div>
-                </div>
-                <div className="text-sm font-bold text-[#3C8B30] font-mono shrink-0 ml-2">
-                  ₹{price.toLocaleString('en-IN')}
-                </div>
-              </div>
-            );
-          })}
         </div>
       </div>
     </div>

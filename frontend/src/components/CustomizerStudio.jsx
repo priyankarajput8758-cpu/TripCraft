@@ -4,18 +4,17 @@ import GuideSelector from './GuideSelector';
 import AddOnsPanel from './AddOnsPanel';
 import RealWorldPanel from './RealWorldPanel';
 import {
-  Hotel, Activity, Car, Check, Layers, ArrowRight, ShieldCheck,
-  Calendar, Clock, MapPin, Receipt, Sparkles, UserCheck, Plus,
-  Trash2, X, Utensils, Ticket, Compass, Users, Zap
+  Calendar, Users, Clock, Check, ChevronDown, Sparkles, ArrowRight,
+  ShieldCheck, HelpCircle, MapPin, Building2, Utensils, Compass, UserCheck,
+  Plus, Trash2, Zap, RotateCcw, BedDouble, Hotel, Ticket, Activity
 } from 'lucide-react';
 
 export default function CustomizerStudio({
   packageDetailData,
-  preferredLanguage,
-  onOpenBooking,
-  tripPrefs = {},
-  onNextToOptimize,
+  onProceedToOptimize,
   onBack,
+  preferredLanguage = 'en',
+  tripPrefs = {},
   realWorldEnabled = false,
   onToggleRealWorld,
 }) {
@@ -25,6 +24,7 @@ export default function CustomizerStudio({
 
   const [selectedComponents, setSelectedComponents] = useState({});
   const [selectedGuide, setSelectedGuide] = useState(null);
+  const [selectedMarketHotel, setSelectedMarketHotel] = useState(null);
   const fixedDurationDays = pkg?.duration_days || 5;
 
   const calculateEndDate = (start, days) => {
@@ -44,6 +44,7 @@ export default function CustomizerStudio({
 
   // Keep duration locked to curated package duration
   const durationDays = fixedDurationDays;
+  const durationNights = Math.max(1, durationDays - 1);
 
   // Whenever startDate or package changes, auto-update locked endDate
   const handleStartDateChange = (newStart) => {
@@ -104,6 +105,7 @@ export default function CustomizerStudio({
     }
     setSelectedComponents(initial);
     setSelectedGuide(null);
+    setSelectedMarketHotel(null);
   }, [pkg?.package_id]);
 
   // Live repricing strictly from scratch in Decimal
@@ -119,7 +121,9 @@ export default function CustomizerStudio({
           guide_id: selectedGuide?.guide_id || null,
           start_date: startDate,
           duration_days: durationDays,
-          num_travelers: numTravelers
+          num_travelers: numTravelers,
+          market_hotel_rate: selectedMarketHotel ? parseFloat(selectedMarketHotel.rate_per_night || 0) : null,
+          market_hotel_name: selectedMarketHotel ? selectedMarketHotel.name : null
         });
         if (res && res.total_price) {
           setPricingResult(res);
@@ -133,9 +137,13 @@ export default function CustomizerStudio({
       }
     }
     triggerReprice();
-  }, [pkg?.package_id, selectedComponents, selectedGuide, startDate, durationDays, numTravelers]);
+  }, [pkg?.package_id, selectedComponents, selectedGuide, selectedMarketHotel, startDate, durationDays, numTravelers]);
 
   const handleSwap = (groupName, componentId) => {
+    // If swapping catalog hotel, clear custom market hotel
+    if (groupName.toLowerCase().includes('hotel') || groupName.toLowerCase().includes('stay')) {
+      setSelectedMarketHotel(null);
+    }
     setSelectedComponents(prev => ({
       ...prev,
       [groupName]: componentId
@@ -159,20 +167,31 @@ export default function CustomizerStudio({
     setAddOnTotal(total);
   };
 
+  const handleSelectMarketHotel = (hotel) => {
+    setSelectedMarketHotel(hotel);
+  };
+
   const handleProceedToOptimize = () => {
-    onNextToOptimize?.({
+    if (!onProceedToOptimize) return;
+    const selectedList = Object.values(selectedComponents)
+      .map(id => rawComponents.find(c => c.component_id === id))
+      .filter(Boolean);
+
+    onProceedToOptimize({
       package: pkg,
-      pricing: pricingResult,
+      selectedComponents: selectedList,
+      selectedComponentIds: Object.values(selectedComponents).filter(Boolean),
       selectedGuide,
-      selectedComponents,
+      selectedMarketHotel,
       startDate,
       endDate,
       durationDays,
       numTravelers,
-      partySize: numTravelers,
-      addOnTotal,
-      totalPrice: displayTotal,
-      currency: pricingResult?.currency || pkg.currency || 'INR'
+      pricing: pricingResult || {
+        base_price: pkg.base_price,
+        total_price: displayTotal,
+        currency: pkg.currency || 'INR'
+      }
     });
   };
 
@@ -185,9 +204,10 @@ export default function CustomizerStudio({
     );
   }
 
-  const pkgTitle = pkg.name || pkg.title || 'Tour Customizer';
+  // Clean formatting for package title
+  const rawTitle = pkg.name || pkg.title || 'Tour Package';
+  const pkgTitle = rawTitle.replace(/^[—\-\s]+|[—\-\s]+$/g, '').trim();
   const cityName = pkg.city_name || 'Destination';
-  const durationNights = Math.max(1, durationDays - 1);
   const currencySymbol = pricingResult?.currency_symbol || (pkg.currency === 'USD' ? '$' : '₹');
 
   const baseCalculatedTotal = pricingResult?.total_price
@@ -325,11 +345,12 @@ export default function CustomizerStudio({
             const currentSelectedId = selectedComponents[groupName];
             const firstItem = items[0] || {};
             const compType = firstItem.component_type || 'component';
+            const isHotelGroup = compType === 'hotel' || groupName.toLowerCase().includes('hotel') || groupName.toLowerCase().includes('stay');
 
             let typeIcon = <Activity className="w-4 h-4 text-teal-600" />;
             let typeLabel = `Swappable Option (${groupName})`;
 
-            if (compType === 'hotel' || groupName.toLowerCase().includes('hotel') || groupName.toLowerCase().includes('stay')) {
+            if (isHotelGroup) {
               typeIcon = <Hotel className="w-4 h-4 text-amber-500" />;
               typeLabel = 'Accommodation & Hotel Tier';
             } else if (compType === 'poi' || groupName.toLowerCase().includes('poi') || groupName.toLowerCase().includes('activity')) {
@@ -350,13 +371,41 @@ export default function CustomizerStudio({
                     </h3>
                   </div>
                   <span className="text-[11px] font-bold text-slate-500">
-                    {items.length} Choice{items.length > 1 ? 's' : ''} Available
+                    {isHotelGroup && selectedMarketHotel ? 'Custom Live Stay Active' : `${items.length} Choice${items.length > 1 ? 's' : ''} Available`}
                   </span>
                 </div>
 
+                {/* If custom market hotel is active for stay group */}
+                {isHotelGroup && selectedMarketHotel && (
+                  <div className="p-4 rounded-2xl bg-amber-50 border-2 border-amber-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-amber-950">
+                          {selectedMarketHotel.name}
+                        </span>
+                        <span className="text-[10px] bg-amber-200 text-amber-900 font-bold px-2 py-0.5 rounded-full">
+                          Live Market Hotel
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-amber-800">
+                        {durationNights} nights stay @ ₹{parseFloat(selectedMarketHotel.rate_per_night || 0).toLocaleString('en-IN')}/night
+                        (Total: ₹{(parseFloat(selectedMarketHotel.rate_per_night || 0) * durationNights).toLocaleString('en-IN')})
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMarketHotel(null)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 font-bold text-xs rounded-xl transition-all cursor-pointer shrink-0 shadow-xs"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>Revert to Standard Hotel</span>
+                    </button>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {items.map((item) => {
-                    const isSelected = currentSelectedId === item.component_id;
+                    const isSelected = !selectedMarketHotel && currentSelectedId === item.component_id;
                     const delta = parseFloat(item.price_delta || '0');
                     const itemTitle = item.title || item.name || 'Component Option';
 
@@ -494,7 +543,12 @@ export default function CustomizerStudio({
 
           {/* 6. Live External Market Data Comparison (SerpAPI Google Hotels) */}
           {realWorldEnabled ? (
-            <RealWorldPanel cityName={pkg.city_name || 'Goa'} />
+            <RealWorldPanel
+              cityName={pkg.city_name || 'Goa'}
+              onSelectHotel={handleSelectMarketHotel}
+              selectedMarketHotel={selectedMarketHotel}
+              durationNights={durationNights}
+            />
           ) : (
             <div className="bg-white/90 border border-[#84D175]/35 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
               <div className="flex items-center space-x-3">
@@ -504,7 +558,7 @@ export default function CustomizerStudio({
                 <div>
                   <h4 className="text-xs font-bold text-[#1a2e1a]">Compare Live Market Rates (Google Hotels)</h4>
                   <p className="text-[11px] text-[#4a5e4a]">
-                    View live real-time hotel pricing in {pkg.city_name || 'this destination'} via SerpAPI
+                    View live real-time hotel pricing in {pkg.city_name || 'this destination'} and swap into your package
                   </p>
                 </div>
               </div>
@@ -544,7 +598,7 @@ export default function CustomizerStudio({
             <div className="space-y-3 text-xs">
               <div className="flex justify-between text-slate-700 font-medium">
                 <div>
-                  <span className="block">Base Rate ({numTravelers}p × {currencySymbol}{parseFloat(pkg.base_price || 32000).toLocaleString('en-IN')})</span>
+                  <span className="block">Base Package ({numTravelers}p × {currencySymbol}{parseFloat(pkg.base_price || 32000).toLocaleString('en-IN')})</span>
                 </div>
                 <span className="font-mono font-bold text-slate-900">
                   {currencySymbol}{(parseFloat(pkg.base_price || 32000) * numTravelers).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
@@ -562,11 +616,25 @@ export default function CustomizerStudio({
                 </div>
               )}
 
-              {selectedGuide ? (
+              {selectedMarketHotel && (
                 <div className="flex justify-between text-amber-900 font-bold bg-amber-50 p-2.5 rounded-xl border border-amber-200">
                   <div className="space-y-0.5">
+                    <span className="block">Live Stay: {selectedMarketHotel.name}</span>
+                    <span className="text-[10px] text-amber-700 font-normal">
+                      {durationNights} Nights @ ₹{parseFloat(selectedMarketHotel.rate_per_night || 0).toLocaleString('en-IN')}/night
+                    </span>
+                  </div>
+                  <span className="font-mono">
+                    +{currencySymbol}{(parseFloat(selectedMarketHotel.rate_per_night || 0) * durationNights).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
+
+              {selectedGuide ? (
+                <div className="flex justify-between text-blue-900 font-bold bg-blue-50 p-2.5 rounded-xl border border-blue-200">
+                  <div className="space-y-0.5">
                     <span className="block">Guide: {selectedGuide.display_name || selectedGuide.name}</span>
-                    <span className="text-[10px] text-amber-700 font-normal">Fixed Group Rate ({durationDays} Days)</span>
+                    <span className="text-[10px] text-blue-700 font-normal">Fixed Group Rate ({durationDays} Days)</span>
                   </div>
                   <span className="font-mono">
                     +{currencySymbol}{parseFloat(pricingResult?.guide_cost || selectedGuide.day_rate || 3500).toLocaleString('en-IN', { minimumFractionDigits: 2 })}

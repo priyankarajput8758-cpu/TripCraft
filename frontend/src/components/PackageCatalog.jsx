@@ -5,7 +5,6 @@ import {
   Bot, ShieldCheck, Star, Globe, Plane
 } from 'lucide-react';
 import { t } from '../i18n';
-import { FALLBACK_PACKAGES } from '../data/fallbackCatalog';
 
 const THEMES_CONFIG = [
   { id: 'all',        key: 'theme_all',        icon: Sparkles },
@@ -47,9 +46,9 @@ export default function PackageCatalog({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState('all');
   const [selectedTheme, setSelectedTheme] = useState('all');
-  const [sortBy, setSortBy] = useState('default'); // 'default' | 'price_asc' | 'price_desc' | 'duration_asc' | 'duration_desc'
+  const [sortBy, setSortBy] = useState('default');
 
-  const allPackages = (packages && packages.length > 0) ? packages : FALLBACK_PACKAGES;
+  const allPackages = packages || [];
 
   // Extract unique cities
   const uniqueCities = useMemo(() => {
@@ -77,15 +76,13 @@ export default function PackageCatalog({
     // 3. Search Query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
-      result = result.filter(p => {
-        const name = (p.name || p.title || '').toLowerCase();
-        const nameTr = (p.title_translated || '').toLowerCase();
-        const city = (p.city_name || '').toLowerCase();
-        const cityTr = (p.city_name_translated || '').toLowerCase();
-        const theme = (p.theme || '').toLowerCase();
-        const tags = Array.isArray(p.tags) ? p.tags.join(' ').toLowerCase() : '';
-        return name.includes(q) || nameTr.includes(q) || city.includes(q) || cityTr.includes(q) || theme.includes(q) || tags.includes(q);
-      });
+      result = result.filter(p =>
+        (p.name && p.name.toLowerCase().includes(q)) ||
+        (p.title && p.title.toLowerCase().includes(q)) ||
+        (p.city_name && p.city_name.toLowerCase().includes(q)) ||
+        (p.theme && p.theme.toLowerCase().includes(q)) ||
+        (p.overview && p.overview.toLowerCase().includes(q))
+      );
     }
 
     // 4. Sorting
@@ -100,223 +97,214 @@ export default function PackageCatalog({
     }
 
     return result;
-  }, [packages, selectedCity, selectedTheme, searchQuery, sortBy]);
+  }, [allPackages, selectedCity, selectedTheme, searchQuery, sortBy]);
 
   return (
-    <div className="space-y-8 animate-in text-[#1a2e1a] pb-12">
-      {/* ── 1. Header Banner ── */}
-      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-10 shadow-xl border border-[#84D175]/30 bg-gradient-to-r from-[#0C2D45] via-[#0C2D45]/95 to-[#0C2D45]/85 text-white">
-        <div className="absolute top-0 right-0 w-72 h-72 bg-[#84D175]/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#84D175]/20 border border-[#84D175]/40 text-[#84D175] text-xs font-bold">
-              <Compass className="w-3.5 h-3.5 text-[#84D175]" />
-              <span>{t('all_packages_title', preferredLanguage)}</span>
-            </div>
+    <div className="space-y-8 animate-fadeIn text-slate-900 pb-12">
 
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-bold text-white transition-all cursor-pointer"
-              >
-                <span>← Back to Home</span>
-              </button>
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
-              {t('all_packages_title', preferredLanguage)}
-            </h1>
-            <p className="text-slate-300 text-xs sm:text-sm max-w-2xl font-medium">
-              {t('all_packages_subtitle', preferredLanguage)}
-            </p>
-          </div>
+      {/* ── Header Bar ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
+        <div className="space-y-1">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 px-3 py-1 rounded-xl transition-all cursor-pointer mb-1 shadow-xs"
+            >
+              ← {t('back_to_discover', preferredLanguage)}
+            </button>
+          )}
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <span>{t('package_catalog_title', preferredLanguage)}</span>
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+              {processedPackages.length} Available
+            </span>
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium">
+            {t('package_catalog_sub', preferredLanguage)}
+          </p>
         </div>
+
+        {onOpenAiBuild && (
+          <button
+            onClick={onOpenAiBuild}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs shadow-md shadow-emerald-500/20 transition-all active:scale-95 cursor-pointer shrink-0"
+          >
+            <Bot className="w-4 h-4" />
+            <span>{t('custom_ai_brief', preferredLanguage)}</span>
+          </button>
+        )}
       </div>
 
-      {/* ── 2. Filter & Search Controls Bar ── */}
-      <div className="bg-white/90 border border-[#84D175]/35 rounded-3xl p-5 shadow-sm space-y-4">
+      {/* ── Search and Filter Controls ── */}
+      <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* Search Box */}
-          <div className="relative lg:col-span-2">
-            <Search className="w-4 h-4 text-[#4a5e4a] absolute left-3.5 top-3" />
+
+          {/* Search Input */}
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('search_packages_placeholder', preferredLanguage)}
-              className="w-full bg-[#FFF8D2]/40 border border-[#84D175]/40 rounded-xl pl-9 pr-3.5 py-2 text-xs font-bold text-[#1a2e1a] placeholder:text-[#4a5e4a]/60 focus:outline-none focus:border-[#84D175] focus:ring-2 focus:ring-[#84D175]/20"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-3 py-2 text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-teal-500 transition-all"
             />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-2.5 text-xs text-[#4a5e4a] hover:text-[#1a2e1a]"
-              >
-                ✕
-              </button>
-            )}
           </div>
 
-          {/* Destination Dropdown */}
+          {/* City Filter */}
           <div>
             <select
               value={selectedCity}
               onChange={(e) => setSelectedCity(e.target.value)}
-              className="w-full bg-[#FFF8D2]/40 border border-[#84D175]/40 rounded-xl px-3 py-2 text-xs font-bold text-[#1a2e1a] focus:outline-none focus:border-[#84D175]"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 transition-all cursor-pointer"
             >
-              <option value="all">{t('all_destinations', preferredLanguage)} ({uniqueCities.length})</option>
+              <option value="all">{t('all_cities_option', preferredLanguage)} ({uniqueCities.length})</option>
               {uniqueCities.map((city) => (
                 <option key={city} value={city}>{city}</option>
               ))}
             </select>
           </div>
 
-          {/* Sort Dropdown */}
+          {/* Theme Filter */}
+          <div>
+            <select
+              value={selectedTheme}
+              onChange={(e) => setSelectedTheme(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 transition-all cursor-pointer"
+            >
+              {THEMES_CONFIG.map((th) => (
+                <option key={th.id} value={th.id}>{t(th.key, preferredLanguage)}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Sort Control */}
           <div>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="w-full bg-[#FFF8D2]/40 border border-[#84D175]/40 rounded-xl px-3 py-2 text-xs font-bold text-[#1a2e1a] focus:outline-none focus:border-[#84D175]"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 transition-all cursor-pointer"
             >
-              <option value="default">{t('sort_by', preferredLanguage)}: Featured</option>
-              <option value="price_asc">{t('sort_price_low', preferredLanguage)}</option>
-              <option value="price_desc">{t('sort_price_high', preferredLanguage)}</option>
+              <option value="default">{t('sort_featured', preferredLanguage)}</option>
+              <option value="price_asc">{t('sort_price_low_high', preferredLanguage)}</option>
+              <option value="price_desc">{t('sort_price_high_low', preferredLanguage)}</option>
               <option value="duration_asc">{t('sort_duration_short', preferredLanguage)}</option>
               <option value="duration_desc">{t('sort_duration_long', preferredLanguage)}</option>
             </select>
           </div>
         </div>
 
-        {/* Theme Pills */}
-        <div className="flex gap-2 overflow-x-auto pt-1 border-t border-[#84D175]/20">
-          {THEMES_CONFIG.map((tItem) => {
-            const IconComponent = tItem.icon;
-            const isSelected = selectedTheme === tItem.id;
+        {/* Theme Quick Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pt-2 border-t border-slate-100 scrollbar-none">
+          {THEMES_CONFIG.map(({ id, key, icon: Icon }) => {
+            const isActive = selectedTheme === id;
             return (
               <button
-                key={tItem.id}
-                onClick={() => setSelectedTheme(tItem.id)}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                  isSelected
-                    ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs'
-                    : 'bg-white/80 border border-[#84D175]/30 text-[#1a2e1a] hover:bg-[#FFF8D2]'
+                key={id}
+                onClick={() => setSelectedTheme(id)}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  isActive
+                    ? 'bg-teal-500 text-slate-950 shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                 }`}
               >
-                <IconComponent className="w-3.5 h-3.5 text-[#1a2e1a]" />
-                <span>{t(tItem.key, preferredLanguage)}</span>
+                <Icon className="w-3.5 h-3.5" />
+                <span>{t(key, preferredLanguage)}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* ── 3. Results Header ── */}
-      <div className="flex items-center justify-between px-1">
-        <div className="text-xs font-bold text-[#4a5e4a]">
-          Showing <span className="text-[#1a2e1a] font-black">{processedPackages.length}</span> verified tour package{processedPackages.length !== 1 ? 's' : ''}
-        </div>
-        {(selectedCity !== 'all' || selectedTheme !== 'all' || searchQuery) && (
-          <button
-            onClick={() => { setSelectedCity('all'); setSelectedTheme('all'); setSearchQuery(''); }}
-            className="text-xs font-bold text-[#3C8B30] hover:text-[#2D6A24] cursor-pointer"
-          >
-            Reset Filters
-          </button>
-        )}
-      </div>
-
-      {/* ── 4. Comprehensive Package Grid ── */}
+      {/* ── Package Grid ── */}
       {processedPackages.length === 0 ? (
-        <div className="bg-white/80 border border-[#84D175]/30 rounded-3xl p-12 text-center space-y-3">
-          <div className="text-4xl">🗺️</div>
-          <h3 className="text-base font-bold text-[#1a2e1a]">{t('no_packages_found', preferredLanguage)}</h3>
-          <p className="text-xs text-[#4a5e4a]">
-            Try adjusting your search query or theme filters to see more results.
-          </p>
+        <div className="py-20 text-center space-y-3 bg-white rounded-3xl border border-slate-200 p-8 shadow-xs">
+          <Compass className="w-10 h-10 text-slate-400 mx-auto" />
+          <h3 className="text-base font-bold text-slate-900">{t('no_packages_matching', preferredLanguage)}</h3>
+          <p className="text-xs text-slate-500">{t('no_packages_try_reset', preferredLanguage)}</p>
           <button
-            onClick={() => { setSelectedCity('all'); setSelectedTheme('all'); setSearchQuery(''); }}
-            className="px-4 py-2 rounded-xl bg-[#84D175] text-[#1a2e1a] text-xs font-bold cursor-pointer"
+            onClick={() => { setSearchQuery(''); setSelectedCity('all'); setSelectedTheme('all'); }}
+            className="px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold transition-all shadow-xs cursor-pointer"
           >
-            Clear All Filters
+            {t('reset_all_filters', preferredLanguage)}
           </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {processedPackages.map((pkg) => {
             const isSelected = selectedPackageId === pkg.package_id;
-            const badgeConfig = THEME_BADGES[pkg.theme];
-            const badgeLabel = badgeConfig ? t(badgeConfig.labelKey, preferredLanguage).toUpperCase() : (pkg.theme || 'TOUR').toUpperCase();
-            const badgeBg = badgeConfig?.bg || 'bg-[#84D175] text-[#1a2e1a] font-bold';
-            const price = parseFloat(pkg.base_price || 0);
-            const imageUrl = pkg.image_url || THEME_FALLBACK_IMAGES[pkg.theme] || THEME_FALLBACK_IMAGES.adventure;
-            const displayTitle = pkg.title_translated || pkg.title || pkg.name;
-            const displayCity = pkg.city_name_translated || pkg.city_name || 'India';
+            const badge = THEME_BADGES[pkg.theme] || { labelKey: 'theme_all', bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' };
+            const price = parseFloat(pkg.base_price || 32000);
+            const heroImg = pkg.hero_image || THEME_FALLBACK_IMAGES[pkg.theme] || THEME_FALLBACK_IMAGES.adventure;
+            const rawTitle = pkg.name || pkg.title || 'Tour Package';
+            const displayTitle = rawTitle.replace(/^[—\-\s]+|[—\-\s]+$/g, '').trim();
 
             return (
               <div
                 key={pkg.package_id}
                 onClick={() => onSelectPackage(pkg.package_id)}
-                className={`group rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden cursor-pointer ${
+                className={`group relative rounded-3xl overflow-hidden border transition-all duration-300 flex flex-col justify-between cursor-pointer hover:shadow-xl hover:-translate-y-1 bg-white ${
                   isSelected
-                    ? 'bg-white border-[#84D175] ring-2 ring-[#84D175]/30 shadow-xl'
-                    : 'bg-white/90 border-[#84D175]/20 hover:border-[#84D175]/60 hover:shadow-xl'
+                    ? 'border-2 border-teal-500 ring-4 ring-teal-500/20 shadow-lg'
+                    : 'border-slate-200 hover:border-teal-400'
                 }`}
               >
                 {/* Image Header */}
-                <div className="relative h-40 w-full overflow-hidden bg-[#0C2D45]">
+                <div className="relative h-44 overflow-hidden bg-slate-100">
                   <img
-                    src={imageUrl}
-                    alt={displayTitle}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
+                    src={heroImg}
+                    alt={pkg.hero_alt || displayTitle}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0C2D45]/85 via-transparent to-black/20 p-3 flex flex-col justify-between">
-                    <div className="flex items-center justify-between">
-                      <span className={`text-[10px] font-black px-2.5 py-0.5 rounded uppercase tracking-wider ${badgeBg}`}>
-                        {badgeLabel}
-                      </span>
-                      <span className="text-[11px] text-white font-bold bg-[#0C2D45]/60 backdrop-blur-sm px-2 py-0.5 rounded-md flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-[#84D175]" />
-                        {pkg.duration_days}D
-                      </span>
-                    </div>
-                    <div className="text-xs font-semibold text-white flex items-center gap-1 drop-shadow-sm">
-                      <MapPin className="w-3.5 h-3.5 text-[#84D175]" />
-                      {displayCity}
-                    </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+
+                  {/* Theme Badge */}
+                  <div className="absolute top-3 left-3">
+                    <span className={`text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs ${badge.bg}`}>
+                      {t(badge.labelKey, preferredLanguage)}
+                    </span>
+                  </div>
+
+                  {/* City Location */}
+                  <div className="absolute bottom-3 left-3 flex items-center space-x-1.5 text-white text-xs font-bold drop-shadow">
+                    <MapPin className="w-3.5 h-3.5 text-teal-400" />
+                    <span>{pkg.city_name || 'India'}</span>
                   </div>
                 </div>
 
-                {/* Card Body */}
-                <div className="p-4 space-y-3 flex-1 flex flex-col justify-between bg-white/90">
+                {/* Body Content */}
+                <div className="p-5 space-y-3.5 flex-1 flex flex-col justify-between">
                   <div className="space-y-2">
-                    <h3 className="font-bold text-[#1a2e1a] text-sm leading-snug group-hover:text-[#3C8B30] transition-colors line-clamp-2">
+                    <h3 className="font-bold text-slate-900 text-base leading-snug group-hover:text-teal-600 transition-colors line-clamp-2">
                       {displayTitle}
                     </h3>
-                    <div className="text-xs text-[#4a5e4a] font-medium">
-                      {pkg.duration_days || 5} {t('days', preferredLanguage)} • {Math.max(1, (pkg.duration_days || 5) - 1)} {t('nights', preferredLanguage)}
+                    <div className="text-xs text-slate-500 font-medium flex items-center gap-2">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{pkg.duration_days || 5} {t('days', preferredLanguage)} • {Math.max(1, (pkg.duration_days || 5) - 1)} {t('nights', preferredLanguage)}</span>
                     </div>
+
                     <div className="flex flex-wrap gap-1.5 pt-1">
-                      {(pkg.tags || ['Customizable', 'Verified Itinerary']).slice(0, 2).map((tagItem, idx) => (
-                        <span key={idx} className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#FFF8D2] text-[#3C8B30] border border-[#84D175]/30">
+                      {(pkg.tags || ['Customizable', 'Verified Hotels']).map((tagItem, idx) => (
+                        <span key={idx} className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
                           {tagItem}
                         </span>
                       ))}
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-[#84D175]/20 space-y-2 mt-auto">
+                  <div className="pt-3.5 border-t border-slate-100 space-y-2.5 mt-auto">
                     <div className="flex items-baseline justify-between">
-                      <span className="text-[10px] uppercase tracking-wider text-[#4a5e4a] font-bold">
+                      <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
                         {t('starting_from', preferredLanguage)}
                       </span>
-                      <span className="text-base font-black text-[#1a2e1a] font-mono">
+                      <span className="text-lg font-black text-slate-900 font-mono">
                         ₹{price.toLocaleString('en-IN')}
                       </span>
                     </div>
+
                     <button
                       onClick={(e) => { e.stopPropagation(); onSelectPackage(pkg.package_id); }}
-                      className="w-full py-2 px-3 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] text-xs font-black transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
+                      className="w-full py-2.5 px-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-black transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
                     >
                       <span>{t('customize_package', preferredLanguage)}</span>
                       <ArrowRight className="w-3.5 h-3.5" />

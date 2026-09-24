@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
-import { Zap, Star, ExternalLink, Clock, Search, Building2 } from 'lucide-react';
+import { Zap, Star, ExternalLink, Clock, Search, Building2, Check, ArrowRight } from 'lucide-react';
 
-export default function RealWorldPanel({ cityName = 'Goa' }) {
+export default function RealWorldPanel({
+  cityName = 'Goa',
+  onSelectHotel = null,
+  selectedMarketHotel = null,
+  durationNights = 3
+}) {
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState(cityName || 'Goa');
@@ -42,10 +47,15 @@ export default function RealWorldPanel({ cityName = 'Goa' }) {
           </div>
           <div>
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <span>Real-World Hotel Market Comparison</span>
+              <span>Real-World Hotel Market Rates</span>
+              {selectedMarketHotel && (
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                  Custom Stay Active
+                </span>
+              )}
             </h3>
             <p className="text-xs text-slate-500 font-medium">
-              Live market rates in {searchQuery || cityName || 'Destination'} for transparent cost comparison
+              Live Google Hotels market rates in {searchQuery || cityName || 'Destination'} — swap into your package with live repricing
             </p>
           </div>
         </div>
@@ -76,7 +86,7 @@ export default function RealWorldPanel({ cityName = 'Goa' }) {
       {loading ? (
         <div className="py-8 text-center space-y-2">
           <Clock className="w-6 h-6 text-amber-500 animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-medium">Fetching live destination hotel market rates...</p>
+          <p className="text-xs text-slate-500 font-medium">Fetching live destination hotel market rates from Google Hotels...</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
@@ -84,13 +94,22 @@ export default function RealWorldPanel({ cityName = 'Goa' }) {
             const rating = hotel.overall_rating || hotel.rating || 4.5;
             const reviewCount = hotel.reviews_count || hotel.reviews || 420;
             const rate = parseFloat(hotel.rate_per_night || 3500);
+            const isSelected = selectedMarketHotel?.name === hotel.name;
+            const totalStayCost = rate * durationNights;
+
+            // Direct hotel booking link or Google Travel Hotels rates page
+            const bookingUrl = hotel.link || `https://www.google.com/travel/hotels?q=${encodeURIComponent(hotel.name + ' ' + (searchQuery || cityName))}`;
 
             return (
               <div
                 key={idx}
-                className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 space-y-2.5 hover:border-amber-400 transition-all flex flex-col justify-between"
+                className={`rounded-2xl p-4 space-y-3 transition-all flex flex-col justify-between border ${
+                  isSelected
+                    ? 'bg-emerald-50/70 border-2 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
+                    : 'bg-slate-50 border-slate-200/80 hover:border-amber-400 hover:bg-slate-100/50'
+                }`}
               >
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <div className="flex items-start justify-between gap-2">
                     <h4 className="text-xs font-bold text-slate-900 line-clamp-1">{hotel.name}</h4>
                     <span className="flex items-center text-amber-600 font-bold text-[11px] shrink-0">
@@ -98,30 +117,61 @@ export default function RealWorldPanel({ cityName = 'Goa' }) {
                       {rating}
                     </span>
                   </div>
-                  <div className="text-[11px] text-slate-500 font-medium">
-                    {hotel.hotel_class || 'Comfort Hotel'} • {reviewCount} reviews
+                  <div className="text-[11px] text-slate-500 font-medium flex items-center justify-between">
+                    <span>{hotel.hotel_class ? `${hotel.hotel_class}-Star Hotel` : 'Verified Hotel'}</span>
+                    <span>{reviewCount} reviews</span>
                   </div>
+                  {hotel.description && (
+                    <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+                      {hotel.description}
+                    </p>
+                  )}
                 </div>
 
-                <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-bold">Live Market Rate</span>
-                    <span className="text-sm font-black text-amber-600 font-mono">
-                      ₹{rate.toLocaleString('en-IN')}
-                      <span className="text-[10px] font-normal text-slate-500"> /night</span>
-                    </span>
-                  </div>
+                <div className="pt-2.5 border-t border-slate-200/80 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-bold">Live Market Rate</span>
+                      <span className="text-sm font-black text-amber-600 font-mono">
+                        ₹{rate.toLocaleString('en-IN')}
+                        <span className="text-[10px] font-normal text-slate-500"> /night</span>
+                      </span>
+                    </div>
 
-                  {hotel.link && (
                     <a
-                      href={hotel.link}
+                      href={bookingUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 transition-all shadow-sm"
-                      title="View on Google Hotels"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-[11px] font-bold transition-all shadow-xs"
+                      title="View direct rates & booking on Google Travel Hotels"
                     >
-                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Booking Site</span>
+                      <ExternalLink className="w-3 h-3 text-slate-400" />
                     </a>
+                  </div>
+
+                  {onSelectHotel && (
+                    <button
+                      type="button"
+                      onClick={() => onSelectHotel(isSelected ? null : hotel)}
+                      className={`w-full py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs ${
+                        isSelected
+                          ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                          : 'bg-[#84D175] text-[#1a2e1a] hover:bg-[#67C456]'
+                      }`}
+                    >
+                      {isSelected ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          <span>Selected as Package Stay (₹{totalStayCost.toLocaleString('en-IN')})</span>
+                        </>
+                      ) : (
+                        <>
+                          <Building2 className="w-3.5 h-3.5" />
+                          <span>Swap to this Hotel (+₹{totalStayCost.toLocaleString('en-IN')})</span>
+                        </>
+                      )}
+                    </button>
                   )}
                 </div>
               </div>

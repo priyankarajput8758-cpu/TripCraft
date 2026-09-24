@@ -1,6 +1,7 @@
 """
 OpenTripMap Integration Service.
 Discovers tourist places, cultural heritage spots, and attractions for any city/area.
+Includes intelligent filtering, rate limiting, and authentic destination POIs.
 """
 
 import json
@@ -18,7 +19,6 @@ CACHE_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "cache"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 OTM_CACHE_FILE = CACHE_DIR / "opentripmap_cache.json"
 
-# Curated High-Quality Unsplash category photos for Indian landmarks
 CATEGORY_IMAGES = {
     "Temple & Spiritual": "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=800&q=80",
     "Heritage & Architecture": "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80",
@@ -26,6 +26,13 @@ CATEGORY_IMAGES = {
     "Museum & Culture": "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?auto=format&fit=crop&w=800&q=80",
     "Attraction": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"
 }
+
+# Blacklist keywords to filter out non-tourist establishments (theatres, banks, hospitals)
+NON_TOURIST_KEYWORDS = [
+    "theater", "theatre", "cinema", "talkies", "multiplex", "atm", "bank", "hospital",
+    "clinic", "dispensary", "pharmacy", "medical", "school", "college", "hostel",
+    "police", "petrol", "fuel", "gas station", "post office", "supermarket", "mart"
+]
 
 class OpenTripMapService:
     _cache: Dict[str, Any] = {}
@@ -108,13 +115,24 @@ class OpenTripMapService:
         return None
 
     @classmethod
-    def _generate_destination_attractions(cls, lat: float, lng: float, radius_meters: int = 15000) -> List[Dict[str, Any]]:
+    def _generate_destination_attractions(cls, lat: float, lng: float, radius_meters: int = 25000) -> List[Dict[str, Any]]:
         """
-        Generate authentic, geographically accurate landmarks for destinations when OpenTripMap API key is absent or rate-limited.
+        Geographically grounded, high-value landmarks for major destinations across India.
         """
         import math
-        # Destination specific landmark catalogs
         CITY_LANDMARKS = {
+            "chikmagalur": [
+                ("Mullayanagiri Peak", "Nature & Scenic", 13.3917, 75.7208, "Highest mountain peak in Karnataka (1,930m) with breathtaking trekking trails and sunset vistas.", "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"),
+                ("Baba Budangiri & Dattatreya Peetha", "Temple & Spiritual", 13.4219, 75.7681, "Sacred mountain range famous for historic Sufi shrine, caves, and scenic hiking ridges.", "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=800&q=80"),
+                ("Hebbe Waterfalls", "Nature & Scenic", 13.5500, 75.7167, "Spectacular 168-meter multi-tiered cascade surrounded by lush coffee estates in Kemmangundi.", "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=800&q=80"),
+                ("Z Point Kemmangundi", "Nature & Scenic", 13.5469, 75.7533, "Thrilling ridge-line cliff walk offering expansive bird's-eye views across the Western Ghats.", "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=800&q=80"),
+                ("Kallathigiri (Kalhatti) Falls", "Nature & Scenic", 13.5492, 75.7892, "Historic waterfall cascading over Veerabhadreshwara rock temple, revered since ancient times.", "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"),
+                ("Hirekolale Lake", "Nature & Scenic", 13.3456, 75.7142, "Serene mountain lake flanked by rolling hills, renowned for peaceful sunset reflections.", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"),
+                ("Bhadra Wildlife Sanctuary & Safari", "Nature & Scenic", 13.7000, 75.6333, "Protected tiger reserve with dense deciduous forests, wild elephants, and river safaris.", "https://images.unsplash.com/photo-1534188753412-3e26d0d618d6?auto=format&fit=crop&w=800&q=80"),
+                ("Coffee Yatra Museum", "Museum & Culture", 13.3150, 75.7720, "Interactive national museum celebrating the heritage, bean processing, and history of Indian coffee.", "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?auto=format&fit=crop&w=800&q=80"),
+                ("Belur Chennakeshava Temple", "Heritage & Architecture", 13.1625, 75.8597, "12th-century Hoysala soapstone architectural marvel featuring 48 intricately carved pillars.", "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80"),
+                ("Manikyadhara Falls", "Nature & Scenic", 13.4358, 75.7644, "Perennial spring waterfall cascading through forest crevices, believed to possess medicinal mineral waters.", "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=800&q=80"),
+            ],
             "gokarna": [
                 ("Om Beach & Coastal Trail", "Nature & Scenic", 14.5186, 74.3168, "Iconic naturally shaped OM beach with rocky cliffs and pristine waters.", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"),
                 ("Kudle Beach", "Nature & Scenic", 14.5269, 74.3142, "Crescent-shaped white sand beach ideal for sunset relaxation and seaside cafes.", "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&w=800&q=80"),
@@ -132,27 +150,12 @@ class OpenTripMapService:
                 ("Dhauli Shanti Stupa", "Heritage & Architecture", 20.1923, 85.8394, "Peace pagoda on the historic Daya river bank marking Emperor Ashoka's conversion to Buddhism.", "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80"),
                 ("Ekamra Haat Traditional Craft Village", "Museum & Culture", 20.2912, 85.8315, "Urban artisan village featuring genuine Odisha handloom and stone crafts.", "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?auto=format&fit=crop&w=800&q=80"),
             ],
-            "tirupati": [
-                ("Lord Venkateswara Temple (Tirumala)", "Temple & Spiritual", 13.6833, 79.3472, "World-renowned holy shrine situated atop the sacred Seshachalam hills.", "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=800&q=80"),
-                ("Silathoranam Natural Rock Arch", "Nature & Scenic", 13.6872, 79.3512, "Rare 2.5 billion-year-old pre-Cambrian natural geological rock arch.", "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"),
-                ("Kapila Theertham & Waterfall", "Temple & Spiritual", 13.6521, 79.4241, "Holy water reservoir and ancient Shiva temple at the foot of the Tirumala hill range.", "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=800&q=80"),
-                ("Sri Venkateswara National Park", "Nature & Scenic", 13.6982, 79.3812, "Biodiverse sanctuary home to rare endemic flora, leopards, and scenic waterfalls.", "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=800&q=80"),
-                ("Chandragiri Fort & Palace", "Heritage & Architecture", 13.5833, 79.3167, "11th-century Vijayanagara imperial fort with Raja Mahal and Rani Mahal palaces.", "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80"),
-            ],
-            "pokhara": [
-                ("Phewa Lake & Tal Barahi", "Nature & Scenic", 28.2167, 83.9500, "Serene freshwater lake reflecting the snow-capped Annapurna Himalayan range.", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"),
-                ("World Peace Pagoda", "Heritage & Architecture", 28.2014, 83.9442, "Brilliant white stupa situated on Anadu hill offering panoramic valley vistas.", "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=800&q=80"),
-                ("Sarangkot Himalayan Sunrise", "Nature & Scenic", 28.2439, 83.9486, "Famed viewpoint for dramatic sunrises over Dhaulagiri and Machhapuchhre.", "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"),
-                ("Davis Falls (Patale Chhango)", "Nature & Scenic", 28.1897, 83.9592, "Underground waterfall funneling into a 500-meter deep mysterious subterranean cavern.", "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=800&q=80"),
-                ("Gupteshwor Mahadev Cave", "Temple & Spiritual", 28.1883, 83.9583, "Sacred limestone cave temple with natural stalagmites and underground stream passages.", "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=800&q=80"),
-            ],
-            "jaipur": [
-                ("Amber Fort & Palace", "Heritage & Architecture", 26.9855, 75.8513, "UNESCO World Heritage hilltop fort famous for artistic Rajput style and Sheesh Mahal.", "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80"),
-                ("Hawa Mahal (Palace of Winds)", "Heritage & Architecture", 26.9239, 75.8267, "Iconic pink sandstone facade featuring 953 intricately carved jharokhas.", "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80"),
-                ("City Palace & Chandra Mahal", "Heritage & Architecture", 26.9258, 75.8237, "Royal residence complex blending Rajasthani and Mughal architectural heritage.", "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?auto=format&fit=crop&w=800&q=80"),
-                ("Jantar Mantar Astronomical Observatory", "Heritage & Architecture", 26.9248, 75.8246, "UNESCO World Heritage site with the world's largest stone sundial.", "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?auto=format&fit=crop&w=800&q=80"),
-                ("Nahargarh Fort & Sunset Viewpoint", "Nature & Scenic", 26.9372, 75.8155, "Edge-of-Aravalli fortification offering sweeping views across the Pink City.", "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"),
-                ("Jal Mahal (Water Palace)", "Heritage & Architecture", 26.9535, 75.8462, "Serene palace floating in the center of Man Sagar Lake.", "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80"),
+            "munnar": [
+                ("Eravikulam National Park", "Nature & Scenic", 10.1500, 77.0667, "High-altitude sanctuary home to the endangered Nilgiri Tahr and blooming Neelakurinji.", "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"),
+                ("Mattupetty Dam & Lake", "Nature & Scenic", 10.1064, 77.1245, "Scenic masonry dam nestled amidst rolling tea plantations with speedboat tours.", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"),
+                ("Tata Tea Museum", "Museum & Culture", 10.0892, 77.0634, "Historic tea manufacturing factory demonstrating century-old processing machinery.", "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?auto=format&fit=crop&w=800&q=80"),
+                ("Top Station Mountain Viewpoint", "Nature & Scenic", 10.1242, 77.2439, "Panoramic cliff edge offering bird's-eye views across the Western Ghats and Tamil Nadu plains.", "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=800&q=80"),
+                ("Attukad Waterfalls", "Nature & Scenic", 10.0456, 77.0345, "Rushing jungle waterfalls surrounded by rolling green hills and hiking trails.", "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=800&q=80"),
             ],
             "goa": [
                 ("Fort Aguada & Lighthouse", "Heritage & Architecture", 15.4920, 73.7738, "17th-century Portuguese fortress overlooking the Arabian Sea.", "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80"),
@@ -162,42 +165,40 @@ class OpenTripMapService:
                 ("Chapora Fort", "Heritage & Architecture", 15.6059, 73.7389, "Historic coastal bastion overlooking Vagator Beach and the Chapora river mouth.", "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80"),
                 ("Fontainhas Latin Quarter", "Museum & Culture", 15.4989, 73.8319, "Heritage quarter in Panaji lined with colorful Portuguese colonial villas and cafes.", "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?auto=format&fit=crop&w=800&q=80"),
             ],
-            "munnar": [
-                ("Eravikulam National Park", "Nature & Scenic", 10.1500, 77.0667, "High-altitude sanctuary home to the endangered Nilgiri Tahr and blooming Neelakurinji.", "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"),
-                ("Mattupetty Dam & Lake", "Nature & Scenic", 10.1064, 77.1245, "Scenic masonry dam nestled amidst rolling tea plantations with speedboat tours.", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"),
-                ("Tata Tea Museum", "Museum & Culture", 10.0892, 77.0634, "Historic tea manufacturing factory demonstrating century-old processing machinery.", "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?auto=format&fit=crop&w=800&q=80"),
-                ("Top Station Mountain Viewpoint", "Nature & Scenic", 10.1242, 77.2439, "Panoramic cliff edge offering bird's-eye views across the Western Ghats and Tamil Nadu plains.", "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=800&q=80"),
-                ("Attukad Waterfalls", "Nature & Scenic", 10.0456, 77.0345, "Rushing jungle waterfalls surrounded by rolling green hills and hiking trails.", "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=800&q=80"),
+            "jaipur": [
+                ("Amber Fort & Palace", "Heritage & Architecture", 26.9855, 75.8513, "UNESCO World Heritage hilltop fort famous for artistic Rajput style and Sheesh Mahal.", "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80"),
+                ("Hawa Mahal (Palace of Winds)", "Heritage & Architecture", 26.9239, 75.8267, "Iconic pink sandstone facade featuring 953 intricately carved jharokhas.", "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80"),
+                ("City Palace & Museum", "Heritage & Architecture", 26.9258, 75.8237, "Royal residence complex blending Rajasthani and Mughal architectural heritage.", "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?auto=format&fit=crop&w=800&q=80"),
+                ("Nahargarh Fort Sunset Viewpoint", "Nature & Scenic", 26.9372, 75.8155, "Edge-of-Aravalli fortification offering sweeping views across the Pink City.", "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"),
+                ("Jal Mahal (Water Palace)", "Heritage & Architecture", 26.9535, 75.8462, "Serene palace floating in the center of Man Sagar Lake.", "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80"),
             ],
-            "varanasi": [
-                ("Kashi Vishwanath Temple", "Temple & Spiritual", 25.3109, 83.0107, "Sacred Jyotirlinga temple standing beside the sacred Ganges River.", "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=800&q=80"),
-                ("Dashashwamedh Ghat Evening Ganga Aarti", "Temple & Spiritual", 25.3068, 83.0104, "Spectacular ancient spiritual ritual with synchronized brass lamps and Vedic chants.", "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=800&q=80"),
-                ("Assi Ghat Sunrise Boat Cruise", "Nature & Scenic", 25.2905, 83.0064, "Southernmost major ghat famous for morning yoga, music, and peaceful dawn boat rides.", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"),
-                ("Sarnath Dhamek Stupa", "Heritage & Architecture", 25.3811, 83.0228, "Holy Deer Park where Gautama Buddha taught his first sermon after enlightenment.", "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80"),
-                ("Ramnagar Fort & Museum", "Museum & Culture", 25.2711, 83.0256, "18th-century Mughal-style sandstone fortress housing vintage royal cars and armory.", "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?auto=format&fit=crop&w=800&q=80"),
+            "hampi": [
+                ("Virupaksha Temple", "Temple & Spiritual", 15.3350, 76.4600, "Ancient 7th-century living temple dedicated to Lord Shiva on the Tungabhadra river banks.", "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=800&q=80"),
+                ("Vijaya Vittala Temple & Stone Chariot", "Heritage & Architecture", 15.3380, 76.4750, "UNESCO World Heritage site featuring the world-famous iconic monolithic stone chariot.", "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80"),
+                ("Matanga Hill Sunrise", "Nature & Scenic", 15.3320, 76.4670, "Highest spot in Hampi offering 360-degree views across Vijayanagara ruins and boulder fields.", "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"),
+                ("Lotus Mahal & Elephant Stables", "Heritage & Architecture", 15.3280, 76.4700, "Indo-Islamic architectural royal palace with domed chambers and manicured lawns.", "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?auto=format&fit=crop&w=800&q=80"),
+                ("Tungabhadra River Coracle Ride", "Nature & Scenic", 15.3360, 76.4620, "Traditional round basket-boat excursion through sacred river rapids and gorge rocks.", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"),
+            ],
+            "ooty": [
+                ("Doddabetta Peak", "Nature & Scenic", 11.4011, 76.7369, "Highest peak in Nilgiri Mountains (2,637m) with telescope house and valley panoramas.", "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"),
+                ("Government Botanical Garden", "Nature & Scenic", 11.4172, 76.7111, "55-acre terraced garden established in 1848 with 1,000+ exotic flower species.", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"),
+                ("Pykara Waterfalls & Boathouse", "Nature & Scenic", 11.4889, 76.6019, "Magnificent cascading river falls and pristine lake surrounded by shola forests.", "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=800&q=80"),
+                ("Nilgiri Mountain Railway (Toy Train)", "Heritage & Architecture", 11.4064, 76.7032, "UNESCO World Heritage historic steam locomotive winding through pine forests.", "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80"),
+                ("Ooty Lake & Boating", "Nature & Scenic", 11.4083, 76.6897, "Scenic 65-acre artificial lake offering pedal and motor boating amidst tall eucalyptus trees.", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"),
             ]
         }
 
-        # Check if coordinates match or are near any catalog city
+        # Check direct coordinates proximity to landmark catalogs
         closest_catalog = None
         min_dist = float("inf")
 
-        # Check against local DB city names and lat/lng
-        try:
-            with get_db_connection() as conn:
-                cities = conn.execute("SELECT name, lat, lng FROM cities").fetchall()
-                for c in cities:
-                    if c["lat"] and c["lng"]:
-                        d = math.hypot(float(c["lat"]) - lat, float(c["lng"]) - lng)
-                        if d < min_dist:
-                            min_dist = d
-                            city_key = c["name"].lower().replace(" ", "_")
-                            if city_key in CITY_LANDMARKS:
-                                closest_catalog = CITY_LANDMARKS[city_key]
-                            elif c["name"].lower() in CITY_LANDMARKS:
-                                closest_catalog = CITY_LANDMARKS[c["name"].lower()]
-        except Exception:
-            pass
+        for c_key, c_items in CITY_LANDMARKS.items():
+            for item in c_items:
+                p_lat, p_lng = item[2], item[3]
+                d = math.hypot(p_lat - lat, p_lng - lng)
+                if d < min_dist:
+                    min_dist = d
+                    closest_catalog = c_items
 
         results = []
         if closest_catalog and min_dist < 0.8:
@@ -218,7 +219,7 @@ class OpenTripMapService:
                     "short_desc": desc
                 })
         else:
-            # Dynamically generate realistic POIs around the given coordinates with authentic radial offsets
+            # Dynamic radial POIs around coordinates
             GENERIC_TEMPLATES = [
                 ("Central Heritage Landmark", "Heritage & Architecture", 0.012, 0.015, "Historic palace and regional monument showcasing iconic regional stone craftsmanship."),
                 ("Sacred Mountain Viewpoint", "Nature & Scenic", -0.018, 0.022, "Panoramic mountain viewpoint offering expansive views of valleys and sunrise."),
@@ -255,12 +256,12 @@ class OpenTripMapService:
         cls,
         lat: float,
         lng: float,
-        radius_meters: int = 15000,
+        radius_meters: int = 25000,
         lang: str = "en",
         limit: int = 40
     ) -> Dict[str, Any]:
         """
-        Query attractions within radius of coordinates from OpenTripMap with reliable local fallback.
+        Query attractions within radius of coordinates from OpenTripMap and OpenStreetMap with intelligent filtering.
         """
         cls._load_cache()
         cache_key = f"{round(lat, 3)}_{round(lng, 3)}_{radius_meters}_{lang}"
@@ -271,33 +272,39 @@ class OpenTripMapService:
                 "attractions": cls._cache[cache_key]
             }
 
-        # If OpenTripMap API key is configured, attempt live call
+        live_places = []
+
+        # 1. Live OpenTripMap API Query with clean tourism kinds
         if settings.OPENTRIPMAP_API_KEY:
             url = f"{settings.OPENTRIPMAP_BASE_URL}/{lang}/places/radius"
             params = {
                 "radius": radius_meters,
                 "lon": lng,
                 "lat": lat,
-                "kinds": "interesting_places,historic,architecture,cultural,natural,other,religion,theatres_and_entertainments,view_points,monuments",
+                "kinds": "interesting_places,historic,architecture,cultural,natural,monuments,view_points,waterfall",
                 "format": "json",
                 "limit": limit,
                 "apikey": settings.OPENTRIPMAP_API_KEY
             }
 
             try:
-                resp = requests.get(url, params=params, timeout=6)
+                resp = requests.get(url, params=params, timeout=7)
                 if resp.status_code == 200:
                     raw_places = resp.json()
-                    places = []
                     for p in raw_places:
-                        name = p.get("name")
-                        if not name or len(name.strip()) < 2:
+                        name = (p.get("name") or "").strip()
+                        if not name or len(name) < 3:
                             continue
+
+                        # Filter out non-tourist establishments (theaters, banks, hospitals)
+                        name_lower = name.lower()
+                        if any(kw in name_lower for kw in NON_TOURIST_KEYWORDS):
+                            continue
+
                         pt = p.get("point", {})
                         kinds_raw = p.get("kinds", "")
                         kinds_list = [k.strip() for k in kinds_raw.split(",") if k.strip()]
 
-                        # Categorize into friendly travel types
                         cat = "Attraction"
                         if any(k in kinds_raw for k in ["religion", "temple", "church", "mosque", "monastery"]):
                             cat = "Temple & Spiritual"
@@ -305,7 +312,7 @@ class OpenTripMapService:
                             cat = "Heritage & Architecture"
                         elif any(k in kinds_raw for k in ["natural", "waterfall", "park", "garden", "mountain", "viewpoint", "view_points", "cave", "lake"]):
                             cat = "Nature & Scenic"
-                        elif any(k in kinds_raw for k in ["cultural", "museum", "theatre", "art", "cinema"]):
+                        elif any(k in kinds_raw for k in ["cultural", "museum", "theatre", "art"]):
                             cat = "Museum & Culture"
 
                         dist_m = float(p.get("dist", 0.0))
@@ -314,9 +321,9 @@ class OpenTripMapService:
 
                         image_url = CATEGORY_IMAGES.get(cat, CATEGORY_IMAGES["Attraction"])
 
-                        places.append({
+                        live_places.append({
                             "xid": p.get("xid"),
-                            "name": name.strip(),
+                            "name": name,
                             "category": cat,
                             "kinds": kinds_list,
                             "rate": p.get("rate", 1),
@@ -328,31 +335,30 @@ class OpenTripMapService:
                             "image_url": image_url,
                             "osm": p.get("osm"),
                             "wikidata": p.get("wikidata"),
-                            "short_desc": f"Explore {name.strip()} ({cat}), located approximately {dist_formatted} from the central tour hub."
+                            "short_desc": f"Explore {name} ({cat}), located approximately {dist_formatted} from the tour center."
                         })
-
-                    # Deduplicate by name
-                    unique_places = []
-                    seen_names = set()
-                    for pl in places:
-                        if pl["name"].lower() not in seen_names:
-                            unique_places.append(pl)
-                            seen_names.add(pl["name"].lower())
-
-                    if unique_places:
-                        cls._cache[cache_key] = unique_places
-                        cls._save_cache()
-                        return {
-                            "source": "opentripmap_live",
-                            "attractions": unique_places
-                        }
             except Exception as e:
                 logger.warning(f"Live OpenTripMap query failed: {e}")
 
-        # Guaranteed high-quality fallback landmarks
+        # Combine with authentic destination landmarks for comprehensive results
         fallback_places = cls._generate_destination_attractions(lat=lat, lng=lng, radius_meters=radius_meters)
-        cls._cache[cache_key] = fallback_places
-        cls._save_cache()
+        
+        # Merge and deduplicate
+        combined = []
+        seen = set()
+        for p in live_places + fallback_places:
+            n_key = p["name"].lower().strip()
+            if n_key not in seen:
+                seen.add(n_key)
+                combined.append(p)
+
+        if combined:
+            cls._cache[cache_key] = combined
+            cls._save_cache()
+            return {
+                "source": "opentripmap_live" if live_places else "grounded_landmarks_catalog",
+                "attractions": combined
+            }
 
         return {
             "source": "grounded_landmarks_catalog",
@@ -415,7 +421,7 @@ class OpenTripMapService:
         }
 
     @classmethod
-    def geocode_and_explore(cls, query: str, radius_meters: int = 15000) -> Dict[str, Any]:
+    def geocode_and_explore(cls, query: str, radius_meters: int = 25000) -> Dict[str, Any]:
         """
         Geocode any city/area, fetch all nearby tourist attractions, and summarize categories.
         """
