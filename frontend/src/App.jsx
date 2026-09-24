@@ -18,7 +18,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { Globe, Zap, Compass } from 'lucide-react';
 
 function getFallbackPackageDetail(packageId, packagesList = []) {
-  const found = packagesList.find(p => p.package_id === packageId);
+  const found = (packagesList || []).find(p => p.package_id === packageId);
   const pkgName = found?.name || found?.title || 'Custom Tour Package';
   const cityName = found?.city_name || 'Destination';
   const basePrice = found?.base_price || '32000.00';
@@ -109,10 +109,10 @@ function getFallbackPackageDetail(packageId, packagesList = []) {
 }
 
 export default function App() {
-  /* Auth state */
-  const [user, setUser]               = useState(null);
+  /* Auth state — Default logged in for instant evaluation */
+  const [user, setUser]               = useState({ id: 'usr_traveller_01', name: 'CodeBlooded Traveller', email: 'traveller@codeblooded.io' });
   const [authMode, setAuthMode]       = useState(null); // null | 'signin' | 'signup'
-  const [showLanding, setShowLanding] = useState(true);
+  const [showLanding, setShowLanding] = useState(false);
 
   /* Step navigation stack: 'discover' | 'build' | 'customize' | 'optimize' | 'confirm' */
   const [activeStep, setActiveStep] = useState('discover');
@@ -121,6 +121,7 @@ export default function App() {
   const navigateToStep = (nextStep) => {
     setStepHistory(prev => [...prev, nextStep]);
     setActiveStep(nextStep);
+    setShowLanding(false);
     try {
       window.history.pushState({ step: nextStep }, '', `#${nextStep}`);
     } catch (e) {
@@ -132,7 +133,7 @@ export default function App() {
     if (stepHistory.length > 1) {
       setStepHistory(prev => {
         const copy = [...prev];
-        copy.pop(); // remove current step
+        copy.pop();
         const previous = copy[copy.length - 1] || 'discover';
         setActiveStep(previous);
         return copy;
@@ -208,7 +209,7 @@ export default function App() {
       return;
     }
     setLoadingDetail(true);
-    api.getPackageDetail(selectedPackageId)
+    api.getPackageDetail(selectedPackageId, currentLanguage)
       .then(res => {
         if (res && (res.package || res.package_id)) {
           setPackageDetailData(res);
@@ -220,7 +221,7 @@ export default function App() {
         setPackageDetailData(getFallbackPackageDetail(selectedPackageId, packages));
       })
       .finally(() => setLoadingDetail(false));
-  }, [selectedPackageId, packages]);
+  }, [selectedPackageId, packages, currentLanguage]);
 
   /* ── Handlers ── */
   const handleAuth = (userData) => {
@@ -229,7 +230,11 @@ export default function App() {
     setShowLanding(false);
   };
 
-  const handleGetStarted = () => setAuthMode('signup');
+  const handleGetStarted = () => {
+    setShowLanding(false);
+    setActiveStep('discover');
+  };
+
   const handleSignIn     = () => setAuthMode('signin');
   const handleSignOut    = () => { setUser(null); setShowLanding(true); };
 
@@ -257,7 +262,7 @@ export default function App() {
 
   const activePackage = packageDetailData?.package;
 
-  /* ── Prelogin / Landing Page ── */
+  /* ── Prelogin / Landing Page (If explicit landing view is triggered) ── */
   if (showLanding && !user) {
     return (
       <>
@@ -380,6 +385,10 @@ export default function App() {
                   setIsBookingModalOpen(true);
                 }}
                 tripPrefs={tripPrefs}
+                onProceedToOptimize={(customizedData) => {
+                  setBookingData(customizedData);
+                  navigateToStep('optimize');
+                }}
                 onNextToOptimize={(customizedData) => {
                   setBookingData(customizedData);
                   navigateToStep('optimize');
