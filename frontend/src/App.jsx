@@ -9,8 +9,6 @@ import BuildView     from './components/BuildView';
 import CustomizerStudio from './components/CustomizerStudio';
 import OptimizeView  from './components/OptimizeView';
 import ConfirmView   from './components/ConfirmView';
-import TripMap       from './components/TripMap';
-import RealWorldPanel from './components/RealWorldPanel';
 import AIAssistantModal from './components/AIAssistantModal';
 import BookingModal  from './components/BookingModal';
 import DestinationExplorer from './components/DestinationExplorer';
@@ -109,10 +107,10 @@ function getFallbackPackageDetail(packageId, packagesList = []) {
 }
 
 export default function App() {
-  /* Auth state — Default logged in for instant evaluation */
-  const [user, setUser]               = useState({ id: 'usr_traveller_01', name: 'CodeBlooded Traveller', email: 'traveller@codeblooded.io' });
+  /* Auth state — Opens with landing page first */
+  const [user, setUser]               = useState(null);
   const [authMode, setAuthMode]       = useState(null); // null | 'signin' | 'signup'
-  const [showLanding, setShowLanding] = useState(false);
+  const [showLanding, setShowLanding] = useState(true);
 
   /* Step navigation stack: 'discover' | 'build' | 'customize' | 'optimize' | 'confirm' */
   const [activeStep, setActiveStep] = useState('discover');
@@ -147,8 +145,11 @@ export default function App() {
     const handlePopState = (e) => {
       if (e.state && e.state.step) {
         setActiveStep(e.state.step);
-      } else {
-        handleGoBack();
+      } else if (window.location.hash) {
+        const step = window.location.hash.replace(/^#/, '');
+        if (['discover', 'catalog', 'build', 'architect', 'customize', 'optimize', 'confirm'].includes(step)) {
+          setActiveStep(step);
+        }
       }
     };
     window.addEventListener('popstate', handlePopState);
@@ -162,7 +163,40 @@ export default function App() {
   const [cities, setCities]                   = useState([]);
   const [selectedCityId, setSelectedCityId]   = useState('');
   const [selectedTheme, setSelectedTheme]     = useState('');
-  const [currentLanguage, setCurrentLanguage] = useState('en');
+  // Persistent language preference: persists across page refreshes and route shifts,
+  // but resets to 'en' if tab is closed / inactive for more than 7 seconds or browser restarted.
+  const getSavedLanguage = () => {
+    try {
+      const saved = localStorage.getItem('tripcraft_pref_lang');
+      const lastActive = parseInt(localStorage.getItem('tripcraft_last_active') || '0', 10);
+      const now = Date.now();
+      if (saved && (now - lastActive <= 7000)) {
+        return saved;
+      }
+    } catch (e) {}
+    return 'en';
+  };
+
+  const [currentLanguage, setCurrentLanguage] = useState(getSavedLanguage);
+
+  useEffect(() => {
+    const updateHeartbeat = () => {
+      try {
+        localStorage.setItem('tripcraft_last_active', Date.now().toString());
+      } catch (e) {}
+    };
+    updateHeartbeat();
+    const interval = setInterval(updateHeartbeat, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('tripcraft_pref_lang', currentLanguage);
+      localStorage.setItem('tripcraft_last_active', Date.now().toString());
+    } catch (e) {}
+  }, [currentLanguage]);
+
   const [loadingPackages, setLoadingPackages] = useState(false);
   const [loadingDetail, setLoadingDetail]     = useState(false);
   const [languageNotice, setLanguageNotice]   = useState(null);

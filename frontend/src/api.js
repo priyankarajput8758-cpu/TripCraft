@@ -5,6 +5,7 @@
 
 const API_BASE_CANDIDATES = [
   '/api',
+  'http://127.0.0.2:8000/api',
   'http://localhost:8000/api',
   'http://127.0.0.1:8000/api'
 ];
@@ -36,6 +37,27 @@ async function smartFetch(endpoint, options = {}) {
 }
 
 export const api = {
+  // Cities & Reference Data
+  getCities: async () => {
+    try {
+      const res = await smartFetch('/catalog/cities');
+      const data = await res.json();
+      return Array.isArray(data) ? data : (data?.cities || []);
+    } catch (e) {
+      console.warn('getCities fallback:', e);
+      return [];
+    }
+  },
+
+  getLanguages: async () => {
+    try {
+      const res = await smartFetch('/catalog/languages');
+      return await res.json();
+    } catch (e) {
+      return [];
+    }
+  },
+
   // Catalog Packages
   getPackages: async (params = {}) => {
     const query = new URLSearchParams();
@@ -63,7 +85,8 @@ export const api = {
     if (params.specialisation) query.append('specialisation', params.specialisation);
 
     const res = await smartFetch(`/catalog/guides?${query.toString()}`);
-    return await res.json();
+    const data = await res.json();
+    return Array.isArray(data) ? data : (data?.guides || []);
   },
 
   checkGuideAvailability: async (guideId, startDate, durationDays = 4, packageId = null) => {
@@ -88,49 +111,63 @@ export const api = {
   },
 
   // Real-World SerpAPI Google Hotels Integration
-  searchLiveHotels: async (query, checkInDate = null, checkOutDate = null, adults = 2) => {
+  searchLiveHotels: async (query, checkInDate = null, checkOutDate = null, adults = 2, currency = 'INR') => {
     const qParams = new URLSearchParams({ query });
     if (checkInDate) qParams.append('check_in_date', checkInDate);
     if (checkOutDate) qParams.append('check_out_date', checkOutDate);
-    if (adults) qParams.append('adults', adults.toString());
+    if (currency) qParams.append('currency', currency);
 
     const res = await smartFetch(`/external/hotels?${qParams.toString()}`);
-    return await res.json();
+    const data = await res.json();
+    return Array.isArray(data) ? data : (data?.hotels || []);
   },
 
   // Real-World OpenTripMap & OSM Attractions
-  getNearbyAttractions: async (lat, lng, radiusMeters = 25000, lang = 'en') => {
-    const res = await smartFetch(`/external/attractions?lat=${lat}&lng=${lng}&radius_meters=${radiusMeters}&lang=${lang}`);
+  exploreDestination: async (query, radiusMeters = 25000) => {
+    const res = await smartFetch(`/external/explore-destination?query=${encodeURIComponent(query)}&radius_meters=${radiusMeters}`);
     return await res.json();
   },
 
-  geocodeAndExplore: async (query, radiusMeters = 25000) => {
-    const res = await smartFetch(`/external/explore?query=${encodeURIComponent(query)}&radius_meters=${radiusMeters}`);
-    return await res.json();
+  getNearbyAttractions: async (lat, lng, radiusMeters = 25000, lang = 'en') => {
+    let endpoint = `/external/attractions?lat=${lat}&lng=${lng}&radius_meters=${radiusMeters}`;
+    if (!lat || !lng) {
+      endpoint = `/external/explore-destination?query=Destination&radius_meters=${radiusMeters}`;
+    }
+    const res = await smartFetch(endpoint);
+    const data = await res.json();
+    return Array.isArray(data) ? data : (data?.attractions || []);
   },
 
   getAttractionDetail: async (xid, lang = 'en') => {
-    const res = await smartFetch(`/external/attraction/${xid}?lang=${lang}`);
+    const res = await smartFetch(`/external/attraction-detail?xid=${encodeURIComponent(xid)}&lang=${lang}`);
     return await res.json();
   },
 
   // AI Trip Builder & Architect
-  buildTrip: async (prompt, userPreferences = {}) => {
-    const res = await smartFetch('/ai/build-package', {
+  buildAiTrip: async (payload) => {
+    const res = await smartFetch('/ai/build-trip', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, user_preferences: userPreferences })
+      body: JSON.stringify(payload)
+    });
+    return await res.json();
+  },
+
+  buildTrip: async (prompt, userPreferences = {}) => {
+    return api.buildAiTrip({ user_prompt: prompt, ...userPreferences });
+  },
+
+  synthesizeCustomTrip: async (payload) => {
+    const res = await smartFetch('/ai/synthesize-custom-trip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
     return await res.json();
   },
 
   architectTrip: async (brief, preferences = {}) => {
-    const res = await smartFetch('/ai/architect', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ brief, preferences })
-    });
-    return await res.json();
+    return api.synthesizeCustomTrip({ destination_name: brief, ...preferences });
   },
 
   // Bookings & Selections
@@ -159,12 +196,34 @@ export const api = {
   },
 
   // Multilingual Translation
-  translate: async (text, targetLang, sourceLang = 'en') => {
+  translateText: async (text, targetLang, sourceLang = 'en') => {
     const res = await smartFetch('/external/translate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text, target_lang: targetLang, source_lang: sourceLang })
     });
     return await res.json();
+  },
+
+  translateBatch: async (texts, targetLang, sourceLang = 'en') => {
+    const res = await smartFetch('/external/translate-batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texts, target_lang: targetLang, source_lang: sourceLang })
+    });
+    return await res.json();
+  },
+
+  translateItinerary: async (customPackage, targetLang, sourceLang = 'en') => {
+    const res = await smartFetch('/external/translate-itinerary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ custom_package: customPackage, target_lang: targetLang, source_lang: sourceLang })
+    });
+    return await res.json();
+  },
+
+  translate: async (text, targetLang, sourceLang = 'en') => {
+    return api.translateText(text, targetLang, sourceLang);
   }
 };
