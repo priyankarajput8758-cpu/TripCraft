@@ -4,7 +4,7 @@ AI API endpoints.
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from src.ai.service import AIService
 
 router = APIRouter(prefix="/ai", tags=["AI Engine"])
@@ -24,6 +24,22 @@ class MatchGuideRequest(BaseModel):
     language: str = Field(default="en", description="BCP-47 language tag")
     specialisation: Optional[str] = Field(None, description="Specialisation enum")
 
+class DaySelection(BaseModel):
+    day_number: int
+    selected_activities: List[str] = []
+    selected_hotel: Optional[Dict[str, Any]] = None
+
+class SynthesizeCustomTripRequest(BaseModel):
+    destination_name: str = Field(..., description="Destination name, e.g. 'Chikmagalur', 'Ooty'")
+    duration_days: int = Field(3, ge=1, le=10, description="Duration in days")
+    pace_preference: str = Field("balanced", description="Pace: 'relaxed', 'balanced', 'packed'")
+    day_selections: List[DaySelection] = Field(default=[], description="Day-wise multi-selected experiences and hotels")
+    external_supply_mode: bool = Field(False, description="Whether live Google Hotels external supply is enabled")
+    selected_guide_id: Optional[str] = Field(None, description="Guide ID if selected")
+    start_date: Optional[str] = Field("2026-09-24", description="Start date")
+    lat: Optional[float] = Field(None, description="Latitude")
+    lng: Optional[float] = Field(None, description="Longitude")
+
 @router.post("/build-trip")
 def build_trip(req: BuildTripRequest):
     """
@@ -38,6 +54,28 @@ def build_trip(req: BuildTripRequest):
             duration_days=req.duration_days,
             preferred_language=req.preferred_language,
             interests=req.interests
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/synthesize-custom-trip")
+def synthesize_custom_trip(req: SynthesizeCustomTripRequest):
+    """
+    Brand New Custom Destination Itinerary Synthesizer:
+    Gathers OpenTripMap tourist experiences across multi-select day matrix,
+    resolves timing & sunset conflicts, fills activity voids, and evaluates hotel surge pricing.
+    """
+    try:
+        return AIService.synthesize_custom_trip(
+            destination_name=req.destination_name,
+            duration_days=req.duration_days,
+            pace_preference=req.pace_preference,
+            day_selections=[d.dict() for d in req.day_selections],
+            external_supply_mode=req.external_supply_mode,
+            selected_guide_id=req.selected_guide_id,
+            start_date=req.start_date or "2026-09-24",
+            lat=req.lat,
+            lng=req.lng
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

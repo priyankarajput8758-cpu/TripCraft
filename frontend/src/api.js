@@ -98,7 +98,26 @@ export const api = {
     return res.json();
   },
 
-  // External Real-World
+  // Brand New Custom Destination Architect (OpenTripMap Day-wise Multi-Select Matrix + Gemini Optimizer)
+  synthesizeCustomTrip: async (payload) => {
+    const res = await fetch(`${API_BASE}/ai/synthesize-custom-trip`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    return res.json();
+  },
+
+  // External Real-World Integrations
+  exploreDestination: async (query, radiusMeters = 15000) => {
+    const params = new URLSearchParams({
+      query,
+      radius_meters: radiusMeters
+    });
+    const res = await fetch(`${API_BASE}/external/explore-destination?${params.toString()}`);
+    return res.json();
+  },
+
   searchLiveHotels: async (query, checkInDate = '2026-09-24', checkOutDate = '2026-09-25') => {
     const params = new URLSearchParams({
       query,
@@ -110,7 +129,7 @@ export const api = {
     return res.json();
   },
 
-  getNearbyAttractions: async (lat, lng, radiusMeters = 3000) => {
+  getNearbyAttractions: async (lat, lng, radiusMeters = 5000) => {
     const params = new URLSearchParams({
       lat,
       lng,

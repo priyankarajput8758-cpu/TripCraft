@@ -25,8 +25,11 @@
 * **Tour-Guide as a First-Class Component:** Local tour guides selectable with BCP-47 language spoken, specialisation (heritage, food, trekking, wildlife, etc.), daily rates, and peak multipliers directly driving the total.
 * **✦ Mandatory Guide Availability Check & Refusal Flow (§2.2):** Adding a guide whose dates clash refuses the selection with the **exact clashing date named**, automatically proposes a **same-language, same-specialisation substitute guide**, and **reprices the package live** with the rate delta.
 * **Server-Side Multilingual Filtering (§8):** Preferences filter packages (`languages_offered`) and tour guides (`languages`) using standard BCP-47 tags (e.g. `ta`, `hi`, `en-IN`), with graceful fallback and clear notices.
-* **Real-World Pricing & POI Toggle:** Toggle between canonical dataset catalog and real-world live Google Hotels pricing (via cached SerpAPI) + tourist attractions (via OpenTripMap).
-* **Grounded AI Package Architect:** Generates custom travel plans from natural language prompts, grounded strictly in database entities and verified with Decimal repricing.
+* **Autonomous Custom Destination Architect (Any City):** Free-form geocoding via OpenStreetMap Nominatim + OpenTripMap tourist landmark discovery for any destination (e.g. Chikmagalur, Wayanad, Coorg, Hampi) on an interactive Leaflet map canvas.
+* **Day-Wise Multi-Select Experience Matrix:** Allows travellers to choose multiple activities/experiences per day (checkboxes) and select hotels/stays per night (radio buttons) across a flexible 1–7 day duration with pace preferences (Relaxed, Balanced, Packed).
+* **Gemini Schedule Optimization & Void Filling:** Automatically fills activity voids with authentic local spots, resolves timing and sunset conflicts, and provides cost optimization insights (weekday vs weekend hotel tariffs).
+* **Real-World Pricing & Live Google Hotels Selection:** Toggle external supply mode to select real-world live hotels via SerpAPI Google Hotels with live INR pricing and booking links.
+* **1-Click Multilingual Translation:** Translate titles and itineraries into Indian regional languages (Tamil, Hindi, Kannada, Telugu) via LibreTranslate.
 
 ---
 
@@ -143,8 +146,14 @@ Open web app in browser: `http://localhost:5173`
    * See the refusal alert appear: *"Guide 'Nisha Verma' is unavailable on 2026-09-01"*.
    * View the recommended **substitute guide** matching the **same language and same specialisation**.
    * Click **"Accept Substitute"** $\to$ the substitute replaces the guide and the total reprices live with the price delta.
-5. **Real-World Toggle:** Switch on the "Real-World Pricing" toggle $\to$ view live Google Hotels rates via SerpAPI and nearby OpenTripMap attractions.
-6. **Book Custom Package:** Click **"Book Package"** $\to$ booking created with unique reference and idempotency key.
+5. **Custom Destination Architect (Any City):**
+   * Switch to the **"Custom Destination Architect"** tab.
+   * Type any destination (e.g. `Chikmagalur`, `Wayanad`, `Coorg`, `Hampi`).
+   * See OpenStreetMap + OpenTripMap discover all nearby POIs on the Leaflet map.
+   * Select day-wise experiences (checkboxes) and hotels (radio buttons) across a 1–7 day duration.
+   * Click **"Synthesize Itinerary & Reprice"** $\to$ Gemini Flash balances schedules, fills voids, resolves timing conflicts, and applies zero-float Decimal pricing.
+6. **Real-World Live Google Hotels:** Toggle external supply mode $\to$ select live hotels via SerpAPI Google Hotels with real INR rates.
+7. **Book Custom Package:** Click **"Book Package"** $\to$ booking created with unique reference and idempotency key.
 
 ---
 
@@ -162,6 +171,3 @@ pytest -v -s tests/
 python PackagePro/tools/validate_conformance.py data/PS-04.db
 ```
 *(Returns `PASS` with 100% schema compliance)*
-=======
-# kv-hack2026-codeblooded
-KogniVera Hackathon 2026 — CodeBlooded
