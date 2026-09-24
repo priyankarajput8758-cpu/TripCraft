@@ -34,6 +34,71 @@ const THEME_FALLBACK_IMAGES = {
   food_trail: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80',
 };
 
+const CITY_LANDMARK_IMAGES = {
+  agra: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=800&q=80', // Taj Mahal
+  delhi: 'https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=800&q=80', // Red Fort / India Gate
+  'new delhi': 'https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=800&q=80',
+  mumbai: 'https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=800&q=80', // Gateway of India
+  gwalior: 'https://images.unsplash.com/photo-1627894483216-2138af692e32?auto=format&fit=crop&w=800&q=80', // Jai Vilas Palace & Fort
+  jodhpur: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80', // Mehrangarh Fort / Blue City
+  hyderabad: 'https://images.unsplash.com/photo-1605007493699-ce65834f8a00?auto=format&fit=crop&w=800&q=80', // Charminar / Golconda
+  jaisalmer: 'https://images.unsplash.com/photo-1576487248805-cf45f6bcc67f?auto=format&fit=crop&w=800&q=80', // Golden Fort
+  leh: 'https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?auto=format&fit=crop&w=800&q=80', // Pangong Lake & Ladakh
+  ladakh: 'https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?auto=format&fit=crop&w=800&q=80',
+  jaipur: 'https://images.unsplash.com/photo-1603262110263-fb010d6e75dc?auto=format&fit=crop&w=800&q=80', // Hawa Mahal
+  udaipur: 'https://images.unsplash.com/photo-1615836245337-f5b9b2303f10?auto=format&fit=crop&w=800&q=80', // City Palace & Lake Pichola
+  varanasi: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=800&q=80', // Varanasi Ghats
+  tirupati: 'https://images.unsplash.com/photo-1609766857041-ed402ea8069a?auto=format&fit=crop&w=800&q=80', // Tirupati Balaji Temple
+  madurai: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80', // Meenakshi Temple
+  thanjavur: 'https://images.unsplash.com/photo-1609766857041-ed402ea8069a?auto=format&fit=crop&w=800&q=80', // Brihadeeswarar Temple
+  lucknow: 'https://images.unsplash.com/photo-1600100397608-f46338b77626?auto=format&fit=crop&w=800&q=80', // Rumi Darwaza
+  amritsar: 'https://images.unsplash.com/photo-1514222134-b57cbb8ce073?auto=format&fit=crop&w=800&q=80', // Golden Temple
+  shimla: 'https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=800&q=80', // Shimla Hills & Ridge
+  manali: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=800&q=80', // Solang Valley & Pines
+  rishikesh: 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=800&q=80', // Ganga & Lakshman Jhula
+  nainital: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80', // Naini Lake
+  srinagar: 'https://images.unsplash.com/photo-1598894101832-61a7a02c3809?auto=format&fit=crop&w=800&q=80', // Dal Lake Shikara
+  pune: 'https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=800&q=80', // Shaniwar Wada
+  aurangabad: 'https://images.unsplash.com/photo-1600100397608-f46338b77626?auto=format&fit=crop&w=800&q=80', // Ajanta Ellora Caves
+  ahmedabad: 'https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=800&q=80', // Sabarmati
+  bhuj: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80', // White Rann
+  goa: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80', // Goa Beaches
+  panaji: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80',
+  bengaluru: 'https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=800&q=80', // Bangalore Palace
+  mysuru: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80', // Mysore Palace
+  hampi: 'https://images.unsplash.com/photo-1600100397608-f46338b77626?auto=format&fit=crop&w=800&q=80', // Stone Chariot
+  gokarna: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80', // Om Beach
+  chennai: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80', // Marina Beach
+  ooty: 'https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=800&q=80', // Nilgiri Toy Train
+  puducherry: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80', // Promenade Beach
+  pondicherry: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
+  kochi: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=800&q=80', // Chinese Fishing Nets
+  alleppey: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=800&q=80', // Backwaters
+  munnar: 'https://images.unsplash.com/photo-1596895111956-bf1cf0599ce5?auto=format&fit=crop&w=800&q=80', // Munnar Tea Gardens
+  thiruvananthapuram: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80', // Kovalam & Temple
+  wayanad: 'https://images.unsplash.com/photo-1596895111956-bf1cf0599ce5?auto=format&fit=crop&w=800&q=80', // Chembra Peak
+  chikmagalur: 'https://images.unsplash.com/photo-1596895111956-bf1cf0599ce5?auto=format&fit=crop&w=800&q=80', // Mullayanagiri
+  coorg: 'https://images.unsplash.com/photo-1598894101832-61a7a02c3809?auto=format&fit=crop&w=800&q=80', // Abbey Falls
+  visakhapatnam: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80', // RK Beach
+  kolkata: 'https://images.unsplash.com/photo-1558431382-27e303142255?auto=format&fit=crop&w=800&q=80', // Victoria Memorial
+  darjeeling: 'https://images.unsplash.com/photo-1622308644420-a922440fa352?auto=format&fit=crop&w=800&q=80', // Kanchenjunga
+  puri: 'https://images.unsplash.com/photo-1600100397608-f46338b77626?auto=format&fit=crop&w=800&q=80', // Jagannath Temple
+  bhubaneswar: 'https://images.unsplash.com/photo-1600100397608-f46338b77626?auto=format&fit=crop&w=800&q=80', // Lingaraj Temple
+  guwahati: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=800&q=80', // Kamakhya Temple
+  shillong: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80', // Living Root Bridges
+  gangtok: 'https://images.unsplash.com/photo-1622308644420-a922440fa352?auto=format&fit=crop&w=800&q=80', // Rumtek Monastery
+  raipur: 'https://images.unsplash.com/photo-1600100397608-f46338b77626?auto=format&fit=crop&w=800&q=80', // Telibandha Marine Drive
+  kyoto: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80', // Fushimi Inari Torii Gates
+  dubai: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80', // Burj Khalifa
+  singapore: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=800&q=80', // Marina Bay Sands
+  zurich: 'https://images.unsplash.com/photo-1515488764276-beab7607c1e6?auto=format&fit=crop&w=800&q=80', // Lake Zurich
+  bangkok: 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=800&q=80', // Wat Arun
+  bali: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80', // Ulun Danu
+  kathmandu: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80', // Pashupatinath
+  colombo: 'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=800&q=80', // Sigiriya
+  male: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=800&q=80' // Maldives Overwater
+};
+
 export default function DiscoverView({
   packages = [],
   selectedPackageId,
@@ -172,10 +237,22 @@ export default function DiscoverView({
             {curatedPackages.map((pkg) => {
               const isSelected = selectedPackageId === pkg.package_id;
               const badge = THEME_BADGES[pkg.theme] || { labelKey: 'theme_all', bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' };
-              const price = parseFloat(pkg.base_price || 32000);
-              const heroImg = pkg.hero_image || THEME_FALLBACK_IMAGES[pkg.theme] || THEME_FALLBACK_IMAGES.adventure;
-              const rawTitle = pkg.name || pkg.title || 'Tour Package';
-              const displayTitle = rawTitle.replace(/^[—\-\s]+|[—\-\s]+$/g, '').trim();
+              const price = parseFloat(pkg.base_price || 32000) || 32000;
+              const pkgCurrency = pkg.currency || 'INR';
+              const CURRENCY_SYMBOLS = { INR: '₹', JPY: '¥', USD: '$', EUR: '€', GBP: '£', CHF: 'CHF ', AED: 'AED ', SGD: 'S$', THB: '฿' };
+              const currencySymbol = CURRENCY_SYMBOLS[pkgCurrency] || `${pkgCurrency} `;
+              const cityKey = (pkg.city_name || '').toLowerCase().trim();
+              const nameKey = (pkg.name || '').toLowerCase();
+              const cityImg = CITY_LANDMARK_IMAGES[cityKey] || Object.entries(CITY_LANDMARK_IMAGES).find(([k]) => cityKey.includes(k) || nameKey.includes(k))?.[1];
+
+              const heroImg = (pkg.hero_image && (pkg.hero_image.startsWith('http') || pkg.hero_image.startsWith('/')))
+                ? pkg.hero_image
+                : (cityImg || THEME_FALLBACK_IMAGES[pkg.theme] || THEME_FALLBACK_IMAGES.adventure);
+              const rawTitle = String(pkg.name || pkg.title || 'Tour Package');
+              const displayTitle = rawTitle.replace(/[\ufffd\uFFFD\u2014\u2013\u2015]+/g, '—').replace(/^[—\-\s]+|[—\-\s]+$/g, '').trim();
+              const tagsList = Array.isArray(pkg.tags)
+                ? pkg.tags
+                : (typeof pkg.tags === 'string' ? pkg.tags.split(',') : ['Customizable', 'Verified Hotels']);
 
               return (
                 <div
@@ -220,7 +297,7 @@ export default function DiscoverView({
                         {pkg.duration_days || 5} {t('days', language)} • {Math.max(1, (pkg.duration_days || 5) - 1)} {t('nights', language)}
                       </div>
                       <div className="flex flex-wrap gap-1.5 pt-1">
-                        {(pkg.tags || ['Customizable', 'Verified Hotels']).map((tagItem, idx) => (
+                        {tagsList.map((tagItem, idx) => (
                           <span key={idx} className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#FFF8D2] text-[#3C8B30] border border-[#84D175]/30">
                             {tagItem}
                           </span>
@@ -234,7 +311,7 @@ export default function DiscoverView({
                           {t('starting_from', language)}
                         </span>
                         <span className="text-base font-black text-[#1a2e1a] font-mono">
-                          ₹{price.toLocaleString('en-IN')}
+                          {currencySymbol}{price.toLocaleString('en-IN')}
                         </span>
                       </div>
                       <button

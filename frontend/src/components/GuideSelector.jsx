@@ -21,10 +21,13 @@ export default function GuideSelector({
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [specialisationFilter, setSpecialisationFilter] = useState('');
 
+  const guideList = Array.isArray(guides) ? guides : (guides?.guides || []);
+
   // Sync guides whenever availableGuides prop updates
   useEffect(() => {
-    if (availableGuides && availableGuides.length > 0) {
-      setGuides(availableGuides);
+    if (availableGuides) {
+      const gList = Array.isArray(availableGuides) ? availableGuides : (availableGuides?.guides || []);
+      if (gList.length > 0) setGuides(gList);
     }
   }, [availableGuides]);
 
@@ -34,12 +37,13 @@ export default function GuideSelector({
       if (!cityId) return;
       setLoading(true);
       try {
-        const list = await api.getGuides({
+        const res = await api.getGuides({
           city_id: cityId,
           language: preferredLanguage,
           specialisation: specialisationFilter || undefined
         });
-        if (list && list.length > 0) {
+        const list = Array.isArray(res) ? res : (res?.guides || []);
+        if (list.length > 0) {
           setGuides(list);
         }
       } catch (err) {
@@ -82,7 +86,7 @@ export default function GuideSelector({
       setAvailabilityCheck(null);
       return;
     }
-    const guide = guides.find(g => g.guide_id === guideId);
+    const guide = guideList.find(g => g.guide_id === guideId);
     if (guide) {
       onSelectGuide(guide);
     }
@@ -146,7 +150,7 @@ export default function GuideSelector({
             className="w-full bg-white border border-amber-300 rounded-2xl p-3 text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-500 cursor-pointer shadow-xs"
           >
             <option value="">-- No Guide Selected (Self-Guided / ₹0) --</option>
-            {guides.map((g) => {
+            {guideList.map((g) => {
               const name = g.display_name || g.name || 'Guide';
               const rate = parseFloat(g.day_rate || 2500);
               const rating = g.rating || '4.8';
@@ -208,67 +212,74 @@ export default function GuideSelector({
             </div>
           )}
 
-          {availabilityCheck && (
-            <div>
-              {availabilityCheck.is_available ? (
-                <div className="flex items-center space-x-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl font-bold">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>
-                    ✓ Confirmed Available for all {durationDays} days of your itinerary!
-                  </span>
-                </div>
-              ) : (
-                /* Clashing Date Refusal & Matching Substitute (§2.2 Mandatory Enhancement) */
-                <div className="space-y-3 bg-rose-50/80 border border-rose-200 p-3.5 rounded-2xl text-xs">
-                  <div className="flex items-start space-x-2 text-rose-800">
-                    <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-bold block">Selection Refused — Date Clash</span>
-                      <span className="text-rose-700">
-                        {selectedGuide.display_name || selectedGuide.name} is unavailable on{' '}
-                        <strong className="underline decoration-rose-400">{availabilityCheck.first_clash_date || 'Day 2'}</strong>.
-                      </span>
-                    </div>
-                  </div>
+          {availabilityCheck && (() => {
+            const isAvailable = availabilityCheck.is_available === true || availabilityCheck.available === true;
+            const clashDate = availabilityCheck.clashing_date || availabilityCheck.first_clash_date || availabilityCheck.first_clashing_date || 'Day 2';
+            const substitute = availabilityCheck.substitute_guide || availabilityCheck.substitute;
+            const guideCurrencySymbol = selectedGuide.currency === 'JPY' ? '¥' : selectedGuide.currency === 'USD' ? '$' : '₹';
 
-                  {/* Matching Substitute Guide Offer (§2.2) */}
-                  {availabilityCheck.substitute_guide && (
-                    <div className="bg-white border border-amber-300 rounded-xl p-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 flex items-center gap-1">
-                          <Sparkles className="w-3 h-3 text-amber-600" />
-                          Recommended Matching Substitute
-                        </span>
-                        <span className="text-[10px] font-bold text-slate-500">
-                          Same Language ({availabilityCheck.substitute_guide.languages}) & Specialisation
+            return (
+              <div>
+                {isAvailable ? (
+                  <div className="flex items-center space-x-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl font-bold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>
+                      ✓ Confirmed Available for all {durationDays} day(s) of your itinerary!
+                    </span>
+                  </div>
+                ) : (
+                  /* Clashing Date Refusal & Matching Substitute (§2.2 Mandatory Enhancement) */
+                  <div className="space-y-3 bg-rose-50/80 border border-rose-200 p-3.5 rounded-2xl text-xs">
+                    <div className="flex items-start space-x-2 text-rose-800">
+                      <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold block text-sm">Selection Refused — Date Clash</span>
+                        <span className="text-rose-700">
+                          <strong>{selectedGuide.display_name || selectedGuide.name}</strong> is unavailable on{' '}
+                          <span className="font-black underline decoration-rose-500 bg-rose-100/80 px-1.5 py-0.5 rounded text-rose-900">{clashDate}</span>.
                         </span>
                       </div>
+                    </div>
 
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-bold text-slate-900 text-xs">
-                            {availabilityCheck.substitute_guide.display_name}
-                          </div>
-                          <div className="text-[10px] text-slate-500">
-                            ★ {availabilityCheck.substitute_guide.rating || '4.9'} • ₹{parseFloat(availabilityCheck.substitute_guide.day_rate || 3500).toLocaleString('en-IN')}/day
-                          </div>
+                    {/* Matching Substitute Guide Offer (§2.2) */}
+                    {substitute && (
+                      <div className="bg-white border border-amber-300 rounded-xl p-3 space-y-2 shadow-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 flex items-center gap-1">
+                            <Sparkles className="w-3 h-3 text-amber-600" />
+                            Recommended Matching Substitute
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-500">
+                            Same Language ({substitute.languages}) & Specialisation ({substitute.specialisation})
+                          </span>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleAcceptSubstitute(availabilityCheck.substitute_guide)}
-                          className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-lg transition-all flex items-center space-x-1 cursor-pointer shadow-xs"
-                        >
-                          <span>Accept Substitute</span>
-                          <ArrowRight className="w-3 h-3" />
-                        </button>
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <div className="font-bold text-slate-900 text-xs">
+                              {substitute.display_name}
+                            </div>
+                            <div className="text-[10px] text-slate-500">
+                              ★ {substitute.rating || '4.9'} • {guideCurrencySymbol}{parseFloat(substitute.day_rate || 3500).toLocaleString('en-IN')}/day
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleAcceptSubstitute(substitute)}
+                            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-lg transition-all flex items-center space-x-1 cursor-pointer shadow-xs shrink-0"
+                          >
+                            <span>Accept Substitute</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>

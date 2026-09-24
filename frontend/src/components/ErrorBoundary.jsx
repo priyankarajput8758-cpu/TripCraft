@@ -36,6 +36,11 @@ export default class ErrorBoundary extends React.Component {
             <p className="text-xs text-slate-500 font-medium leading-relaxed">
               We encountered a display issue while rendering this package. You can reload the package details or return to the discover catalog.
             </p>
+            {this.state.error && (
+              <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-left font-mono text-[11px] text-rose-700 overflow-x-auto max-h-32">
+                <span className="font-bold">{this.state.error.name || 'Error'}:</span> {this.state.error.message || String(this.state.error)}
+              </div>
+            )}
             <div className="flex items-center justify-center gap-3 pt-2">
               <button
                 onClick={this.handleReset}

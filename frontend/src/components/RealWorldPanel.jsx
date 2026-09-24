@@ -24,7 +24,7 @@ export default function RealWorldPanel({
     setLoading(true);
     try {
       const res = await api.searchLiveHotels(q);
-      const list = res?.hotels || res?.data || [];
+      const list = Array.isArray(res) ? res : (res?.hotels || res?.data || []);
       setHotels(list);
     } catch (err) {
       console.error('Error fetching live hotels:', err);

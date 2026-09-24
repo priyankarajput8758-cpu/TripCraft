@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../api';
+import { t } from '../i18n';
 import GuideSelector from './GuideSelector';
 import AddOnsPanel from './AddOnsPanel';
 import RealWorldPanel from './RealWorldPanel';
@@ -112,7 +113,14 @@ export default function CustomizerStudio({
   useEffect(() => {
     async function triggerReprice() {
       if (!pkg?.package_id) return;
-      const componentIds = Object.values(selectedComponents).filter(Boolean);
+      let componentIds = Object.values(selectedComponents).filter(Boolean);
+      if (selectedMarketHotel) {
+        const hotelGroupKeys = Object.keys(swapGroupsMap).filter(k =>
+          k.toLowerCase().includes('hotel') || k.toLowerCase().includes('stay')
+        );
+        const hotelComponentIds = new Set(hotelGroupKeys.map(k => selectedComponents[k]).filter(Boolean));
+        componentIds = componentIds.filter(id => !hotelComponentIds.has(id));
+      }
       setIsRepricing(true);
       try {
         const res = await api.reprice({
@@ -208,7 +216,19 @@ export default function CustomizerStudio({
   const rawTitle = pkg.name || pkg.title || 'Tour Package';
   const pkgTitle = rawTitle.replace(/^[—\-\s]+|[—\-\s]+$/g, '').trim();
   const cityName = pkg.city_name || 'Destination';
-  const currencySymbol = pricingResult?.currency_symbol || (pkg.currency === 'USD' ? '$' : '₹');
+  const pkgCurrency = pkg.currency || pricingResult?.currency || 'INR';
+  const CURRENCY_SYMBOLS = {
+    INR: '₹',
+    JPY: '¥',
+    USD: '$',
+    EUR: '€',
+    GBP: '£',
+    CHF: 'CHF ',
+    AED: 'AED ',
+    SGD: 'S$',
+    THB: '฿'
+  };
+  const currencySymbol = pricingResult?.currency_symbol || CURRENCY_SYMBOLS[pkgCurrency] || `${pkgCurrency} `;
 
   const baseCalculatedTotal = pricingResult?.total_price
     ? parseFloat(pricingResult.total_price)
@@ -260,7 +280,7 @@ export default function CustomizerStudio({
           onClick={handleProceedToOptimize}
           className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition-all active:scale-95 cursor-pointer shrink-0"
         >
-          <span>Next: View Verified Itinerary</span>
+          <span>{t('next_verified_itinerary', preferredLanguage)}</span>
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
@@ -277,18 +297,18 @@ export default function CustomizerStudio({
               <div className="flex items-center space-x-2">
                 <Calendar className="w-4 h-4 text-teal-600" />
                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
-                  Trip Dates & Party Size
+                  {t('trip_dates_party_size', preferredLanguage)}
                 </h3>
               </div>
               <span className="text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                Live Repricing Active
+                {t('live_repricing_active', preferredLanguage)}
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Start Date
+                  {t('start_date', preferredLanguage)}
                 </label>
                 <input
                   type="date"
@@ -301,7 +321,7 @@ export default function CustomizerStudio({
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    End Date
+                    {t('end_date', preferredLanguage)}
                   </label>
                   <span className="text-[10px] text-teal-700 bg-teal-50 px-1.5 py-0.2 rounded font-bold border border-teal-200">
                     Fixed {durationDays} Days
@@ -318,7 +338,7 @@ export default function CustomizerStudio({
 
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Party Size (Travelers)
+                  {t('party_size', preferredLanguage)}
                 </label>
                 <div className="grid grid-cols-4 gap-1.5">
                   {[1, 2, 4, 6].map((count) => (
@@ -343,6 +363,8 @@ export default function CustomizerStudio({
           {/* 2. Swappable Package Components (Hotel Tiers, POIs, Activities) */}
           {Object.entries(swapGroupsMap).map(([groupName, items]) => {
             const currentSelectedId = selectedComponents[groupName];
+            const baseItem = items.find(i => i.is_default) || items[0] || {};
+            const baseDelta = parseFloat(baseItem.price_delta || '0');
             const firstItem = items[0] || {};
             const compType = firstItem.component_type || 'component';
             const isHotelGroup = compType === 'hotel' || groupName.toLowerCase().includes('hotel') || groupName.toLowerCase().includes('stay');
@@ -352,10 +374,10 @@ export default function CustomizerStudio({
 
             if (isHotelGroup) {
               typeIcon = <Hotel className="w-4 h-4 text-amber-500" />;
-              typeLabel = 'Accommodation & Hotel Tier';
+              typeLabel = t('accommodation_hotel_tier', preferredLanguage);
             } else if (compType === 'poi' || groupName.toLowerCase().includes('poi') || groupName.toLowerCase().includes('activity')) {
               typeIcon = <Compass className="w-4 h-4 text-teal-600" />;
-              typeLabel = 'Attraction & Experience Options';
+              typeLabel = t('attraction_experience_options', preferredLanguage);
             } else if (compType === 'guide' || groupName.toLowerCase().includes('guide')) {
               typeIcon = <UserCheck className="w-4 h-4 text-blue-600" />;
               typeLabel = 'Local Guide Delivery Option';
@@ -406,7 +428,8 @@ export default function CustomizerStudio({
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {items.map((item) => {
                     const isSelected = !selectedMarketHotel && currentSelectedId === item.component_id;
-                    const delta = parseFloat(item.price_delta || '0');
+                    const itemDelta = parseFloat(item.price_delta || '0');
+                    const relativeDelta = itemDelta - baseDelta;
                     const itemTitle = item.title || item.name || 'Component Option';
 
                     return (
@@ -432,9 +455,11 @@ export default function CustomizerStudio({
 
                         <div className="mt-3 pt-2 border-t border-slate-200/60 flex items-center justify-between">
                           <span className={`text-xs font-mono font-bold ${
-                            delta === 0 ? 'text-slate-500' : delta > 0 ? 'text-teal-700' : 'text-emerald-700'
+                            relativeDelta === 0 ? 'text-slate-500' : relativeDelta > 0 ? 'text-teal-700' : 'text-emerald-700'
                           }`}>
-                            {delta === 0 ? 'Included (Base)' : `${delta > 0 ? '+' : ''}${currencySymbol}${Math.abs(delta).toLocaleString('en-IN')}`}
+                            {relativeDelta === 0
+                              ? t('included_base', preferredLanguage)
+                              : `${relativeDelta > 0 ? '+' : '-'}${currencySymbol}${Math.abs(relativeDelta).toLocaleString('en-IN')}`}
                           </span>
 
                           {isSelected && (
@@ -539,6 +564,9 @@ export default function CustomizerStudio({
           <AddOnsPanel
             selectedTheme={pkg.theme}
             onAddOnsChange={handleAddOnsChange}
+            preferredLanguage={preferredLanguage}
+            currency={pkgCurrency}
+            currencySymbol={currencySymbol}
           />
 
           {/* 6. Live External Market Data Comparison (SerpAPI Google Hotels) */}
@@ -581,7 +609,7 @@ export default function CustomizerStudio({
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="space-y-0.5">
                 <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
-                  Live Repricing Quote
+                  {t('live_repricing_quote', preferredLanguage)}
                 </h3>
                 <span className="text-[11px] text-slate-500 font-mono">
                   {numTravelers} Traveler{numTravelers > 1 ? 's' : ''} • Zero Float Decimal
@@ -621,7 +649,7 @@ export default function CustomizerStudio({
                   <div className="space-y-0.5">
                     <span className="block">Live Stay: {selectedMarketHotel.name}</span>
                     <span className="text-[10px] text-amber-700 font-normal">
-                      {durationNights} Nights @ ₹{parseFloat(selectedMarketHotel.rate_per_night || 0).toLocaleString('en-IN')}/night
+                      {durationNights} Nights @ {currencySymbol}{parseFloat(selectedMarketHotel.rate_per_night || 0).toLocaleString('en-IN')}/night
                     </span>
                   </div>
                   <span className="font-mono">
@@ -643,7 +671,7 @@ export default function CustomizerStudio({
               ) : (
                 <div className="flex justify-between text-slate-400">
                   <span>Local Tour Guide</span>
-                  <span>Self-Guided (₹0)</span>
+                  <span>Self-Guided ({currencySymbol}0)</span>
                 </div>
               )}
 

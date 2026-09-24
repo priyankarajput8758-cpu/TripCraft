@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { api } from '../api';
+import { t } from '../i18n';
 import {
   Compass,
   MapPin,
@@ -80,6 +81,7 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
   // Translation state
   const [selectedLang, setSelectedLang] = useState(initialState?.language || 'en');
   const [translatedTripTitle, setTranslatedTripTitle] = useState(null);
+  const [originalEnglishTrip, setOriginalEnglishTrip] = useState(initialState?.customPackage || null);
   const [translating, setTranslating] = useState(false);
 
   // Leaflet map refs
@@ -102,6 +104,15 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
       }
       if (initialState.customPackage) {
         setSynthesizedTrip(initialState.customPackage);
+        setOriginalEnglishTrip(initialState.customPackage);
+        if (initialState.customPackage.itinerary && initialState.customPackage.itinerary.length > 0) {
+          const preSelectedMatrix = initialState.customPackage.itinerary.map(dayItem => ({
+            day_number: dayItem.day,
+            selected_activities: (dayItem.slots || []).filter(s => s.type !== 'hotel' && s.type !== 'dining').map(s => s.title),
+            selected_hotel: masterHotel
+          }));
+          setDayMatrix(preSelectedMatrix);
+        }
       }
       handleExploreDestination(dest);
     }
@@ -157,9 +168,25 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
         // Fetch Live Hotels via SerpAPI for this destination
         fetchLiveHotels(query);
 
-        // Pre-populate Day 1 & Day 2 with top attractions if matrix is empty
+        // Pre-populate Day matrix with attractions matching user theme/requests
         if (res.attractions && res.attractions.length > 0) {
-          const topSpots = res.attractions.slice(0, 8).map(a => a.name);
+          let candidateSpots = [...res.attractions];
+          const reqKeywords = ((initialState?.customRequests || userCustomRequests || '') + ' ' + (initialState?.interests || '')).toLowerCase().split(/\s+/);
+          const matchingKeywords = reqKeywords.filter(w => w.length > 3 && !['trip', 'tour', 'with', 'under', 'guide', 'days', 'package'].includes(w));
+
+          if (matchingKeywords.length > 0) {
+            candidateSpots.sort((a, b) => {
+              const textA = ((a.name || '') + ' ' + (a.category || '') + ' ' + (a.kinds || '')).toLowerCase();
+              const textB = ((b.name || '') + ' ' + (b.category || '') + ' ' + (b.kinds || '')).toLowerCase();
+              const matchA = matchingKeywords.some(kw => textA.includes(kw));
+              const matchB = matchingKeywords.some(kw => textB.includes(kw));
+              if (matchA && !matchB) return -1;
+              if (!matchA && matchB) return 1;
+              return 0;
+            });
+          }
+
+          const topSpots = candidateSpots.slice(0, 12).map(a => a.name);
           setDayMatrix(prev => {
             return prev.map((day, idx) => {
               if (day.selected_activities.length === 0) {
@@ -186,14 +213,47 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
     setLoadingHotels(true);
     try {
       const res = await api.searchLiveHotels(cityName);
-      const list = res?.hotels || res?.data || [];
+      const list = Array.isArray(res) ? res : (res?.hotels || res?.data || []);
       setLiveHotels(list);
+      if (externalSupplyMode && list.length > 0) {
+        const topH = list[0];
+        const rateNum = topH.rate_per_night || 3500;
+        setMasterHotel({
+          name: topH.name,
+          price_per_night: rateNum,
+          type: 'external_serpapi',
+          link: topH.link
+        });
+      }
     } catch (err) {
       console.error('Error fetching live hotels:', err);
     } finally {
       setLoadingHotels(false);
     }
   };
+
+  // When externalSupplyMode toggles, auto-select live Google hotel
+  useEffect(() => {
+    if (externalSupplyMode && liveHotels.length > 0) {
+      const topH = liveHotels[0];
+      const rateNum = topH.rate_per_night || 3500;
+      setMasterHotel({
+        name: topH.name,
+        price_per_night: rateNum,
+        type: 'external_serpapi',
+        link: topH.link
+      });
+      setDayMatrix(prev => prev.map(d => ({
+        ...d,
+        selected_hotel: {
+          name: topH.name,
+          price_per_night: rateNum,
+          type: 'external_serpapi',
+          link: topH.link
+        }
+      })));
+    }
+  }, [externalSupplyMode]);
 
   // Setup Leaflet Map whenever geoData or attractions update
   useEffect(() => {
@@ -379,6 +439,8 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
       const res = await api.synthesizeCustomTrip(payload);
       if (res && res.status === 'success') {
         setSynthesizedTrip(res.custom_package);
+        setOriginalEnglishTrip(res.custom_package);
+        setTranslatedTripTitle(null);
         // Scroll smoothly to generated itinerary
         setTimeout(() => {
           const el = document.getElementById('custom-itinerary-output');
@@ -392,19 +454,27 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
     }
   };
 
-  // Translate synthesized itinerary title
+  // Translate complete synthesized itinerary (trip title, day titles, slot descriptions, notes, and tips)
   const handleTranslate = async (langCode) => {
     if (!synthesizedTrip) return;
     setSelectedLang(langCode);
     if (langCode === 'en') {
+      if (originalEnglishTrip) {
+        setSynthesizedTrip(originalEnglishTrip);
+      }
       setTranslatedTripTitle(null);
       return;
     }
     setTranslating(true);
     try {
-      const res = await api.translateText(synthesizedTrip.trip_title, langCode);
-      if (res && res.translated_text) {
-        setTranslatedTripTitle(res.translated_text);
+      if (!originalEnglishTrip) {
+        setOriginalEnglishTrip(synthesizedTrip);
+      }
+      const baseTrip = originalEnglishTrip || synthesizedTrip;
+      const res = await api.translateItinerary(baseTrip, langCode);
+      if (res && res.status === 'success' && res.custom_package) {
+        setSynthesizedTrip(res.custom_package);
+        setTranslatedTripTitle(res.custom_package.trip_title);
       }
     } catch (err) {
       console.error('Translation failed:', err);
@@ -442,15 +512,10 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
               )}
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Custom Destination Itinerary Architect
+              {t('custom_architect_title', selectedLang)}
             </h2>
             <p className="text-sm text-slate-300 max-w-2xl leading-relaxed">
-              Input any Indian hill station, heritage town, or getaway (e.g.{' '}
-              <span className="text-teal-400 font-semibold cursor-pointer underline" onClick={() => { setDestinationQuery('Chikmagalur'); handleExploreDestination('Chikmagalur'); }}>Chikmagalur</span>,{' '}
-              <span className="text-teal-400 font-semibold cursor-pointer underline" onClick={() => { setDestinationQuery('Wayanad'); handleExploreDestination('Wayanad'); }}>Wayanad</span>,{' '}
-              <span className="text-teal-400 font-semibold cursor-pointer underline" onClick={() => { setDestinationQuery('Hampi'); handleExploreDestination('Hampi'); }}>Hampi</span>, or{' '}
-              <span className="text-teal-400 font-semibold cursor-pointer underline" onClick={() => { setDestinationQuery('Varanasi'); handleExploreDestination('Varanasi'); }}>Varanasi</span>).
-              OpenTripMap auto-discovers real tourist spots up to 90km, and Gemini Flash constructs a seamless, void-filled itinerary.
+              {t('custom_architect_desc', selectedLang)}
             </p>
           </div>
         </div>
@@ -763,9 +828,9 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
             {/* Pace Selector */}
             <div className="flex items-center space-x-1.5 bg-slate-800/90 p-1 rounded-xl border border-slate-700 text-xs">
               {[
-                { id: 'relaxed', label: 'Relaxed' },
-                { id: 'balanced', label: 'Balanced' },
-                { id: 'packed', label: 'Packed' }
+                { id: 'relaxed', label: t('relaxed_pace', selectedLang) },
+                { id: 'balanced', label: t('balanced_pace', selectedLang) },
+                { id: 'packed', label: t('fast_pace', selectedLang) }
               ].map(p => (
                 <button
                   key={p.id}
@@ -1103,12 +1168,12 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
             {synthesizing ? (
               <>
                 <RefreshCw className="w-4 h-4 animate-spin" />
-                Synthesizing with Gemini Flash...
+                {t('synthesizing_itinerary', selectedLang)}
               </>
             ) : (
               <>
                 <Zap className="w-4 h-4" />
-                Synthesize Itinerary & Reprice
+                {t('synthesize_itinerary', selectedLang)}
               </>
             )}
           </button>
@@ -1145,22 +1210,28 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
             </div>
 
             {/* Translation Action Buttons */}
-            <div className="flex items-center space-x-1.5 bg-slate-800/80 p-1.5 rounded-xl border border-slate-700 text-xs">
-              <Languages className="w-4 h-4 text-slate-400 ml-1.5 mr-1" />
+            <div className="flex flex-wrap items-center gap-1.5 bg-slate-800/80 p-1.5 rounded-xl border border-slate-700 text-xs">
+              <div className="flex items-center text-slate-400 px-1 font-bold gap-1 text-[11px]">
+                <Languages className="w-3.5 h-3.5" />
+                <span>{translating ? t('translating_plan', selectedLang) : t('translate_plan', selectedLang)}:</span>
+              </div>
               {[
                 { code: 'en', label: 'EN' },
-                { code: 'ta', label: 'தமிழ்' },
                 { code: 'hi', label: 'हिंदी' },
+                { code: 'ta', label: 'தமிழ்' },
+                { code: 'te', label: 'తెలుగు' },
                 { code: 'kn', label: 'ಕನ್ನಡ' },
-                { code: 'te', label: 'తెలుగు' }
+                { code: 'mr', label: 'मराठी' },
+                { code: 'bn', label: 'বাংলা' },
+                { code: 'gu', label: 'ગુજરાતી' }
               ].map(lang => (
                 <button
                   key={lang.code}
                   onClick={() => handleTranslate(lang.code)}
                   disabled={translating}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-2 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     selectedLang === lang.code
-                      ? 'bg-teal-500 text-slate-950'
+                      ? 'bg-teal-500 text-slate-950 shadow-xs'
                       : 'text-slate-300 hover:bg-slate-700'
                   }`}
                 >

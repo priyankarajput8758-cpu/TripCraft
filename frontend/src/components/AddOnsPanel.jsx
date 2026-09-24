@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Minus, Check, Clock, ShoppingBag } from 'lucide-react';
+import { t } from '../i18n';
 
 const ADDONS = [
   {
@@ -76,7 +77,14 @@ const ADDONS = [
   },
 ];
 
-export default function AddOnsPanel({ selectedTheme, onAddOnsChange, currentAddOns = [] }) {
+export default function AddOnsPanel({
+  selectedTheme,
+  onAddOnsChange,
+  currentAddOns = [],
+  preferredLanguage = 'en',
+  currency = 'INR',
+  currencySymbol = '₹'
+}) {
   const [addedIds, setAddedIds] = useState(new Set(currentAddOns));
 
   const relevantAddons = selectedTheme
@@ -111,10 +119,10 @@ export default function AddOnsPanel({ selectedTheme, onAddOnsChange, currentAddO
           </div>
           <div>
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              RECOMMENDED ADD-ONS
+              {t('recommended_add_ons', preferredLanguage)}
             </h3>
             <p className="text-xs text-slate-500">
-              Personalized based on your package theme
+              {t('personalized_theme', preferredLanguage)}
             </p>
           </div>
         </div>
@@ -122,7 +130,7 @@ export default function AddOnsPanel({ selectedTheme, onAddOnsChange, currentAddO
           <div className="text-right">
             <div className="text-xs text-slate-500 font-medium">Add-ons Total</div>
             <div className="text-sm font-bold text-blue-600 font-mono">
-              +₹{totalAddOnCost.toLocaleString('en-IN')}
+              +{currencySymbol}{totalAddOnCost.toLocaleString()}
             </div>
           </div>
         )}
@@ -165,7 +173,7 @@ export default function AddOnsPanel({ selectedTheme, onAddOnsChange, currentAddO
 
               <div className="mt-3 pt-2.5 border-t border-slate-200/80 flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-900 font-mono">
-                  ₹{addon.price.toLocaleString('en-IN')}
+                  {currencySymbol}{addon.price.toLocaleString()}
                   <span className="text-[10px] text-slate-400 font-normal ml-1">/ person</span>
                 </span>
                 <button

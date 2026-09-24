@@ -93,7 +93,7 @@ export default function TripMap({ city, lat, lng, cityName }) {
       try {
         const res = await api.getNearbyAttractions(defaultLat, defaultLng, radiusMeters);
         if (isCancelled) return;
-        const list = res?.attractions || res?.data || [];
+        const list = Array.isArray(res) ? res : (res?.attractions || res?.data || []);
         setAttractions(list);
 
         // Add markers to map if map is alive
