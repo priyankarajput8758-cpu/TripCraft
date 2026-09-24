@@ -1,9 +1,11 @@
 """
 Catalog service for packages, components, guides, cities, and categories.
+Includes server-side multilingual filtering (§8 BCP-47) and dynamic translation of package details.
 """
 
 from typing import Dict, List, Optional, Any
 from src.database import get_db_connection, to_decimal, format_money
+from src.external.translate_service import TranslationService
 
 class CatalogService:
     @staticmethod
@@ -16,7 +18,7 @@ class CatalogService:
         limit: int = 50,
         offset: int = 0
     ) -> Dict[str, Any]:
-        """List curated packages with filters."""
+        """List curated packages with filters and live language translation."""
         query = """
             SELECT tp.*, c.name AS city_name, c.state AS city_state, co.name AS country_name
             FROM tour_packages tp
@@ -40,19 +42,21 @@ class CatalogService:
 
         # Server-side language filtering (PS-04 Rule R6)
         lang_notice = None
-        if language_bcp47:
-            # Check if any package has this language tag
+        clean_lang = language_bcp47.split("-")[0].lower() if language_bcp47 else None
+
+        if clean_lang and clean_lang != "en":
+            # Check if any packages explicitly offer this language tag
             with get_db_connection() as conn:
                 count = conn.execute(
                     "SELECT COUNT(*) AS c FROM tour_packages WHERE languages_offered LIKE ? AND status = 'active'",
-                    (f"%{language_bcp47}%",)
+                    (f"%{clean_lang}%",)
                 ).fetchone()["c"]
 
                 if count > 0:
                     query += " AND tp.languages_offered LIKE ?"
-                    params.append(f"%{language_bcp47}%")
+                    params.append(f"%{clean_lang}%")
                 else:
-                    lang_notice = f"No direct packages available in '{language_bcp47}'. Displaying all recommended packages."
+                    lang_notice = f"No direct packages offering native '{language_bcp47}' tour delivery. Showing all packages with live translation."
 
         query += " ORDER BY tp.base_price ASC LIMIT ? OFFSET ?"
         params.extend([limit, offset])
@@ -72,6 +76,16 @@ class CatalogService:
                 """, (pkg["city_id"],)).fetchone()
                 pkg["hero_image"] = img["file_path"] if img else None
                 pkg["hero_alt"] = img["alt_text"] if img else pkg["name"]
+
+            # Translate package names and titles if non-English language is requested
+            if clean_lang and clean_lang != "en" and packages:
+                titles = [p["name"] for p in packages]
+                translated_titles = TranslationService.translate_batch(titles, clean_lang, "en")
+                for idx, pkg in enumerate(packages):
+                    trans = translated_titles[idx]
+                    if trans:
+                        pkg["name"] = trans
+                        pkg["title"] = trans
 
             return {
                 "total": len(packages),
@@ -105,6 +119,23 @@ class CatalogService:
                 ORDER BY day_index, slot
             """, (package_id,)).fetchall()
 
+            # Dynamic Translation of Package and Component titles if language is non-English
+            clean_lang = language.split("-")[0].lower() if language else None
+            if clean_lang and clean_lang != "en":
+                # Translate package title
+                pkg_trans = TranslationService.translate(pkg["name"], clean_lang, "en")
+                if pkg_trans.get("translated_text"):
+                    pkg["name"] = pkg_trans["translated_text"]
+                    pkg["title"] = pkg_trans["translated_text"]
+
+                # Batch translate component names
+                comp_titles = [c["name"] for c in components]
+                translated_comps = TranslationService.translate_batch(comp_titles, clean_lang, "en")
+                for idx, c in enumerate(components):
+                    if translated_comps[idx]:
+                        c["name"] = translated_comps[idx]
+                        c["title"] = translated_comps[idx]
+
             # Organize components:
             # 1. Day-by-day itinerary
             # 2. Swap groups (e.g. hotel options, activity options)
@@ -131,7 +162,6 @@ class CatalogService:
                     swap_groups[sg]["options"].append(comp)
 
             # Available tour guides: prioritize requested BCP-47 language and local proximity
-            clean_lang = language.split("-")[0].lower() if language else None
             if clean_lang and clean_lang != "en":
                 guides = conn.execute("""
                     SELECT g.*, c.name AS city_name, c.state AS city_state,

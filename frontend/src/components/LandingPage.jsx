@@ -3,7 +3,7 @@ import {
   Compass, Sparkles, ArrowRight, MapPin, Shield,
   Zap, Globe, Users, Check, Waves, Castle,
   Trees, Flame, Building2, Heart, ShieldCheck, CheckCircle2,
-  Lock, ArrowUpRight, Layers
+  Lock, ArrowUpRight, Layers, Sliders, Calendar, FileText
 } from 'lucide-react';
 
 /* ─── Data ─────────────────────────────────────────── */
@@ -24,11 +24,38 @@ const FEATURES = [
   { icon: ShieldCheck,color: 'text-[#3C8B30]', bg: 'bg-[#84D175]/15 border-[#84D175]/30',
     title: 'Guide Availability',   desc: 'Every guide selection is checked against real calendar dates. If unavailable, we offer the nearest matching substitute.' },
   { icon: Globe,      color: 'text-sky-600',    bg: 'bg-sky-50 border-sky-100',
-    title: 'Language Preference',  desc: 'Set your preferred guide language — Tamil, Hindi, Telugu and more. Packages and guides are filtered automatically.' },
+    title: 'Language Preference',  desc: 'Set your preferred guide language — Tamil, Hindi, Telugu, Kannada and more. Packages and guides are filtered automatically.' },
   { icon: MapPin,     color: 'text-rose-500',   bg: 'bg-rose-50 border-rose-100',
-    title: 'Interactive Map',      desc: 'Explore your itinerary on a live Leaflet map with OpenTripMap landmarks.' },
+    title: 'Interactive Map',      desc: 'Explore your itinerary on a live Leaflet map with OpenTripMap landmarks up to 90km radius.' },
   { icon: Users,      color: 'text-amber-600',  bg: 'bg-amber-50 border-amber-100',
-    title: 'Expert Local Guides',  desc: 'Choose certified local experts by language, specialisation and rating.' },
+    title: 'Expert Local Guides',  desc: 'Choose certified local experts by language, specialisation and rating with instant availability verification.' },
+];
+
+const HOW_IT_WORKS_STEPS = [
+  {
+    step: '01',
+    title: 'Choose or Build with AI',
+    desc: 'Select from 60+ curated packages by theme, or state your budget and interests for Gemini AI to rank real catalog packages.',
+    icon: Sparkles,
+  },
+  {
+    step: '02',
+    title: 'Customize Components & Reprice',
+    desc: 'Swap hotel tiers, activities, and private transfers. Total price recalculates live from scratch using zero-float Decimal arithmetic.',
+    icon: Sliders,
+  },
+  {
+    step: '03',
+    title: 'Certified Guide Clash Verification',
+    desc: 'Select your preferred language guide. If calendar dates clash, the engine refuses the selection with the clashing date named and recommends a same-language substitute.',
+    icon: ShieldCheck,
+  },
+  {
+    step: '04',
+    title: 'Instant Confirmation & Map',
+    desc: 'Review your complete itinerary, verify live SerpAPI market rates, and book with immediate confirmation and interactive Leaflet map guidance.',
+    icon: CheckCircle2,
+  }
 ];
 
 const STATS = [
@@ -52,11 +79,8 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
 
       {/* ── Animated Background Blobs ── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        {/* Moss green blob top-left */}
         <div className="absolute -top-48 -left-48 w-[500px] h-[500px] bg-[#84D175]/25 rounded-full blur-3xl animate-blob" />
-        {/* Soft yellow blob top-right */}
         <div className="absolute -top-20 -right-40 w-96 h-96 bg-[#FFF3B0]/60 rounded-full blur-3xl animate-blob animation-delay-2000" />
-        {/* Deep green blob bottom-center */}
         <div className="absolute -bottom-40 left-1/3 w-96 h-96 bg-[#84D175]/20 rounded-full blur-3xl animate-blob animation-delay-4000" />
       </div>
 
@@ -69,12 +93,16 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
         <div className="max-w-7xl mx-auto px-5 sm:px-8 flex items-center justify-between">
           {/* Brand */}
           <div className="flex items-center gap-2.5 cursor-pointer" onClick={onGetStarted}>
-            <div className="w-9 h-9 rounded-xl bg-[#84D175] flex items-center justify-center text-[#1a2e1a] font-black text-xl shadow-md shadow-[#84D175]/30">
-              P
-            </div>
+            <img
+              src="/logo.png"
+              alt="TripCraft"
+              className="w-9 h-9 object-contain rounded-xl shadow-md shadow-[#84D175]/30 bg-white/90 p-1 border border-[#84D175]/40"
+            />
             <div className="flex items-center gap-2">
-              <span className="text-xl font-black tracking-tight text-[#1a2e1a]">PackagePro</span>
-
+              <span className="text-xl font-black tracking-tight text-[#1a2e1a]">TripCraft</span>
+              <span className="hidden sm:inline-block text-[10px] px-2 py-0.5 rounded-full bg-white/90 text-[#3C8B30] border border-[#84D175]/50 font-black uppercase tracking-wider">
+                PS-04
+              </span>
             </div>
           </div>
 
@@ -105,10 +133,12 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
       </nav>
 
       {/* ── HERO ── */}
-      <section className="relative z-10 pt-36 pb-24 px-5 text-center max-w-5xl mx-auto space-y-8">
-        
+      <section className="relative z-10 pt-36 pb-20 px-5 text-center max-w-5xl mx-auto space-y-8">
         {/* Eyebrow */}
-
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 border border-[#84D175]/40 text-[#3C8B30] text-xs font-black tracking-wider uppercase shadow-xs">
+          <Sparkles className="w-3.5 h-3.5 text-[#84D175]" />
+          <span>KogniVera Hackathon 2026 · PS-04 Dynamic Packages</span>
+        </div>
 
         {/* Hero Title */}
         <h1 className="text-5xl sm:text-7xl font-black text-[#1a2e1a] tracking-tight leading-[1.06]">
@@ -120,7 +150,7 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
 
         {/* Subtitle */}
         <p className="text-base sm:text-xl text-[#4a5e4a] max-w-2xl mx-auto font-medium leading-relaxed">
-          Browse curated packages or let AI build one. Swap hotels, guides, and activities — watch your price update in real time with exact decimal precision.
+          Browse curated packages or let AI build one. Swap hotels, guides, and activities — watch your price update in real time with exact decimal precision and verified guide availability.
         </p>
 
         {/* CTA Buttons */}
@@ -129,7 +159,6 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
             onClick={onGetStarted}
             className="group flex items-center gap-3 px-8 py-4 rounded-2xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-base shadow-xl shadow-[#84D175]/30 transition-all cursor-pointer active:scale-95"
           >
-            
             <span>Start Building My Trip</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
@@ -153,7 +182,50 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
         </div>
       </section>
 
-      {/* ── DESTINATIONS ── */}
+      {/* ── HOW IT WORKS (ANCHOR: #how) ── */}
+      <section id="how" className="relative z-10 py-16 px-5 max-w-7xl mx-auto space-y-12">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 border border-[#84D175]/30 text-[#3C8B30] text-[11px] font-bold uppercase tracking-wider">
+            <Compass className="w-3.5 h-3.5 text-[#84D175]" />
+            <span>Step-by-Step Experience</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-black text-[#1a2e1a] tracking-tight">How TripCraft Works</h2>
+          <p className="text-xs sm:text-sm text-[#4a5e4a] font-medium max-w-lg mx-auto">
+            From initial discovery to live decimal repricing and verified guide booking in 4 intuitive steps.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {HOW_IT_WORKS_STEPS.map((step) => {
+            const IconComp = step.icon;
+            return (
+              <div
+                key={step.step}
+                className="bg-white/90 border border-[#84D175]/30 rounded-3xl p-6 space-y-4 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-2xl font-black text-[#84D175]">
+                      {step.step}
+                    </span>
+                    <div className="w-10 h-10 rounded-xl bg-[#84D175]/20 flex items-center justify-center text-[#3C8B30]">
+                      <IconComp className="w-5 h-5" />
+                    </div>
+                  </div>
+                  <h3 className="text-base font-extrabold text-[#1a2e1a]">
+                    {step.title}
+                  </h3>
+                  <p className="text-xs text-[#4a5e4a] leading-relaxed font-medium">
+                    {step.desc}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ── DESTINATIONS (ANCHOR: #destinations) ── */}
       <section id="destinations" className="relative z-10 py-16 px-5 max-w-7xl mx-auto space-y-10">
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 border border-[#84D175]/30 text-[#3C8B30] text-[11px] font-bold uppercase tracking-wider">
@@ -194,14 +266,14 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
         </div>
       </section>
 
-      {/* ── FEATURES ── */}
+      {/* ── FEATURES (ANCHOR: #features) ── */}
       <section id="features" className="relative z-10 py-16 px-5 max-w-7xl mx-auto space-y-12">
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 border border-[#84D175]/30 text-[#3C8B30] text-[11px] font-bold uppercase tracking-wider">
             <Layers className="w-3.5 h-3.5 text-[#84D175]" />
             <span>Platform Capabilities</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-[#1a2e1a] tracking-tight">Why PackagePro</h2>
+          <h2 className="text-3xl sm:text-4xl font-black text-[#1a2e1a] tracking-tight">Why TripCraft</h2>
           <p className="text-xs sm:text-sm text-[#4a5e4a] font-medium max-w-lg mx-auto">Engineered for modern customizable travel with strict backend algorithms</p>
         </div>
 
@@ -224,7 +296,7 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
       {/* ── FOOTER ── */}
       <footer className="relative z-10 border-t border-[#84D175]/30 bg-white/60 backdrop-blur-sm py-8 px-5 text-xs text-[#4a5e4a] font-medium">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <span>PackagePro (TripCraft) · KogniVera Hackathon 2026 (PS-04) · Team CodeBlooded</span>
+          <span>TripCraft (PackagePro) · KogniVera Hackathon 2026 (PS-04) · Team CodeBlooded</span>
           <div className="flex items-center gap-4 text-[#3C8B30] font-bold">
             <span>Decimal Pricing Engine</span>
             <span className="text-[#84D175]">·</span>
