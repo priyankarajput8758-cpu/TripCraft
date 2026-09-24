@@ -118,6 +118,12 @@ export const api = {
     return res.json();
   },
 
+  getAttractionDetail: async (xid, lang = 'en') => {
+    const params = new URLSearchParams({ xid, lang });
+    const res = await fetch(`${API_BASE}/external/attraction-detail?${params.toString()}`);
+    return res.json();
+  },
+
   searchLiveHotels: async (query, checkInDate = '2026-09-24', checkOutDate = '2026-09-25') => {
     const params = new URLSearchParams({
       query,

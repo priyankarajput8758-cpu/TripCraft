@@ -19,12 +19,22 @@ class TranslateRequest(BaseModel):
 @router.get("/explore-destination")
 def explore_destination(
     query: str = Query(..., description="Destination city or area name, e.g. 'Chikmagalur', 'Ooty', 'Hampi'"),
-    radius_meters: int = Query(15000, ge=1000, le=50000, description="Search radius in meters (default 15km)")
+    radius_meters: int = Query(15000, ge=1000, le=100000, description="Search radius in meters (up to 90-100km)")
 ):
     """
     Geocodes any destination and fetches all nearby tourist spots, heritage landmarks, and viewpoints from OpenTripMap.
     """
     return OpenTripMapService.geocode_and_explore(query=query, radius_meters=radius_meters)
+
+@router.get("/attraction-detail")
+def get_attraction_detail(
+    xid: str = Query(..., description="OpenTripMap XID"),
+    lang: str = Query("en", description="Language code")
+):
+    """
+    Get detailed description and image for an OpenTripMap attraction.
+    """
+    return OpenTripMapService.get_attraction_detail(xid=xid, lang=lang)
 
 @router.get("/hotels")
 def search_live_hotels(
@@ -47,7 +57,7 @@ def search_live_hotels(
 def get_nearby_attractions(
     lat: float = Query(..., description="Latitude"),
     lng: float = Query(..., description="Longitude"),
-    radius_meters: int = Query(5000, ge=500, le=30000, description="Search radius in meters")
+    radius_meters: int = Query(15000, ge=500, le=100000, description="Search radius in meters")
 ):
     """
     Get nearby tourist attractions & heritage spots within radius from OpenTripMap.

@@ -7,6 +7,7 @@ import TripMap from './components/TripMap';
 import RealWorldPanel from './components/RealWorldPanel';
 import AIAssistantModal from './components/AIAssistantModal';
 import BookingModal from './components/BookingModal';
+import { t } from './i18n';
 import {
   Compass,
   Filter,
@@ -32,7 +33,16 @@ export default function App() {
   const [cities, setCities] = useState([]);
   const [selectedCityId, setSelectedCityId] = useState('');
   const [selectedTheme, setSelectedTheme] = useState('');
-  const [currentLanguage, setCurrentLanguage] = useState('en');
+
+  // Persist language across entire website via localStorage
+  const [currentLanguage, setCurrentLanguage] = useState(() => {
+    try {
+      return localStorage.getItem('tripcraft_lang') || 'en';
+    } catch {
+      return 'en';
+    }
+  });
+
   const [loadingPackages, setLoadingPackages] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [languageNotice, setLanguageNotice] = useState(null);
@@ -42,6 +52,16 @@ export default function App() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [bookingData, setBookingData] = useState(null);
   const [realWorldEnabled, setRealWorldEnabled] = useState(false);
+
+  // Sync language state to localStorage
+  const handleLanguageChange = (lang) => {
+    setCurrentLanguage(lang);
+    try {
+      localStorage.setItem('tripcraft_lang', lang);
+    } catch (err) {
+      console.warn('LocalStorage error:', err);
+    }
+  };
 
   // Load cities on mount
   useEffect(() => {
@@ -135,11 +155,11 @@ export default function App() {
   const activePackage = packageDetailData?.package;
 
   return (
-    <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col font-sans selection:bg-teal-500 selection:text-slate-950">
+    <div className="min-h-screen bg-[#080c16] text-slate-100 flex flex-col font-sans selection:bg-teal-500 selection:text-slate-950">
       {/* Top Navbar */}
       <Navbar
         currentLanguage={currentLanguage}
-        onLanguageChange={setCurrentLanguage}
+        onLanguageChange={handleLanguageChange}
         onOpenAiPlanner={() => setIsAiModalOpen(true)}
         realWorldEnabled={realWorldEnabled}
         onToggleRealWorld={setRealWorldEnabled}
@@ -148,29 +168,29 @@ export default function App() {
       />
 
       {/* Mode Navigation Bar for Mobile */}
-      <div className="sm:hidden bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-center space-x-2">
+      <div className="sm:hidden bg-slate-900 border-b border-slate-800 p-2 flex items-center justify-center space-x-2">
         <button
           onClick={() => setActiveMode('curated')}
-          className={`flex-1 py-1.5 rounded-lg text-xs font-bold ${
-            activeMode === 'curated' ? 'bg-teal-500 text-slate-950' : 'text-slate-400 bg-slate-800'
+          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+            activeMode === 'curated' ? 'bg-teal-500 text-slate-950 shadow-md' : 'text-slate-400 bg-slate-800/80'
           }`}
         >
-          Curated Packages
+          {t('curated_packages', currentLanguage)}
         </button>
         <button
           onClick={() => setActiveMode('custom_destination')}
-          className={`flex-1 py-1.5 rounded-lg text-xs font-bold ${
-            activeMode === 'custom_destination' ? 'bg-teal-500 text-slate-950' : 'text-slate-400 bg-slate-800'
+          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+            activeMode === 'custom_destination' ? 'bg-teal-500 text-slate-950 shadow-md' : 'text-slate-400 bg-slate-800/80'
           }`}
         >
-          Custom Architect (Any City)
+          {t('custom_architect', currentLanguage)}
         </button>
       </div>
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 space-y-6">
         {/* Language Fallback Notice if applicable */}
         {languageNotice && (
-          <div className="bg-amber-950/40 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-300 flex items-center justify-between shadow-md">
+          <div className="bg-amber-950/40 border border-amber-500/30 rounded-2xl p-3 text-xs text-amber-300 flex items-center justify-between shadow-md">
             <div className="flex items-center space-x-2">
               <Globe className="w-4 h-4 text-amber-400 shrink-0" />
               <span>{languageNotice}</span>
@@ -180,30 +200,37 @@ export default function App() {
 
         {/* Mode 1: Curated Packages Studio */}
         {activeMode === 'curated' ? (
-          <div className="space-y-8 animate-fadeIn">
-            {/* Catalog Selector Section */}
-            <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 sm:p-6 space-y-4 shadow-xl">
+          <div className="space-y-6 animate-fadeIn">
+            {/* Streamlined & Decluttered Catalog Selector Card */}
+            <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-6 space-y-4 shadow-xl">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
-                <div className="flex items-center space-x-2">
-                  <Compass className="w-5 h-5 text-teal-400" />
-                  <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-                    Curated Packages Catalog (Click to Customize Live)
-                  </h2>
-                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-medium">
-                    {packages.length} Available
-                  </span>
+                <div className="flex items-center space-x-2.5">
+                  <div className="p-2 rounded-xl bg-teal-500/10 text-teal-400">
+                    <Compass className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                      <span>{t('curated_packages', currentLanguage)}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-teal-300 font-mono font-bold">
+                        {packages.length} Available
+                      </span>
+                    </h2>
+                    <p className="text-xs text-slate-400">
+                      Select any tour to customize hotels, transfers, day-by-day activities & guides
+                    </p>
+                  </div>
                 </div>
 
-                {/* Filter Dropdowns */}
+                {/* Filter Dropdowns with Clean Dark Styling */}
                 <div className="flex flex-wrap items-center gap-2">
                   <select
                     value={selectedCityId}
                     onChange={(e) => setSelectedCityId(e.target.value)}
-                    className="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-teal-500 cursor-pointer"
+                    className="bg-slate-800 border border-slate-700 text-xs text-slate-100 rounded-xl px-3 py-2 focus:outline-none focus:border-teal-500 cursor-pointer font-medium"
                   >
-                    <option value="">All Destinations</option>
+                    <option value="" className="bg-slate-900 text-slate-100">All Destinations</option>
                     {cities.map((city) => (
-                      <option key={city.city_id} value={city.city_id}>
+                      <option key={city.city_id} value={city.city_id} className="bg-slate-900 text-slate-100">
                         {city.name} ({city.package_count || 0} tours)
                       </option>
                     ))}
@@ -212,15 +239,15 @@ export default function App() {
                   <select
                     value={selectedTheme}
                     onChange={(e) => setSelectedTheme(e.target.value)}
-                    className="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-teal-500 cursor-pointer"
+                    className="bg-slate-800 border border-slate-700 text-xs text-slate-100 rounded-xl px-3 py-2 focus:outline-none focus:border-teal-500 cursor-pointer font-medium"
                   >
-                    <option value="">All Themes</option>
-                    <option value="heritage">Heritage & Culture</option>
-                    <option value="adventure">Adventure & Nature</option>
-                    <option value="food_trail">Food & Culinary</option>
-                    <option value="wildlife">Wildlife Safari</option>
-                    <option value="pilgrimage">Pilgrimage & Spiritual</option>
-                    <option value="honeymoon">Honeymoon & Romantic</option>
+                    <option value="" className="bg-slate-900 text-slate-100">All Themes</option>
+                    <option value="heritage" className="bg-slate-900 text-slate-100">Heritage & Culture</option>
+                    <option value="adventure" className="bg-slate-900 text-slate-100">Adventure & Nature</option>
+                    <option value="food_trail" className="bg-slate-900 text-slate-100">Food & Culinary</option>
+                    <option value="wildlife" className="bg-slate-900 text-slate-100">Wildlife Safari</option>
+                    <option value="pilgrimage" className="bg-slate-900 text-slate-100">Pilgrimage & Spiritual</option>
+                    <option value="honeymoon" className="bg-slate-900 text-slate-100">Honeymoon & Romantic</option>
                   </select>
                 </div>
               </div>
@@ -232,11 +259,11 @@ export default function App() {
                   <span>Fetching packages...</span>
                 </div>
               ) : packages.length === 0 ? (
-                <div className="py-8 text-center text-xs text-slate-400 bg-slate-950/40 rounded-xl border border-slate-800 p-4">
+                <div className="py-8 text-center text-xs text-slate-400 bg-slate-950/40 rounded-2xl border border-slate-800 p-4">
                   No tour packages found matching the selected filters. Try choosing "All Destinations" or "All Themes".
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-72 overflow-y-auto pr-1">
                   {packages.map((pkg) => {
                     const isSelected = selectedPackageId === pkg.package_id;
                     const pkgTitle = pkg.name || pkg.title || 'Tour Package';
@@ -252,10 +279,10 @@ export default function App() {
                       >
                         <div className="space-y-1.5">
                           <div className="flex items-center justify-between">
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-teal-400 font-semibold uppercase tracking-wider">
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-teal-400 font-semibold uppercase tracking-wider">
                               {pkg.theme}
                             </span>
-                            <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                            <span className="text-[10px] text-slate-400 flex items-center gap-1 font-mono">
                               <Clock className="w-3 h-3 text-slate-500" />
                               {pkg.duration_days}D
                             </span>
@@ -269,15 +296,15 @@ export default function App() {
                           </p>
                         </div>
 
-                        <div className="pt-2 mt-2 border-t border-slate-800/80 flex items-center justify-between">
+                        <div className="pt-2.5 mt-2 border-t border-slate-800/80 flex items-center justify-between">
                           <div>
                             <span className="text-[10px] text-slate-500 block">From</span>
                             <span className="text-xs font-bold text-white font-mono">
                               ₹{parseFloat(pkg.base_price || 0).toLocaleString('en-IN')}
                             </span>
                           </div>
-                          <span className={`text-[10px] font-semibold flex items-center gap-0.5 ${isSelected ? 'text-teal-400 font-bold' : 'text-slate-400'}`}>
-                            {isSelected ? 'Active Customizer' : 'Customize'} <ChevronRight className="w-3 h-3" />
+                          <span className={`text-[10px] font-bold flex items-center gap-0.5 ${isSelected ? 'text-teal-400' : 'text-slate-400'}`}>
+                            {isSelected ? 'Active Tour' : 'Customize'} <ChevronRight className="w-3 h-3" />
                           </span>
                         </div>
                       </div>
@@ -297,7 +324,9 @@ export default function App() {
               <CustomizerStudio
                 packageDetailData={packageDetailData}
                 preferredLanguage={currentLanguage}
+                currentLanguage={currentLanguage}
                 onOpenBooking={handleOpenBooking}
+                externalSupplyMode={realWorldEnabled}
               />
             ) : null}
 
@@ -312,14 +341,16 @@ export default function App() {
                 cityName={activePackage.city_name}
                 lat={parseFloat(activePackage.city_lat || 12.9716)}
                 lng={parseFloat(activePackage.city_lng || 77.5946)}
+                currentLanguage={currentLanguage}
               />
             )}
           </div>
         ) : (
-          /* Mode 2: Brand New Custom Destination Architect */
+          /* Mode 2: Brand New Custom Destination Architect (Any City) */
           <DestinationExplorer
             externalSupplyMode={realWorldEnabled}
             onBookingComplete={handleOpenBooking}
+            currentLanguage={currentLanguage}
           />
         )}
       </main>
@@ -345,10 +376,10 @@ export default function App() {
           <div>
             TripCraft (PackagePro) — KogniVera Hackathon 2026 (PS-04) • Team CodeBlooded (BMSCE)
           </div>
-          <div className="flex items-center space-x-3 text-slate-400">
-            <span>Decimal Pricing Engine</span>
+          <div className="flex items-center space-x-3 text-slate-400 text-[11px]">
+            <span>Decimal Repricing Engine</span>
             <span>•</span>
-            <span>Mandatory Guide Availability Check</span>
+            <span>Mandatory Guide Availability Check (§2.2)</span>
             <span>•</span>
             <span>Grounded Gemini AI</span>
             <span>•</span>

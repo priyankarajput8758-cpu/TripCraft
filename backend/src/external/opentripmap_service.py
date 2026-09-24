@@ -18,6 +18,15 @@ CACHE_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "cache"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 OTM_CACHE_FILE = CACHE_DIR / "opentripmap_cache.json"
 
+# Curated High-Quality Unsplash category photos for Indian landmarks
+CATEGORY_IMAGES = {
+    "Temple & Spiritual": "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=800&q=80",
+    "Heritage & Architecture": "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80",
+    "Nature & Scenic": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80",
+    "Museum & Culture": "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?auto=format&fit=crop&w=800&q=80",
+    "Attraction": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"
+}
+
 class OpenTripMapService:
     _cache: Dict[str, Any] = {}
 
@@ -103,9 +112,9 @@ class OpenTripMapService:
         cls,
         lat: float,
         lng: float,
-        radius_meters: int = 10000,
+        radius_meters: int = 15000,
         lang: str = "en",
-        limit: int = 25
+        limit: int = 40
     ) -> Dict[str, Any]:
         """
         Query attractions within radius of coordinates from OpenTripMap.
@@ -127,7 +136,7 @@ class OpenTripMapService:
             "radius": radius_meters,
             "lon": lng,
             "lat": lat,
-            "kinds": "interesting_places,historic,architecture,cultural,natural,other,religion,theatres_and_entertainments",
+            "kinds": "interesting_places,historic,architecture,cultural,natural,other,religion,theatres_and_entertainments,view_points,monuments",
             "format": "json",
             "limit": limit,
             "apikey": settings.OPENTRIPMAP_API_KEY
@@ -152,10 +161,16 @@ class OpenTripMapService:
                         cat = "Temple & Spiritual"
                     elif any(k in kinds_raw for k in ["historic", "monument", "castle", "ruins", "fort", "architecture"]):
                         cat = "Heritage & Architecture"
-                    elif any(k in kinds_raw for k in ["natural", "waterfall", "park", "garden", "mountain", "viewpoint", "cave", "lake"]):
+                    elif any(k in kinds_raw for k in ["natural", "waterfall", "park", "garden", "mountain", "viewpoint", "view_points", "cave", "lake"]):
                         cat = "Nature & Scenic"
                     elif any(k in kinds_raw for k in ["cultural", "museum", "theatre", "art", "cinema"]):
                         cat = "Museum & Culture"
+
+                    dist_m = float(p.get("dist", 0.0))
+                    dist_km = round(dist_m / 1000.0, 1) if dist_m >= 1000 else None
+                    dist_formatted = f"{dist_km} km" if dist_km is not None else f"{int(dist_m)} m"
+
+                    image_url = CATEGORY_IMAGES.get(cat, CATEGORY_IMAGES["Attraction"])
 
                     places.append({
                         "xid": p.get("xid"),
@@ -163,11 +178,15 @@ class OpenTripMapService:
                         "category": cat,
                         "kinds": kinds_list,
                         "rate": p.get("rate", 1),
-                        "dist_meters": round(p.get("dist", 0), 1),
+                        "dist_meters": int(dist_m),
+                        "dist_km": dist_km,
+                        "dist_formatted": dist_formatted,
                         "lat": pt.get("lat"),
                         "lng": pt.get("lon"),
+                        "image_url": image_url,
                         "osm": p.get("osm"),
-                        "wikidata": p.get("wikidata")
+                        "wikidata": p.get("wikidata"),
+                        "short_desc": f"Explore {name.strip()} ({cat}), located approximately {dist_formatted} from the central tour hub."
                     })
 
                 # Deduplicate by name
@@ -199,6 +218,61 @@ class OpenTripMapService:
             }
 
     @classmethod
+    def get_attraction_detail(cls, xid: str, lang: str = "en") -> Dict[str, Any]:
+        """
+        Fetch rich detail, description, and photo for a specific OpenTripMap attraction by XID.
+        """
+        if not xid or not settings.OPENTRIPMAP_API_KEY:
+            return {"status": "error", "message": "Invalid XID or missing API key"}
+
+        url = f"{settings.OPENTRIPMAP_BASE_URL}/{lang}/places/xid/{xid}"
+        params = {"apikey": settings.OPENTRIPMAP_API_KEY}
+
+        try:
+            resp = requests.get(url, params=params, timeout=8)
+            if resp.status_code == 200:
+                data = resp.json()
+                preview = data.get("preview", {})
+                image = preview.get("source") if preview else None
+                wiki_extract = data.get("wikipedia_extracts", {})
+                desc = wiki_extract.get("text") if wiki_extract else None
+
+                kinds_str = data.get("kinds", "")
+                cat = "Attraction"
+                if any(k in kinds_str for k in ["religion", "temple", "church", "mosque"]):
+                    cat = "Temple & Spiritual"
+                elif any(k in kinds_str for k in ["historic", "monument", "fort"]):
+                    cat = "Heritage & Architecture"
+                elif any(k in kinds_str for k in ["natural", "waterfall", "park", "mountain"]):
+                    cat = "Nature & Scenic"
+                elif any(k in kinds_str for k in ["cultural", "museum"]):
+                    cat = "Museum & Culture"
+
+                if not image:
+                    image = CATEGORY_IMAGES.get(cat, CATEGORY_IMAGES["Attraction"])
+
+                return {
+                    "status": "success",
+                    "xid": xid,
+                    "name": data.get("name", "Landmark"),
+                    "category": cat,
+                    "description": desc or f"A prominent {cat.lower()} landmark offering rich sights and cultural insights.",
+                    "image_url": image,
+                    "address": data.get("address", {}),
+                    "point": data.get("point", {}),
+                    "url": data.get("url") or data.get("otm")
+                }
+        except Exception as e:
+            logger.warning(f"Error fetching attraction detail for {xid}: {e}")
+
+        return {
+            "status": "fallback",
+            "xid": xid,
+            "category": "Attraction",
+            "image_url": CATEGORY_IMAGES["Attraction"]
+        }
+
+    @classmethod
     def geocode_and_explore(cls, query: str, radius_meters: int = 15000) -> Dict[str, Any]:
         """
         Geocode any city/area, fetch all nearby tourist attractions, and summarize categories.
@@ -216,7 +290,7 @@ class OpenTripMapService:
             lat=geo["lat"],
             lng=geo["lng"],
             radius_meters=radius_meters,
-            limit=30
+            limit=45
         )
 
         attractions = attractions_res.get("attractions", [])
