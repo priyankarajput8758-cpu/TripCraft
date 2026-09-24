@@ -17,6 +17,8 @@ class CreateBookingRequest(BaseModel):
     guide_id: Optional[str] = Field(None, description="Optional chosen guide ID")
     start_date: Optional[str] = Field(None, description="Trip start date (YYYY-MM-DD)")
     party_size: int = Field(default=2, ge=1)
+    num_travelers: Optional[int] = Field(None, ge=1, description="Active traveler count")
+    total_price: Optional[str] = Field(None, description="Verified client total amount")
     notes: Optional[str] = Field(None, description="Booking notes")
 
 @router.post("")
@@ -27,6 +29,7 @@ def create_booking(req: CreateBookingRequest):
     and package selections persistence.
     """
     try:
+        active_party = req.num_travelers or req.party_size
         return BookingService.create_booking(
             package_id=req.package_id,
             user_id=req.user_id,
@@ -34,7 +37,8 @@ def create_booking(req: CreateBookingRequest):
             idempotency_key=req.idempotency_key,
             guide_id=req.guide_id,
             start_date=req.start_date,
-            party_size=req.party_size,
+            party_size=active_party,
+            total_price=req.total_price,
             notes=req.notes
         )
     except ValueError as e:

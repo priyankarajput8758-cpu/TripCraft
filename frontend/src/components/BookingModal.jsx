@@ -114,10 +114,10 @@ export default function BookingModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0C2D45]/70 backdrop-blur-md animate-in">
-      <div className="relative w-full max-w-xl bg-[#FFF8D2]/95 border border-[#84D175]/40 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-[#1a2e1a] backdrop-blur-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0C2D45]/70 backdrop-blur-md animate-in print:p-0 print:bg-white print:static print:inset-auto">
+      <div className="relative w-full max-w-xl bg-[#FFF8D2]/95 border border-[#84D175]/40 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-[#1a2e1a] backdrop-blur-xl print:max-w-full print:border-none print:shadow-none print:bg-white print:max-h-none">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#84D175]/30 bg-white/75 shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#84D175]/30 bg-white/75 shrink-0 print:hidden no-print">
           <div className="flex items-center space-x-2.5">
             <div className="p-2 rounded-xl bg-[#84D175] text-[#1a2e1a] shadow-sm font-black">
               {bookingConfirmed ? <CheckCircle2 className="w-5 h-5 text-[#1a2e1a]" /> : <CreditCard className="w-5 h-5" />}
@@ -142,13 +142,13 @@ export default function BookingModal({
         </div>
 
         {/* Modal Content */}
-        <div className="p-6 overflow-y-auto space-y-5">
+        <div className="p-6 overflow-y-auto space-y-5 print:p-2 print:overflow-visible">
           {bookingConfirmed ? (
             /* === BOOKING CONFIRMED STATE === */
-            <div className="space-y-5">
+            <div id="booking-confirmed-receipt" className="space-y-5 printable-receipt">
               <div className="text-center py-4 space-y-3">
                 <div className="relative mx-auto w-16 h-16">
-                  <div className="w-16 h-16 rounded-full bg-[#84D175]/30 text-[#2D6A24] border border-[#84D175] flex items-center justify-center shadow-md animate-bounce">
+                  <div className="w-16 h-16 rounded-full bg-[#84D175]/30 text-[#2D6A24] border border-[#84D175] flex items-center justify-center shadow-md animate-bounce print:animate-none">
                     <CheckCircle2 className="w-9 h-9" />
                   </div>
                 </div>
@@ -170,7 +170,9 @@ export default function BookingModal({
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="text-xs font-black text-[#1a2e1a]">{pkgTitle}</div>
-                    <div className="text-[11px] text-[#4a5e4a]">{dateRange} · {durationDays} Days</div>
+                    <div className="text-[11px] text-[#4a5e4a]">
+                      {dateRange} · {durationDays} Days · {activeTravelerCount} Traveler{activeTravelerCount > 1 ? 's' : ''}
+                    </div>
                     {guide && (
                       <div className="text-[11px] text-[#2D6A24] font-bold mt-0.5 flex items-center gap-1">
                         <UserCheck className="w-3 h-3" /> Guide: {guideName}
@@ -178,14 +180,16 @@ export default function BookingModal({
                     )}
                   </div>
                   <div className="text-right">
-                    <div className="text-base font-black text-[#2D6A24] font-mono">{currencySymbol}{totalPrice}</div>
+                    <div className="text-base font-black text-[#2D6A24] font-mono">
+                      {currencySymbol}{bookingConfirmed.total_amount ? parseFloat(bookingConfirmed.total_amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : totalPrice}
+                    </div>
                     <div className="text-[10px] text-[#4a5e4a]">Tax Inclusive (5% GST)</div>
                   </div>
                 </div>
               </div>
 
               {/* Action buttons */}
-              <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="grid grid-cols-2 gap-3 pt-2 print:hidden no-print">
                 <button
                   onClick={onClose}
                   className="flex items-center justify-center gap-2 py-2.5 bg-white/80 hover:bg-white text-[#1a2e1a] border border-[#84D175]/30 font-bold text-xs rounded-xl transition-all cursor-pointer shadow-xs"

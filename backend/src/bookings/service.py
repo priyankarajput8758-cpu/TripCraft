@@ -20,6 +20,7 @@ class BookingService:
         guide_id: Optional[str] = None,
         start_date: Optional[str] = None,
         party_size: int = 2,
+        total_price: Optional[str] = None,
         notes: Optional[str] = None
     ) -> Dict[str, Any]:
         """
@@ -49,8 +50,24 @@ class BookingService:
                 start_date=start_date
             )
 
-            total_amount = reprice["total_price"]
             currency = reprice["currency"]
+            # Honor verified client total_price or scale with party_size proportionally
+            if total_price:
+                try:
+                    dec_val = to_decimal(total_price)
+                    total_amount = format_money(dec_val)
+                except Exception:
+                    total_amount = reprice["total_price"]
+            else:
+                base_dec = to_decimal(reprice["total_price"])
+                if party_size and party_size != 2:
+                    guide_dec = to_decimal(reprice.get("guide_cost", "0.00"))
+                    pkg_dec = max(Decimal("0.00"), base_dec - guide_dec)
+                    scaled_pkg = (pkg_dec / Decimal("2")) * Decimal(str(party_size))
+                    total_amount = format_money(scaled_pkg + guide_dec)
+                else:
+                    total_amount = reprice["total_price"]
+
             tax_amount = format_money(to_decimal(total_amount) * Decimal("0.05")) # 5% GST
 
             # 3. Generate Opaque IDs (R2)
@@ -184,6 +201,8 @@ class BookingService:
                 "booking_reference": booking_ref,
                 "status": "confirmed",
                 "total_amount": total_amount,
+                "total_price": total_amount,
+                "party_size": party_size,
                 "currency": currency,
                 "tax_amount": tax_amount,
                 "trip_id": trip_id,

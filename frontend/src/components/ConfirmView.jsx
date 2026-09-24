@@ -386,7 +386,7 @@ export default function ConfirmView({
       </div>
 
       {/* ── Action Buttons ── */}
-      <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+      <div className="flex flex-wrap items-center justify-center gap-3 pt-2 print:hidden no-print">
         {onBack && (
           <button
             onClick={onBack}

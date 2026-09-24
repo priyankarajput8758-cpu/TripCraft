@@ -154,21 +154,29 @@ export default function OptimizeView({
     return dayActs;
   }, [activeDay, componentsList, selectedHotel, activeGuide, cityName, conflictResolved]);
 
-  // Initial and dynamic pricing calculations
-  const rawBasePrice = bookingDetails?.totalPrice
-    ? parseFloat(bookingDetails.totalPrice.toString().replace(/,/g, ''))
-    : (pricing?.total_price ? parseFloat(pricing.total_price) : parseFloat(pkg?.base_price || 32000) * numTravelers);
+  // Initial and dynamic pricing calculations - preserve unoptimizedBasePrice to prevent discount degradation
+  const unoptimizedBase = bookingDetails?.unoptimizedBasePrice
+    ? parseFloat(bookingDetails.unoptimizedBasePrice.toString().replace(/,/g, ''))
+    : (bookingDetails?.totalPrice
+      ? parseFloat(bookingDetails.totalPrice.toString().replace(/,/g, ''))
+      : (pricing?.total_price ? parseFloat(pricing.total_price) : parseFloat(pkg?.base_price || 32000) * numTravelers));
 
+  if (bookingDetails && !bookingDetails.unoptimizedBasePrice) {
+    bookingDetails.unoptimizedBasePrice = unoptimizedBase.toFixed(2);
+  }
+
+  const rawBasePrice = unoptimizedBase;
   const currentDisplayPrice = Math.max(0, rawBasePrice - optimizedDiscount);
 
   // Handle Apply Optimization: resolve conflict and apply cost optimization discount
   const handleApplyOptimization = () => {
     setConflictResolved(true);
-    // Apply 20% smart booking rate optimization if not yet applied
+    // Apply 20% smart booking rate optimization strictly from the unoptimized base price
     const discount = Math.round(rawBasePrice * 0.20);
     setOptimizedDiscount(discount);
     if (bookingDetails) {
       bookingDetails.optimizedTotalPrice = (rawBasePrice - discount).toFixed(2);
+      bookingDetails.finalPrice = (rawBasePrice - discount).toFixed(2);
       bookingDetails.discountApplied = discount.toFixed(2);
     }
   };
@@ -389,7 +397,8 @@ export default function OptimizeView({
             <button
               onClick={() => {
                 if (bookingDetails) {
-                  bookingDetails.totalPrice = currentDisplayPrice.toFixed(2);
+                  bookingDetails.finalPrice = currentDisplayPrice.toFixed(2);
+                  bookingDetails.optimizedTotalPrice = currentDisplayPrice.toFixed(2);
                   bookingDetails.numTravelers = numTravelers;
                   bookingDetails.partySize = numTravelers;
                 }

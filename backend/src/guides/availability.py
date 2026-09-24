@@ -52,6 +52,7 @@ class GuideAvailabilityEngine:
             if not original_guide:
                 raise ValueError(f"Guide not found: {guide_id}")
 
+            original_guide = dict(original_guide)
             orig_day_rate = to_decimal(original_guide["day_rate"])
             orig_languages = [lang.strip() for lang in original_guide["languages"].split(",") if lang.strip()]
             orig_spec = original_guide["specialisation"]
@@ -119,23 +120,40 @@ class GuideAvailabilityEngine:
             orig_base_langs = [l.split("-")[0].lower() for l in orig_languages]
 
             # Query candidate guides with matching specialisation and active status
-            candidates = conn.execute(
-                "SELECT g.*, c.name AS city_name FROM tour_guides g "
+            candidates_raw = conn.execute(
+                "SELECT g.*, c.name AS city_name, c.state AS city_state FROM tour_guides g "
                 "JOIN cities c ON c.city_id = g.city_id "
                 "WHERE g.status = 'active' AND g.guide_id != ? "
                 "AND (g.specialisation = ? OR g.secondary_specialisation = ? OR g.specialisation = ?)",
                 (guide_id, orig_spec, orig_spec, orig_sec_spec or orig_spec)
             ).fetchall()
 
+            # Ensure local city / state guides are prioritized
+            same_city_guides = conn.execute(
+                "SELECT g.*, c.name AS city_name, c.state AS city_state FROM tour_guides g "
+                "JOIN cities c ON c.city_id = g.city_id "
+                "WHERE g.status = 'active' AND g.guide_id != ? AND g.city_id = ?",
+                (guide_id, orig_city_id)
+            ).fetchall()
+
+            all_candidates_dict = {}
+            for r in list(same_city_guides) + list(candidates_raw):
+                d = dict(r)
+                if d["guide_id"] not in all_candidates_dict:
+                    all_candidates_dict[d["guide_id"]] = d
+
+            candidates = list(all_candidates_dict.values())
             valid_substitutes = []
 
             for cand in candidates:
                 cand_langs = [l.strip() for l in cand["languages"].split(",") if l.strip()]
                 cand_base = [l.split("-")[0].lower() for l in cand_langs]
 
-                # Check shared language match or preferred language match
+                # Check shared language match or preferred language match or same city
                 has_lang_match = False
-                if clean_pref and clean_pref in cand_base:
+                if cand["city_id"] == orig_city_id:
+                    has_lang_match = True
+                elif clean_pref and clean_pref in cand_base:
                     has_lang_match = True
                 elif any(l in orig_base_langs for l in cand_base):
                     has_lang_match = True

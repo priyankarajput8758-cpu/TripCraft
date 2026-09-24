@@ -96,7 +96,7 @@ export default function GuideSelector({
 
   const handleAcceptSubstitute = (substitute) => {
     if (!substitute) return;
-    onSelectGuide({
+    const newGuideObj = {
       guide_id: substitute.guide_id,
       display_name: substitute.display_name || substitute.name,
       name: substitute.display_name || substitute.name,
@@ -105,7 +105,16 @@ export default function GuideSelector({
       specialisation: substitute.specialisation,
       day_rate: substitute.day_rate,
       currency: substitute.currency
+    };
+    // Ensure substitute is incorporated into the local guides dropdown list
+    setGuides(prev => {
+      const list = Array.isArray(prev) ? prev : (prev?.guides || []);
+      if (!list.some(g => g.guide_id === substitute.guide_id)) {
+        return [newGuideObj, ...list];
+      }
+      return list;
     });
+    onSelectGuide(newGuideObj);
   };
 
   const guideDisplayName = selectedGuide?.display_name || selectedGuide?.name || 'Local Guide';
@@ -216,7 +225,7 @@ export default function GuideSelector({
 
           {availabilityCheck && (() => {
             const isAvailable = availabilityCheck.is_available === true || availabilityCheck.available === true;
-            const clashDate = availabilityCheck.clashing_date || availabilityCheck.first_clash_date || availabilityCheck.first_clashing_date || 'Day 2';
+            const clashDate = availabilityCheck.clashing_date || availabilityCheck.first_clash_date || availabilityCheck.first_clashing_date;
             const substitute = availabilityCheck.substitute_guide || availabilityCheck.substitute;
             const guideCurrencySymbol = selectedGuide.currency === 'JPY' ? '¥' : selectedGuide.currency === 'USD' ? '$' : '₹';
 
@@ -237,8 +246,7 @@ export default function GuideSelector({
                       <div>
                         <span className="font-bold block text-sm">Selection Refused — Date Clash</span>
                         <span className="text-rose-700">
-                          <strong>{selectedGuide.display_name || selectedGuide.name}</strong> is unavailable on{' '}
-                          <span className="font-black underline decoration-rose-500 bg-rose-100/80 px-1.5 py-0.5 rounded text-rose-900">{clashDate}</span>.
+                          <strong>{selectedGuide.display_name || selectedGuide.name}</strong> is unavailable {clashDate ? <>on <span className="font-black underline decoration-rose-500 bg-rose-100/80 px-1.5 py-0.5 rounded text-rose-900">{clashDate}</span></> : 'during the requested itinerary dates'}.
                         </span>
                       </div>
                     </div>

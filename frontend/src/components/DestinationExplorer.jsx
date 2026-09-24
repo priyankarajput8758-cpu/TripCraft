@@ -220,17 +220,14 @@ export default function DestinationExplorer({
             });
           }
 
-          const topSpots = candidateSpots.slice(0, 12).map(a => a.name);
+          const topSpots = candidateSpots.slice(0, 20).map(a => a.name);
           setDayMatrix(prev => {
             return prev.map((day, idx) => {
-              if (day.selected_activities.length === 0) {
-                const sliceStart = idx * 2;
-                return {
-                  ...day,
-                  selected_activities: topSpots.slice(sliceStart, sliceStart + 2)
-                };
-              }
-              return day;
+              const sliceStart = idx * 2;
+              return {
+                ...day,
+                selected_activities: topSpots.slice(sliceStart, sliceStart + 2)
+              };
             });
           });
         }
@@ -431,8 +428,8 @@ export default function DestinationExplorer({
     setAppliedSuggestions(prev => ({ ...prev, 'cost_optimization': true }));
     // Actively apply hotel rate / date shift optimization (e.g. 20% savings on hotel total and recalculate grand total)
     if (synthesizedTrip?.estimated_pricing) {
-      const oldHotel = parseFloat(synthesizedTrip.estimated_pricing.hotel_total || '14000.00');
-      const optimizedHotel = Math.max(0, oldHotel * 0.80);
+      const baseHotel = parseFloat(synthesizedTrip.estimated_pricing.unoptimized_hotel || synthesizedTrip.estimated_pricing.hotel_total || '14000.00');
+      const optimizedHotel = Math.max(0, baseHotel * 0.80);
       const actTotal = parseFloat(synthesizedTrip.estimated_pricing.activities_total || '9000.00');
       const transferTotal = parseFloat(synthesizedTrip.estimated_pricing.transfers_total || '4200.00');
       const guideTotal = parseFloat(synthesizedTrip.estimated_pricing.guide_total || '0.00');
@@ -444,10 +441,11 @@ export default function DestinationExplorer({
         ...prev,
         estimated_pricing: {
           ...prev.estimated_pricing,
+          unoptimized_hotel: baseHotel.toFixed(2),
           hotel_total: optimizedHotel.toFixed(2),
           gst_tax: gst.toFixed(2),
           grand_total: newGrand.toFixed(2),
-          discount_applied: (oldHotel - optimizedHotel).toFixed(2)
+          discount_applied: (baseHotel - optimizedHotel).toFixed(2)
         }
       }));
     }

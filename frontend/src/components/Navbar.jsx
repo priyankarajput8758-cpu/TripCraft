@@ -141,25 +141,20 @@ export default function Navbar({
             )}
           </div>
 
-          {/* User Avatar & Logout */}
-          {user ? (
-            <div className="flex items-center gap-1.5 bg-white/80 border border-[#84D175]/30 px-2 py-1 rounded-xl shadow-xs">
-              <div className="w-6 h-6 rounded-full bg-[#84D175] text-[#1a2e1a] font-black text-[11px] flex items-center justify-center">
-                {user.name?.[0]?.toUpperCase() || 'P'}
-              </div>
-              <button
-                onClick={onSignOut}
-                className="p-1 rounded-lg text-[#4a5e4a] hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                title="Sign Out"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
+          {/* User Profile & Sign Out / Logout */}
+          <div className="flex items-center gap-1.5 bg-white/80 border border-[#84D175]/30 px-2 sm:px-2.5 py-1 rounded-xl shadow-xs">
+            <div className="w-6 h-6 rounded-full bg-[#84D175] text-[#1a2e1a] font-black text-[11px] flex items-center justify-center shrink-0">
+              {user?.name?.[0]?.toUpperCase() || 'P'}
             </div>
-          ) : (
-            <div className="w-7 h-7 rounded-full bg-[#84D175] text-[#1a2e1a] font-black text-xs flex items-center justify-center shadow-xs">
-              PR
-            </div>
-          )}
+            <button
+              onClick={onSignOut}
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-[#4a5e4a] hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer text-xs font-bold"
+              title="Sign Out to Landing Page"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
+          </div>
 
           {/* Mobile hamburger button */}
           <button
@@ -216,6 +211,17 @@ export default function Navbar({
           >
             <Sparkles className="w-4 h-4" />
             <span>{t('ai_builder', currentLanguage)}</span>
+          </button>
+
+          <button
+            onClick={() => {
+              onSignOut?.();
+              setMobileMenuOpen(false);
+            }}
+            className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-white border border-rose-200 text-rose-700 font-bold text-xs shadow-xs hover:bg-rose-50 transition-all cursor-pointer"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sign Out to Landing Page</span>
           </button>
         </div>
       )}

@@ -336,7 +336,28 @@ Return ONLY a valid JSON object strictly matching this schema:
             except Exception as e:
                 logger.warning(f"Could not load db_pois for {destination_name}: {e}")
 
-            # Fallback POI pool grounded in destination name if database has none
+            # Ground POIs dynamically using OpenTripMapService for authentic destination spots (e.g. Gwalior, Raipur)
+            if not db_pois or len(db_pois) < 6:
+                try:
+                    from src.external.opentripmap_service import OpenTripMapService
+                    explore_res = OpenTripMapService.geocode_and_explore(destination_name)
+                    attractions = explore_res.get("attractions", []) if isinstance(explore_res, dict) else []
+                    for a in attractions:
+                        name = a.get("name")
+                        cat = (a.get("category") or "sightseeing").lower()
+                        if name and name not in all_chosen_activities and not any(p["title"] == name for p in db_pois):
+                            c_type = "heritage" if any(w in cat or w in name.lower() for w in ["heritage", "palace", "fort", "castle", "monument", "historic"]) else (
+                                "scenic" if any(w in cat or w in name.lower() for w in ["nature", "scenic", "lake", "falls", "peak", "valley", "garden", "park", "wildlife"]) else (
+                                    "spiritual" if any(w in cat or w in name.lower() for w in ["spiritual", "temple", "shrine", "mosque", "church", "gurdwara", "stupa"]) else (
+                                        "cultural" if any(w in cat or w in name.lower() for w in ["museum", "culture", "art", "craft", "bazaar"]) else "sightseeing"
+                                    )
+                                )
+                            )
+                            db_pois.append({"title": name, "type": c_type})
+                except Exception as ex:
+                    logger.warning(f"Could not load OpenTripMap POIs for {destination_name}: {ex}")
+
+            # Safe ultimate fallback POI pool grounded in destination name
             if not db_pois:
                 db_pois = [
                     {"title": f"{destination_name} Heritage & Historic Landmark Walk", "type": "heritage"},
