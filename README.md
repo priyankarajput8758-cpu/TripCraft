@@ -9,6 +9,7 @@
 
 * **Team Name:** CodeBlooded
 * **Problem Statement:** PS-04 — Dynamic Tour Packages (PackagePro / TripCraft)
+* **Build Window:** 24 Sep 09:00 → 25 Sep 09:00 IST (24 Hours)
 * **Team Members & Roles:**
   * **Divyansh Duggad (Lead):** Backend, Business Logics, Decimal Pricing & Grounded AI
   * **Navya Agrawal:** Design & User Experience

@@ -78,7 +78,7 @@ action counts as a "write operation" — treat it as one, stop, and ask.
 | **Problem statement** | PS-04 — Dynamic Tour Packages |
 | **Team** | CodeBlooded, BMS College of Engineering |
 | **Repo** | [`kognivera-org/kv-hack2026-codeblooded`](https://github.com/kognivera-org/kv-hack2026-codeblooded) |
-| **Build window** | 24 Sep 12:00 → 25 Sep 12:00 |
+| **Build window** | 24 Sep 09:00 → 25 Sep 09:00 IST (24 Hours) |
 | **Data model version** | v1.1.0-rc1 |
 
 **Team & roles — 4 members** (Anagha Avinash is no longer on the team; her
