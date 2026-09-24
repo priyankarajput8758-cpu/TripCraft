@@ -35,9 +35,9 @@ export default function OptimizeView({
           )}
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-black text-slate-900">Your Optimized Trip</h1>
-            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-600 text-white flex items-center gap-1 shadow-sm">
-              <Sparkles className="w-3 h-3" />
-              Optimized by PackagePro AI
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#84D175] text-[#1a2e1a] flex items-center gap-1 shadow-sm">
+              <Sparkles className="w-3 h-3 text-[#1a2e1a]" />
+              Optimized by TripCraft AI
             </span>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-1">

@@ -15,7 +15,7 @@ def get_packages(
     tier: Optional[str] = Query(None, description="Filter by tier (budget, comfort, luxury)"),
     language_bcp47: Optional[str] = Query(None, description="Filter by BCP-47 language tag (e.g. 'ta', 'hi', 'en-IN')"),
     max_price: Optional[float] = Query(None, description="Max base price filter"),
-    limit: int = Query(50, ge=1, le=100),
+    limit: int = Query(100, ge=1, le=100),
     offset: int = Query(0, ge=0)
 ):
     try:

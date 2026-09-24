@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Globe, Zap, LogOut, Compass, Sparkles, Layers, Menu, X } from 'lucide-react';
+import { t } from '../i18n';
 
 const LANGUAGES = [
   { code: 'en', label: 'English', short: 'EN' },
@@ -9,6 +10,7 @@ const LANGUAGES = [
   { code: 'kn', label: 'Kannada (ಕನ್ನಡ)', short: 'KN' },
   { code: 'mr', label: 'Marathi (मराठी)', short: 'MR' },
   { code: 'bn', label: 'Bengali (বাংলা)', short: 'BN' },
+  { code: 'gu', label: 'Gujarati (ગુજરાતી)', short: 'GU' },
 ];
 
 export default function Navbar({
@@ -41,13 +43,10 @@ export default function Navbar({
           <img
             src="/logo.png"
             alt="TripCraft"
-            className="h-8 w-auto object-contain rounded-lg shadow-sm"
+            className="h-9 w-auto object-contain rounded-xl shadow-sm bg-white/80 p-0.5"
           />
           <div className="flex items-center gap-1.5">
-            <span className="text-lg font-black tracking-tight text-[#1a2e1a]">TripCraft</span>
-            <span className="hidden sm:inline-block text-[10px] px-2 py-0.5 rounded-full bg-white/90 text-[#3C8B30] border border-[#84D175]/50 font-black uppercase tracking-wider">
-              PS-04
-            </span>
+            <span className="text-xl font-black tracking-tight text-[#1a2e1a]">TripCraft</span>
           </div>
         </div>
 
@@ -62,7 +61,7 @@ export default function Navbar({
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>Curated Packages</span>
+            <span>{t('curated_packages', currentLanguage)}</span>
           </button>
 
           <button
@@ -74,7 +73,7 @@ export default function Navbar({
             }`}
           >
             <Compass className="w-3.5 h-3.5" />
-            <span>Custom Architect</span>
+            <span>{t('custom_architect', currentLanguage)}</span>
           </button>
 
           <button
@@ -82,7 +81,7 @@ export default function Navbar({
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#1a2e1a] bg-[#84D175]/20 hover:bg-[#84D175]/35 transition-all cursor-pointer border border-[#84D175]/40"
           >
             <Sparkles className="w-3.5 h-3.5 text-[#3C8B30]" />
-            <span>AI Builder</span>
+            <span>{t('ai_builder', currentLanguage)}</span>
           </button>
         </nav>
 
@@ -100,7 +99,7 @@ export default function Navbar({
             title="Live SerpAPI & OpenTripMap Market Data"
           >
             <Zap className={`w-3.5 h-3.5 ${realWorldEnabled ? 'text-[#2D6A24] fill-[#2D6A24]' : 'text-[#84D175]'}`} />
-            <span className="hidden lg:inline">{realWorldEnabled ? 'Market Active' : 'Market Data'}</span>
+            <span className="hidden lg:inline">{realWorldEnabled ? t('market_active', currentLanguage) : t('market_data', currentLanguage)}</span>
           </button>
 
           {/* Language dropdown */}
@@ -117,7 +116,7 @@ export default function Navbar({
             {langOpen && (
               <div className="absolute right-0 top-full mt-2 w-48 bg-white/95 border border-[#84D175]/40 rounded-2xl shadow-xl overflow-hidden z-50 py-1 backdrop-blur-md animate-in">
                 <div className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#4a5e4a] border-b border-[#84D175]/20">
-                  Select Language (§8 BCP-47)
+                  {t('select_language', currentLanguage)}
                 </div>
                 {LANGUAGES.map((lang) => (
                   <button
@@ -189,7 +188,7 @@ export default function Navbar({
               }`}
             >
               <Layers className="w-4 h-4" />
-              <span>Curated Packages</span>
+              <span>{t('curated_packages', currentLanguage)}</span>
             </button>
 
             <button
@@ -204,7 +203,7 @@ export default function Navbar({
               }`}
             >
               <Compass className="w-4 h-4" />
-              <span>Custom Architect</span>
+              <span>{t('custom_architect', currentLanguage)}</span>
             </button>
           </div>
 
@@ -216,7 +215,7 @@ export default function Navbar({
             className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-xs shadow-md transition-all cursor-pointer"
           >
             <Sparkles className="w-4 h-4" />
-            <span>Open Grounded AI Trip Builder</span>
+            <span>{t('ai_builder', currentLanguage)}</span>
           </button>
         </div>
       )}

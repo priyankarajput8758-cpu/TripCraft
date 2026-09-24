@@ -7,7 +7,7 @@ from src.catalog.service import CatalogService
 from src.database import get_db_connection
 
 def test_language_preference_filters_packages(db):
-    """Verify that BCP-47 language tag filters tour packages server-side."""
+    """Verify that BCP-47 language tag prioritizes native matching packages at the top without discarding catalog items."""
     # Find a language present in packages
     pkg = db.execute("SELECT languages_offered FROM tour_packages WHERE languages_offered LIKE '%hi%' LIMIT 1").fetchone()
     if not pkg:
@@ -15,8 +15,10 @@ def test_language_preference_filters_packages(db):
 
     res = CatalogService.list_packages(language_bcp47="hi")
     assert res["total"] > 0
-    for p in res["packages"]:
-        assert "hi" in p["languages_offered"]
+    # Top prioritized package must offer Hindi natively
+    assert "hi" in res["packages"][0]["languages_offered"]
+    # Full catalog availability maintained for seamless browsing
+    assert len(res["packages"]) > 10
 
 def test_language_preference_filters_guides(db):
     """Verify that BCP-47 tag filters guides who speak that language."""

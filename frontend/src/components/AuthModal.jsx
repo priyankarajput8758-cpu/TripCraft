@@ -26,7 +26,7 @@ export default function AuthModal({ mode: initialMode = 'signin', onSuccess, onC
   };
 
   const handleGuest = () => {
-    onSuccess({ name: 'Guest Explorer', email: 'guest@packagepro.dev' });
+    onSuccess({ name: 'Guest Explorer', email: 'guest@tripcraft.dev' });
   };
 
   const inputClass = "w-full bg-[#FFF8D2]/60 border border-[#84D175]/40 rounded-xl px-4 py-3 pl-10 text-xs font-semibold text-[#1a2e1a] placeholder:text-[#4a5e4a]/50 focus:outline-none focus:border-[#84D175] focus:ring-2 focus:ring-[#84D175]/20 transition-all";
@@ -51,14 +51,14 @@ export default function AuthModal({ mode: initialMode = 'signin', onSuccess, onC
 
         {/* Brand & Title */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-[#84D175] flex items-center justify-center mx-auto text-[#1a2e1a] font-black text-xl shadow-lg shadow-[#84D175]/30">
-            P
+          <div className="w-14 h-14 rounded-2xl bg-white/90 p-1.5 flex items-center justify-center mx-auto shadow-lg shadow-[#84D175]/30 border border-[#84D175]/40">
+            <img src="/logo.png" alt="TripCraft" className="w-full h-full object-contain" />
           </div>
           <h2 className="text-2xl font-black text-[#1a2e1a] tracking-tight">
-            {isSignUp ? 'Create Your Account' : 'Welcome Back'}
+            {isSignUp ? 'Create Your Account' : 'Welcome Back to TripCraft'}
           </h2>
           <p className="text-[#4a5e4a] text-xs mt-1 font-medium">
-            {isSignUp ? 'Start customizing your PackagePro trip live' : 'Sign in to access your saved packages & trips'}
+            {isSignUp ? 'Start customizing your TripCraft journey live' : 'Sign in to access your saved packages & custom trips'}
           </p>
         </div>
 
@@ -74,7 +74,7 @@ export default function AuthModal({ mode: initialMode = 'signin', onSuccess, onC
                   type="text"
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  placeholder="Priyanka Rajput"
+                  placeholder="Divyansh Duggad"
                   className={inputClass}
                 />
                 <User className="w-4 h-4 text-[#84D175] absolute left-3.5 top-3.5" />
@@ -159,9 +159,10 @@ export default function AuthModal({ mode: initialMode = 'signin', onSuccess, onC
           onClick={handleGuest}
           className="w-full py-3 rounded-xl bg-[#84D175]/15 hover:bg-[#84D175]/30 text-[#3C8B30] border border-[#84D175]/30 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2"
         >
-          <ShieldCheck className="w-4 h-4 text-[#3C8B30]" />
-          <span>Continue as Guest (Demo Mode)</span>
+          <span>Continue as Guest</span>
+          <ArrowRight className="w-3.5 h-3.5" />
         </button>
+
       </div>
     </div>
   );

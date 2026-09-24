@@ -1,5 +1,5 @@
 /**
- * TripCraft API Client — Complete REST contract for PS-04 Dynamic Tour Packages.
+ * TripCraft API Client — Complete REST contract for Dynamic Tour Packages.
  * Provides dual-signature compatibility (object or positional params) and error resilience.
  */
 

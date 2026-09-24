@@ -12,6 +12,7 @@ import TripMap       from './components/TripMap';
 import RealWorldPanel from './components/RealWorldPanel';
 import AIAssistantModal from './components/AIAssistantModal';
 import BookingModal  from './components/BookingModal';
+import DestinationExplorer from './components/DestinationExplorer';
 import { Globe, Zap, Compass } from 'lucide-react';
 
 function getFallbackPackageDetail(packageId) {
@@ -312,6 +313,7 @@ export default function App() {
             onSelectPackage={handleSelectPackage}
             onOpenAiBuild={() => setIsAiModalOpen(true)}
             onStartBuild={() => navigateToStep('build')}
+            language={currentLanguage}
           />
         )}
 
@@ -454,14 +456,14 @@ export default function App() {
       />
 
       {/* Footer */}
-      <footer className="border-t border-slate-200/80 bg-white py-8 text-xs text-slate-500">
+      <footer className="border-t border-[#84D175]/30 bg-white/70 backdrop-blur-sm py-8 text-xs text-[#4a5e4a]">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 font-medium">
-          <span>PackagePro (TripCraft) · KogniVera Hackathon 2026 (PS-04) · Team CodeBlooded · BMSCE</span>
-          <div className="flex items-center gap-4 text-slate-500">
+          <span>TripCraft · KogniVera Hackathon 2026 · Team CodeBlooded · BMSCE</span>
+          <div className="flex items-center gap-4 text-[#3C8B30] font-bold">
             <span>Decimal Pricing Engine</span>
-            <span>·</span>
+            <span className="text-[#84D175]">·</span>
             <span>Mandatory Guide Availability Check</span>
-            <span>·</span>
+            <span className="text-[#84D175]">·</span>
             <span>Grounded Gemini AI</span>
           </div>
         </div>

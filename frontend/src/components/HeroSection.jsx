@@ -84,7 +84,7 @@ export default function HeroSection({ onBuildTrip, currentLanguage }) {
         <div className="text-center max-w-4xl mx-auto space-y-6 mb-12">
           <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-semibold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>KogniVera Hackathon 2026 — PS-04 Dynamic Tour Packages</span>
+            <span>KogniVera Hackathon 2026 — Dynamic Tour Packages</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">

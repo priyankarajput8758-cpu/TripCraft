@@ -3,25 +3,23 @@ import {
   Sparkles, Clock, MapPin, Mountain, Heart, Landmark, Users, Castle,
   Utensils, Plane, Bot, ArrowRight, ShieldCheck, Compass
 } from 'lucide-react';
+import { t } from '../i18n';
 
-const THEMES = [
-  { id: 'all',        label: 'All Themes',  icon: Sparkles },
-  { id: 'adventure',  label: 'Adventure',   icon: Mountain },
-  { id: 'honeymoon',  label: 'Honeymoon',   icon: Heart },
-  { id: 'pilgrimage', label: 'Pilgrimage',  icon: Landmark },
-  { id: 'family',     label: 'Family',      icon: Users },
-  { id: 'heritage',   label: 'Heritage',    icon: Castle },
-  { id: 'food_trail', label: 'Food Trail',  icon: Utensils },
+const THEMES_CONFIG = [
+  { id: 'all',        key: 'theme_all',        icon: Sparkles },
+  { id: 'adventure',  key: 'theme_adventure',  icon: Mountain },
+  { id: 'honeymoon',  key: 'theme_honeymoon',  icon: Heart },
+  { id: 'pilgrimage', key: 'theme_pilgrimage', icon: Landmark },
+  { id: 'family',     key: 'theme_family',     icon: Users },
+  { id: 'heritage',   key: 'theme_heritage',   icon: Castle },
 ];
 
 const THEME_BADGES = {
-  adventure:  { label: 'ADVENTURE',  bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
-  honeymoon:  { label: 'HONEYMOON',  bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
-  pilgrimage: { label: 'PILGRIMAGE', bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
-  family:     { label: 'FAMILY',     bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
-  heritage:   { label: 'HERITAGE',   bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
-  food_trail: { label: 'FOOD TRAIL', bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
-  wildlife:   { label: 'WILDLIFE',   bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
+  adventure:  { labelKey: 'theme_adventure',  bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
+  honeymoon:  { labelKey: 'theme_honeymoon',  bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
+  pilgrimage: { labelKey: 'theme_pilgrimage', bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
+  family:     { labelKey: 'theme_family',     bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
+  heritage:   { labelKey: 'theme_heritage',   bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
 };
 
 const DEFAULT_PREBUILT_PACKAGES = [
@@ -77,6 +75,7 @@ export default function DiscoverView({
   onSelectPackage,
   onOpenAiBuild,
   onStartBuild,
+  language = 'en',
 }) {
   const [activeTheme, setActiveTheme] = useState('all');
 
@@ -91,7 +90,7 @@ export default function DiscoverView({
 
       {/* ── 1. Top Hero Banner with Translucent Background Image ── */}
       <div className="relative overflow-hidden rounded-3xl p-8 sm:p-12 shadow-2xl border border-[#84D175]/30">
-        
+
         {/* Translucent background image */}
         <div
           className="absolute inset-0 bg-cover bg-center opacity-35 scale-105 transition-transform duration-700 hover:scale-100"
@@ -109,17 +108,17 @@ export default function DiscoverView({
           {/* Eyebrow badge with solid plane symbol */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#84D175]/20 border border-[#84D175]/40 text-[#84D175] text-xs font-bold backdrop-blur-md">
             <Plane className="w-3.5 h-3.5 text-[#84D175]" />
-            <span>Next-Gen Travel Configurator</span>
+            <span>{t('next_gen_travel', language)}</span>
           </div>
 
           {/* Title */}
           <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-            Build a trip that fits you.
+            {t('build_trip_title', language)}
           </h1>
 
           {/* Subtitle */}
           <p className="text-slate-200 text-sm sm:text-base leading-relaxed max-w-2xl font-medium">
-            PackagePro uses AI to combine your travel preferences, budget constraints, and booking history into fully customized, real-time optimized holiday packages.
+            {t('hero_subtitle', language)}
           </p>
 
           {/* Buttons */}
@@ -129,14 +128,14 @@ export default function DiscoverView({
               className="flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-sm shadow-xl shadow-[#84D175]/30 transition-all active:scale-95 cursor-pointer"
             >
               <Sparkles className="w-4 h-4 text-[#1a2e1a]" />
-              <span>Build with AI →</span>
+              <span>{t('build_with_ai', language)}</span>
             </button>
             <button
               onClick={onStartBuild}
               className="flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 text-white font-bold text-sm transition-all cursor-pointer backdrop-blur-sm"
             >
               <Compass className="w-4 h-4 text-[#84D175]" />
-              <span>Explore Packages</span>
+              <span>{t('explore_packages', language)}</span>
             </button>
           </div>
         </div>
@@ -147,29 +146,29 @@ export default function DiscoverView({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-black text-[#1a2e1a] tracking-tight">
-              Curated Packages by Theme
+              {t('curated_by_theme', language)}
             </h2>
             <p className="text-xs text-[#4a5e4a] mt-0.5 font-medium">
-              Handpicked customizable trips tailored for every travel style
+              {t('curated_subtitle', language)}
             </p>
           </div>
           <button
             onClick={() => setActiveTheme('all')}
             className="text-xs font-bold text-[#3C8B30] hover:text-[#2D6A24] transition-colors self-start sm:self-auto"
           >
-            View All Themes →
+            {t('view_all_themes', language)}
           </button>
         </div>
 
-        {/* Theme Pills Row with solid black/dark vector icons */}
+        {/* Theme Pills Row */}
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {THEMES.map((t) => {
-            const IconComponent = t.icon;
-            const isSelected = activeTheme === t.id;
+          {THEMES_CONFIG.map((tItem) => {
+            const IconComponent = tItem.icon;
+            const isSelected = activeTheme === tItem.id;
             return (
               <button
-                key={t.id}
-                onClick={() => setActiveTheme(t.id)}
+                key={tItem.id}
+                onClick={() => setActiveTheme(tItem.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                   isSelected
                     ? 'bg-[#84D175] text-[#1a2e1a] shadow-md shadow-[#84D175]/25'
@@ -177,7 +176,7 @@ export default function DiscoverView({
                 }`}
               >
                 <IconComponent className="w-4 h-4 text-[#1a2e1a]" />
-                <span>{t.label}</span>
+                <span>{t(tItem.key, language)}</span>
               </button>
             );
           })}
@@ -186,13 +185,15 @@ export default function DiscoverView({
         {/* Packages Cards Grid */}
         {filteredPackages.length === 0 ? (
           <div className="bg-white/80 border border-[#84D175]/30 rounded-2xl p-10 text-center text-[#4a5e4a] text-xs font-medium">
-            No packages found for this theme filter. Click "All Themes" to view all.
+            {t('no_packages_found', language)}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {filteredPackages.slice(0, 8).map((pkg) => {
               const isSelected = selectedPackageId === pkg.package_id;
-              const badge = THEME_BADGES[pkg.theme] || { label: (pkg.theme || 'TOUR').toUpperCase(), bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' };
+              const badgeConfig = THEME_BADGES[pkg.theme];
+              const badgeLabel = badgeConfig ? t(badgeConfig.labelKey, language).toUpperCase() : (pkg.theme || 'TOUR').toUpperCase();
+              const badgeBg = badgeConfig?.bg || 'bg-[#84D175] text-[#1a2e1a] font-bold';
               const price = parseFloat(pkg.base_price || 0);
 
               const defaultImages = {
@@ -223,8 +224,8 @@ export default function DiscoverView({
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0C2D45]/85 via-transparent to-black/20 p-3 flex flex-col justify-between">
                       <div className="flex items-center justify-between">
-                        <span className={`text-[10px] font-black px-2.5 py-0.5 rounded uppercase tracking-wider ${badge.bg}`}>
-                          {badge.label}
+                        <span className={`text-[10px] font-black px-2.5 py-0.5 rounded uppercase tracking-wider ${badgeBg}`}>
+                          {badgeLabel}
                         </span>
                         <span className="text-[11px] text-white font-bold bg-[#0C2D45]/60 backdrop-blur-sm px-2 py-0.5 rounded-md flex items-center gap-1">
                           <Clock className="w-3 h-3 text-[#84D175]" />
@@ -245,12 +246,12 @@ export default function DiscoverView({
                         {pkg.name || pkg.title}
                       </h3>
                       <div className="text-xs text-[#4a5e4a] font-medium">
-                        {pkg.duration_days || 5} Days • {Math.max(1, (pkg.duration_days || 5) - 1)} Nights
+                        {pkg.duration_days || 5} {t('days', language)} • {Math.max(1, (pkg.duration_days || 5) - 1)} {t('nights', language)}
                       </div>
                       <div className="flex flex-wrap gap-1.5 pt-1">
-                        {(pkg.tags || ['Customizable', 'Sightseeing']).map((t, idx) => (
+                        {(pkg.tags || ['Customizable', 'Sightseeing']).map((tagItem, idx) => (
                           <span key={idx} className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#FFF8D2] text-[#3C8B30] border border-[#84D175]/30">
-                            {t}
+                            {tagItem}
                           </span>
                         ))}
                       </div>
@@ -258,7 +259,9 @@ export default function DiscoverView({
 
                     <div className="pt-3 border-t border-[#84D175]/20 flex items-center justify-between mt-auto">
                       <div>
-                        <span className="text-[10px] uppercase tracking-wider text-[#4a5e4a] block font-bold">FROM</span>
+                        <span className="text-[10px] uppercase tracking-wider text-[#4a5e4a] block font-bold">
+                          {t('starting_from', language)}
+                        </span>
                         <span className="text-base font-black text-[#1a2e1a] font-mono">
                           ₹{price.toLocaleString('en-IN')}
                         </span>
@@ -267,7 +270,7 @@ export default function DiscoverView({
                         onClick={(e) => { e.stopPropagation(); onSelectPackage(pkg.package_id); }}
                         className="px-3.5 py-1.5 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] text-xs font-bold transition-all shadow-sm cursor-pointer"
                       >
-                        View Package
+                        {t('customize_package', language)}
                       </button>
                     </div>
                   </div>
@@ -278,7 +281,7 @@ export default function DiscoverView({
         )}
       </div>
 
-      {/* ── 3. Recommended for You (Solid symbols in place of emojis) ── */}
+      {/* ── 3. Recommended for You ── */}
       <div className="rounded-2xl bg-[#84D175]/10 border border-[#84D175]/30 p-5 space-y-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">

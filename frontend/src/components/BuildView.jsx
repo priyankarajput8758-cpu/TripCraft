@@ -85,7 +85,7 @@ export default function BuildView({
               Tell us what your perfect trip looks like.
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              PackagePro AI will tailor every activity, stay, and guide according to your inputs.
+              TripCraft AI will tailor every activity, stay, and guide according to your inputs.
             </p>
           </div>
         </div>
@@ -287,9 +287,9 @@ export default function BuildView({
               ⚡
             </div>
             <div>
-              <div className="text-xs font-bold text-white">PackagePro AI Builder Engine</div>
+              <div className="text-xs font-bold text-white">TripCraft AI Builder Engine</div>
               <div className="text-[11px] text-slate-300">
-                PackagePro AI will combine your preferences, budget and booking history to build your package.
+                TripCraft AI will combine your preferences, budget and booking history to build your package.
               </div>
             </div>
           </div>

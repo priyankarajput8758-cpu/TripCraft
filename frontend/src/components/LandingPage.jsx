@@ -5,6 +5,8 @@ import {
   Trees, Flame, Building2, Heart, ShieldCheck, CheckCircle2,
   Lock, ArrowUpRight, Layers, Sliders, Calendar, FileText
 } from 'lucide-react';
+import { AnimatedTopDock } from '../shaders/animated-top-dock/AnimatedTopDock';
+import '../shaders/threeui.css';
 
 /* ─── Data ─────────────────────────────────────────── */
 const DESTINATIONS = [
@@ -66,14 +68,6 @@ const STATS = [
 ];
 
 export default function LandingPage({ onGetStarted, onSignIn }) {
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 30);
-    window.addEventListener('scroll', fn, { passive: true });
-    return () => window.removeEventListener('scroll', fn);
-  }, []);
-
   return (
     <div className="relative min-h-screen bg-[#FFF8D2] text-[#1a2e1a] overflow-x-hidden selection:bg-[#84D175] selection:text-[#1a2e1a]">
 
@@ -84,60 +78,40 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
         <div className="absolute -bottom-40 left-1/3 w-96 h-96 bg-[#84D175]/20 rounded-full blur-3xl animate-blob animation-delay-4000" />
       </div>
 
-      {/* ── Header Nav ── */}
-      <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-[#FFF8D2]/90 backdrop-blur-md border-b border-[#84D175]/30 shadow-sm py-3'
-          : 'bg-transparent py-5'
-      }`}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 flex items-center justify-between">
-          {/* Brand */}
-          <div className="flex items-center gap-2.5 cursor-pointer" onClick={onGetStarted}>
-            <img
-              src="/logo.png"
-              alt="TripCraft"
-              className="w-9 h-9 object-contain rounded-xl shadow-md shadow-[#84D175]/30 bg-white/90 p-1 border border-[#84D175]/40"
-            />
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-black tracking-tight text-[#1a2e1a]">TripCraft</span>
-              <span className="hidden sm:inline-block text-[10px] px-2 py-0.5 rounded-full bg-white/90 text-[#3C8B30] border border-[#84D175]/50 font-black uppercase tracking-wider">
-                PS-04
-              </span>
-            </div>
-          </div>
-
-          {/* Nav Links */}
-          <div className="hidden md:flex items-center gap-8 text-xs font-bold text-[#4a5e4a]">
-            <a href="#features"     className="hover:text-[#3C8B30] transition-colors">Features</a>
-            <a href="#destinations" className="hover:text-[#3C8B30] transition-colors">Destinations</a>
-            <a href="#how"          className="hover:text-[#3C8B30] transition-colors">How It Works</a>
-          </div>
-
-          {/* Auth Buttons */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onSignIn}
-              className="hidden sm:block text-xs font-bold text-[#4a5e4a] hover:text-[#3C8B30] transition-colors px-3 py-2 rounded-xl"
-            >
-              Sign In
-            </button>
-            <button
-              onClick={onGetStarted}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-bold text-xs shadow-lg shadow-[#84D175]/30 transition-all active:scale-95 cursor-pointer"
-            >
-              <span>Get Started</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
+      {/* ── ThreeUI Animated Top Dock (Modern Command Bar) ── */}
+      <div className="fixed top-3 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
+        <div className="pointer-events-auto max-w-5xl w-full">
+          <AnimatedTopDock
+            variant="modern"
+            proximity={122}
+            spring={0.19}
+            damping={0.70}
+            widthGrowth={17}
+            heightGrowth={16}
+            drop={3.5}
+            onSignIn={onSignIn}
+            onGetStarted={onGetStarted}
+            onNavigate={(id) => {
+              if (id === 'guides') {
+                const el = document.getElementById('how');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              } else if (id === 'destinations') {
+                const el = document.getElementById('destinations');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              } else {
+                onGetStarted();
+              }
+            }}
+          />
         </div>
-      </nav>
+      </div>
 
       {/* ── HERO ── */}
       <section className="relative z-10 pt-36 pb-20 px-5 text-center max-w-5xl mx-auto space-y-8">
         {/* Eyebrow */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 border border-[#84D175]/40 text-[#3C8B30] text-xs font-black tracking-wider uppercase shadow-xs">
           <Sparkles className="w-3.5 h-3.5 text-[#84D175]" />
-          <span>KogniVera Hackathon 2026 · PS-04 Dynamic Packages</span>
+          <span>KogniVera Hackathon 2026 · Dynamic Tour Packages</span>
         </div>
 
         {/* Hero Title */}
@@ -296,7 +270,7 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
       {/* ── FOOTER ── */}
       <footer className="relative z-10 border-t border-[#84D175]/30 bg-white/60 backdrop-blur-sm py-8 px-5 text-xs text-[#4a5e4a] font-medium">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <span>TripCraft (PackagePro) · KogniVera Hackathon 2026 (PS-04) · Team CodeBlooded</span>
+          <span>TripCraft · KogniVera Hackathon 2026 · Team CodeBlooded</span>
           <div className="flex items-center gap-4 text-[#3C8B30] font-bold">
             <span>Decimal Pricing Engine</span>
             <span className="text-[#84D175]">·</span>

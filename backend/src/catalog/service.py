@@ -15,7 +15,7 @@ class CatalogService:
         tier: Optional[str] = None,
         language_bcp47: Optional[str] = None,
         max_price: Optional[float] = None,
-        limit: int = 50,
+        limit: int = 100,
         offset: int = 0
     ) -> Dict[str, Any]:
         """List curated packages with filters and live language translation."""
@@ -40,26 +40,19 @@ class CatalogService:
             query += " AND tp.tier = ?"
             params.append(tier)
 
-        # Server-side language filtering (PS-04 Rule R6)
+        # Server-side language filtering & ranking (PS-04 Rule R6)
         lang_notice = None
         clean_lang = language_bcp47.split("-")[0].lower() if language_bcp47 else None
 
         if clean_lang and clean_lang != "en":
-            # Check if any packages explicitly offer this language tag
-            with get_db_connection() as conn:
-                count = conn.execute(
-                    "SELECT COUNT(*) AS c FROM tour_packages WHERE languages_offered LIKE ? AND status = 'active'",
-                    (f"%{clean_lang}%",)
-                ).fetchone()["c"]
-
-                if count > 0:
-                    query += " AND tp.languages_offered LIKE ?"
-                    params.append(f"%{clean_lang}%")
-                else:
-                    lang_notice = f"No direct packages offering native '{language_bcp47}' tour delivery. Showing all packages with live translation."
-
-        query += " ORDER BY tp.base_price ASC LIMIT ? OFFSET ?"
-        params.extend([limit, offset])
+            # Priority ranking: packages explicitly offering this language appear first,
+            # while retaining all packages in the catalog with dynamic translation.
+            query += " ORDER BY CASE WHEN tp.languages_offered LIKE ? THEN 1 ELSE 2 END, tp.base_price ASC LIMIT ? OFFSET ?"
+            params.extend([f"%{clean_lang}%", limit, offset])
+            lang_notice = f"Showing all packages with live translation. Packages natively offering '{language_bcp47}' are prioritized at top."
+        else:
+            query += " ORDER BY tp.base_price ASC LIMIT ? OFFSET ?"
+            params.extend([limit, offset])
 
         with get_db_connection() as conn:
             packages = conn.execute(query, params).fetchall()

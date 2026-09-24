@@ -10,7 +10,7 @@ export default function ConfirmView({
   const pkg = bookingDetails?.package || {};
   const guide = bookingDetails?.selectedGuide || {};
 
-  const bookingId = bookingResult?.booking_id || 'PP-482731';
+  const bookingId = bookingResult?.booking_id || 'TC-482731';
   const cityName = pkg.city_name || 'Goa, India';
   const startDate = bookingDetails?.startDate || '10 Oct 2026';
   const endDate = bookingDetails?.endDate || '14 Oct 2026';
@@ -33,7 +33,7 @@ export default function ConfirmView({
             Your Trip is Confirmed!
           </h1>
           <p className="text-xs text-slate-500 mt-1 font-medium">
-            Your customized PackagePro trip is ready.
+            Your customized TripCraft trip is ready.
           </p>
         </div>
 
