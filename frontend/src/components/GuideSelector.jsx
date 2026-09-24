@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
+import { FALLBACK_GUIDES } from '../data/fallbackCatalog';
 import {
   UserCheck, AlertTriangle, CheckCircle2, Star, Languages, BadgeCheck,
   ArrowRight, ShieldAlert, Sparkles, Clock
@@ -15,11 +16,23 @@ export default function GuideSelector({
   preferredLanguage,
   availableGuides = []
 }) {
-  const [guides, setGuides] = useState(availableGuides);
+  const [guides, setGuides] = useState(
+    availableGuides.length > 0 ? availableGuides : (cityId ? FALLBACK_GUIDES.filter(g => g.city_id === cityId) : FALLBACK_GUIDES.slice(0, 15))
+  );
   const [loading, setLoading] = useState(false);
   const [availabilityCheck, setAvailabilityCheck] = useState(null);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [specialisationFilter, setSpecialisationFilter] = useState('');
+
+  // Sync guides whenever availableGuides prop updates
+  useEffect(() => {
+    if (availableGuides && availableGuides.length > 0) {
+      setGuides(availableGuides);
+    } else if (cityId) {
+      const cityMatches = FALLBACK_GUIDES.filter(g => g.city_id === cityId);
+      setGuides(cityMatches.length > 0 ? cityMatches : FALLBACK_GUIDES.slice(0, 15));
+    }
+  }, [availableGuides, cityId]);
 
   // Fetch or update available guides when city, language or specialisation changes
   useEffect(() => {
@@ -27,16 +40,19 @@ export default function GuideSelector({
       if (!cityId) return;
       setLoading(true);
       try {
-        const res = await api.getGuides({
+        const list = await api.getGuides({
           city_id: cityId,
           language: preferredLanguage,
           specialisation: specialisationFilter || undefined
         });
-        const list = res?.guides || (Array.isArray(res) ? res : []);
-        setGuides(list.length > 0 ? list : availableGuides);
+        if (list && list.length > 0) {
+          setGuides(list);
+        } else {
+          const fallback = FALLBACK_GUIDES.filter(g => (!cityId || g.city_id === cityId) && (!specialisationFilter || g.specialisation === specialisationFilter));
+          setGuides(fallback.length > 0 ? fallback : FALLBACK_GUIDES.slice(0, 15));
+        }
       } catch (err) {
         console.error('Error fetching guides:', err);
-        setGuides(availableGuides);
       } finally {
         setLoading(false);
       }
@@ -77,7 +93,7 @@ export default function GuideSelector({
       setAvailabilityCheck(null);
       return;
     }
-    const guide = guides.find(g => g.guide_id === guideId);
+    const guide = guides.find(g => g.guide_id === guideId) || FALLBACK_GUIDES.find(g => g.guide_id === guideId);
     if (guide) {
       onSelectGuide(guide);
     }
@@ -88,6 +104,7 @@ export default function GuideSelector({
     onSelectGuide({
       guide_id: substitute.guide_id,
       display_name: substitute.display_name || substitute.name,
+      name: substitute.display_name || substitute.name,
       rating: substitute.rating,
       languages: substitute.languages,
       specialisation: substitute.specialisation,
@@ -154,7 +171,7 @@ export default function GuideSelector({
           </select>
         </div>
 
-        {/* Selected Guide Card inside Amber Container (Matching Screenshot 3) */}
+        {/* Selected Guide Card inside Amber Container */}
         <div className="bg-white border border-amber-300/80 rounded-xl p-3 flex flex-col justify-center shadow-sm">
           {selectedGuide ? (
             <div className="space-y-1 text-xs">
@@ -170,7 +187,7 @@ export default function GuideSelector({
               </div>
               <div className="text-[11px] text-emerald-700 font-bold pt-0.5 font-mono flex items-center justify-between">
                 <span>Rate: ₹{parseFloat(selectedGuide.day_rate || 0).toLocaleString('en-IN')}/day</span>
-                <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">✓ Available</span>
+                <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">✓ Selected</span>
               </div>
             </div>
           ) : (

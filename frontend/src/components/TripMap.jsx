@@ -44,6 +44,11 @@ export default function TripMap({ city, lat, lng, cityName }) {
         }).addTo(map);
 
         mapInstanceRef.current = map;
+        setTimeout(() => {
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.invalidateSize();
+          }
+        }, 300);
       } else {
         mapInstanceRef.current.setView([defaultLat, defaultLng], 13);
         setTimeout(() => {

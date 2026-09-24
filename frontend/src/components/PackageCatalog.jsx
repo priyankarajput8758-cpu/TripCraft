@@ -5,6 +5,7 @@ import {
   Bot, ShieldCheck, Star, Globe, Plane
 } from 'lucide-react';
 import { t } from '../i18n';
+import { FALLBACK_PACKAGES } from '../data/fallbackCatalog';
 
 const THEMES_CONFIG = [
   { id: 'all',        key: 'theme_all',        icon: Sparkles },
@@ -48,18 +49,20 @@ export default function PackageCatalog({
   const [selectedTheme, setSelectedTheme] = useState('all');
   const [sortBy, setSortBy] = useState('default'); // 'default' | 'price_asc' | 'price_desc' | 'duration_asc' | 'duration_desc'
 
+  const allPackages = (packages && packages.length > 0) ? packages : FALLBACK_PACKAGES;
+
   // Extract unique cities
   const uniqueCities = useMemo(() => {
     const set = new Set();
-    for (const p of packages) {
+    for (const p of allPackages) {
       if (p.city_name) set.add(p.city_name);
     }
     return Array.from(set).sort();
-  }, [packages]);
+  }, [allPackages]);
 
   // Filter and sort packages
   const processedPackages = useMemo(() => {
-    let result = [...packages];
+    let result = [...allPackages];
 
     // 1. City Filter
     if (selectedCity !== 'all') {

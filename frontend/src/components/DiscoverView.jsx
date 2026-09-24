@@ -4,6 +4,7 @@ import {
   Utensils, Plane, Bot, ArrowRight, ShieldCheck, Compass
 } from 'lucide-react';
 import { t } from '../i18n';
+import { FALLBACK_PACKAGES } from '../data/fallbackCatalog';
 
 const THEMES_CONFIG = [
   { id: 'all',        key: 'theme_all',        icon: Sparkles },
@@ -20,54 +21,9 @@ const THEME_BADGES = {
   pilgrimage: { labelKey: 'theme_pilgrimage', bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
   family:     { labelKey: 'theme_family',     bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
   heritage:   { labelKey: 'theme_heritage',   bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
+  wildlife:   { labelKey: 'theme_all',        bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
+  food_trail: { labelKey: 'theme_all',        bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
 };
-
-const DEFAULT_PREBUILT_PACKAGES = [
-  {
-    package_id: 'pkg_goa_trek_01',
-    name: 'Goa Coastal Trek',
-    title: 'Goa Coastal Trek',
-    theme: 'adventure',
-    duration_days: 5,
-    city_name: 'Goa, India',
-    base_price: '32000.00',
-    tags: ['Scuba Diving', 'Cliff Trek'],
-    image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80',
-  },
-  {
-    package_id: 'pkg_beach_resort_02',
-    name: 'Romantic Beach Resort',
-    title: 'Romantic Beach Resort',
-    theme: 'honeymoon',
-    duration_days: 5,
-    city_name: 'Goa, India',
-    base_price: '45000.00',
-    tags: ['Luxury Stay', 'Sunset Sail'],
-    image_url: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80',
-  },
-  {
-    package_id: 'pkg_temples_trail_03',
-    name: 'Ancient Temples Trail',
-    title: 'Ancient Temples Trail',
-    theme: 'pilgrimage',
-    duration_days: 5,
-    city_name: 'Goa, India',
-    base_price: '28000.00',
-    tags: ['Guided Tours', 'Transfers'],
-    image_url: 'https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=600&q=80',
-  },
-  {
-    package_id: 'pkg_family_wildlife_04',
-    name: 'Family Beach & Wildlife',
-    title: 'Family Beach & Wildlife',
-    theme: 'family',
-    duration_days: 5,
-    city_name: 'Goa, India',
-    base_price: '38000.00',
-    tags: ['Resort Stay', 'Spice Tour'],
-    image_url: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=600&q=80',
-  },
-];
 
 export default function DiscoverView({
   packages = [],
@@ -80,7 +36,7 @@ export default function DiscoverView({
 }) {
   const [activeTheme, setActiveTheme] = useState('all');
 
-  const displayPackages = (packages && packages.length > 0) ? packages : DEFAULT_PREBUILT_PACKAGES;
+  const displayPackages = (packages && packages.length > 0) ? packages : FALLBACK_PACKAGES;
 
   const filteredPackages = activeTheme === 'all'
     ? displayPackages
