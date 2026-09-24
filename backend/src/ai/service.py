@@ -25,6 +25,91 @@ REGION_MAP = {
     "international": ["dubai", "abu dhabi", "doha", "singapore", "kuala lumpur", "bangkok", "bali", "kathmandu", "pokhara", "colombo", "kandy", "male", "thimphu", "zurich", "kyoto"]
 }
 
+# Phonetic & Common Aliases for Indian Cities
+CITY_ALIASES = {
+    "bhuvaneshwar": "bhubaneswar",
+    "bhubaneshwar": "bhubaneswar",
+    "bhubaneswar": "bhubaneswar",
+    "orissa": "bhubaneswar",
+    "odisha": "bhubaneswar",
+    "puri": "puri",
+    "jagannath": "puri",
+    "bangalore": "bengaluru",
+    "bengaluru": "bengaluru",
+    "mysore": "mysuru",
+    "mysuru": "mysuru",
+    "calcutta": "kolkata",
+    "kolkata": "kolkata",
+    "madras": "chennai",
+    "chennai": "chennai",
+    "cochin": "kochi",
+    "kochi": "kochi",
+    "trivandrum": "thiruvananthapuram",
+    "thiruvananthapuram": "thiruvananthapuram",
+    "chikmagalur": "chikmagalur",
+    "chikkamagaluru": "chikmagalur",
+    "chikkamagalur": "chikmagalur",
+    "ooty": "ooty",
+    "udhagamandalam": "ooty",
+    "munnar": "munnar",
+    "munar": "munnar",
+    "kashi": "varanasi",
+    "banaras": "varanasi",
+    "benares": "varanasi",
+    "varanasi": "varanasi",
+    "bombay": "mumbai",
+    "mumbai": "mumbai",
+    "poona": "pune",
+    "pune": "pune",
+    "vizag": "visakhapatnam",
+    "visakhapatnam": "visakhapatnam",
+    "ahmedabad": "ahmedabad",
+    "jodhpur": "jodhpur",
+    "jaipur": "jaipur",
+    "udaipur": "udaipur",
+    "jaisalmer": "jaisalmer",
+    "delhi": "new delhi",
+    "new delhi": "new delhi",
+    "goa": "panaji",
+    "panjim": "panaji",
+    "panaji": "panaji",
+    "darjeeling": "darjeeling",
+    "shimla": "shimla",
+    "simla": "shimla",
+    "rishikesh": "rishikesh",
+    "amritsar": "amritsar",
+    "tirupati": "tirupati",
+    "agra": "agra",
+    "leh": "leh",
+    "ladakh": "leh",
+    "srinagar": "srinagar",
+    "kashmir": "srinagar",
+    "gangtok": "gangtok",
+    "sikkim": "gangtok",
+    "shillong": "shillong",
+    "guwahati": "guwahati",
+    "hampi": "hampi",
+    "wayanad": "wayanad",
+    "alleppey": "alleppey",
+    "alappuzha": "alleppey",
+    "gokarna": "gokarna",
+    "pondicherry": "puducherry",
+    "puducherry": "puducherry",
+    "aurangabad": "aurangabad",
+    "lucknow": "lucknow",
+    "nainital": "nainital",
+    "manali": "manali",
+    "bhuj": "bhuj",
+    "thanjavur": "thanjavur",
+    "madurai": "madurai",
+    "hyderabad": "hyderabad",
+    "zurich": "zurich",
+    "kyoto": "kyoto",
+    "dubai": "dubai",
+    "singapore": "singapore",
+    "bali": "bali"
+}
+
 # Rich Photography Curations for Grounded Custom Destinations
 DESTINATION_PHOTOS = {
     "chikmagalur": "https://images.unsplash.com/photo-1596895111956-bf1cf0599ce5?auto=format&fit=crop&w=1000&q=80",
@@ -373,11 +458,23 @@ Return a valid JSON object ONLY with this structure:
                             if pkg_region == reg_name or any(p in pkg_city or p in pkg_state for p in places):
                                 score += 80
 
+                    # Check Phonetic / Common City Aliases (e.g. Bhuvaneshwar -> Bhubaneswar)
+                    for alias_key, target_city in CITY_ALIASES.items():
+                        if alias_key in prompt_lower:
+                            if target_city in pkg_city or target_city in pkg_name or target_city in pkg_desc:
+                                score += 200
+
                     # Direct city / state keyword match
                     if pkg_city in prompt_lower:
-                        score += 100
+                        score += 120
                     if pkg_state and pkg_state in prompt_lower:
                         score += 70
+
+                    # International vs Domestic protection: Prevent domestic requests from falling back to Zurich/Kyoto
+                    is_international = pkg_region == "international" or (pkg.get("currency") and pkg.get("currency") != "INR")
+                    user_wants_international = any(w in prompt_lower for w in ["international", "foreign", "abroad", "europe", "switzerland", "japan", "zurich", "kyoto", "dubai", "bali", "singapore", "thailand", "bangkok", "maldives"])
+                    if is_international and not user_wants_international:
+                        score -= 300
 
                     # Theme matching
                     if pkg_theme and pkg_theme in prompt_lower:

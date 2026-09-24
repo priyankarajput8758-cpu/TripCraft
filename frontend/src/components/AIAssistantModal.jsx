@@ -180,7 +180,8 @@ export default function AIAssistantModal({
                 </div>
                 <div className="text-right">
                   <span className="text-xs font-mono font-black text-[#3C8B30]">
-                    ₹{parseFloat(reprice?.total_price || matchedPkg.base_price).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    {reprice?.currency_symbol || (matchedPkg?.currency === 'INR' || !matchedPkg?.currency ? '₹' : `${matchedPkg.currency} `)}
+                    {parseFloat(reprice?.total_price || matchedPkg.base_price).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </span>
                   <span className="text-[10px] text-[#4a5e4a] block font-medium">Verified Decimal Total</span>
                 </div>

@@ -126,6 +126,7 @@ class PricingEngine:
                 "package_id": package_id,
                 "package_name": pkg["name"],
                 "currency": currency,
+                "currency_symbol": "₹" if currency == "INR" else f"{currency} ",
                 "base_price": format_money(base_price),
                 "components_delta_total": format_money(components_delta_total),
                 "guide_cost": format_money(guide_cost),

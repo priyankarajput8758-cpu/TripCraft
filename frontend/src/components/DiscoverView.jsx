@@ -189,7 +189,7 @@ export default function DiscoverView({
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {filteredPackages.slice(0, 8).map((pkg) => {
+            {filteredPackages.map((pkg) => {
               const isSelected = selectedPackageId === pkg.package_id;
               const badgeConfig = THEME_BADGES[pkg.theme];
               const badgeLabel = badgeConfig ? t(badgeConfig.labelKey, language).toUpperCase() : (pkg.theme || 'TOUR').toUpperCase();
@@ -257,9 +257,9 @@ export default function DiscoverView({
                       </div>
                     </div>
 
-                    <div className="pt-3 border-t border-[#84D175]/20 flex items-center justify-between mt-auto">
-                      <div>
-                        <span className="text-[10px] uppercase tracking-wider text-[#4a5e4a] block font-bold">
+                    <div className="pt-3 border-t border-[#84D175]/20 space-y-2 mt-auto">
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-[10px] uppercase tracking-wider text-[#4a5e4a] font-bold">
                           {t('starting_from', language)}
                         </span>
                         <span className="text-base font-black text-[#1a2e1a] font-mono">
@@ -268,9 +268,10 @@ export default function DiscoverView({
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); onSelectPackage(pkg.package_id); }}
-                        className="px-3.5 py-1.5 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] text-xs font-bold transition-all shadow-sm cursor-pointer"
+                        className="w-full py-2 px-3 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] text-xs font-black transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
                       >
-                        {t('customize_package', language)}
+                        <span>{t('customize_package', language)}</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
