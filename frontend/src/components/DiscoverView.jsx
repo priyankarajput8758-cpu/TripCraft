@@ -75,6 +75,7 @@ export default function DiscoverView({
   onSelectPackage,
   onOpenAiBuild,
   onStartBuild,
+  onExploreCatalog,
   language = 'en',
 }) {
   const [activeTheme, setActiveTheme] = useState('all');
@@ -84,6 +85,11 @@ export default function DiscoverView({
   const filteredPackages = activeTheme === 'all'
     ? displayPackages
     : displayPackages.filter(p => p.theme === activeTheme || p.theme?.includes(activeTheme));
+
+  // Homepage displays a curated set of up to 8 featured packages across themes
+  const curatedPackages = filteredPackages.slice(0, 8);
+
+  const handleExplore = onExploreCatalog || onStartBuild;
 
   return (
     <div className="space-y-10 animate-in">
@@ -131,7 +137,7 @@ export default function DiscoverView({
               <span>{t('build_with_ai', language)}</span>
             </button>
             <button
-              onClick={onStartBuild}
+              onClick={handleExplore}
               className="flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 text-white font-bold text-sm transition-all cursor-pointer backdrop-blur-sm"
             >
               <Compass className="w-4 h-4 text-[#84D175]" />
@@ -152,12 +158,6 @@ export default function DiscoverView({
               {t('curated_subtitle', language)}
             </p>
           </div>
-          <button
-            onClick={() => setActiveTheme('all')}
-            className="text-xs font-bold text-[#3C8B30] hover:text-[#2D6A24] transition-colors self-start sm:self-auto"
-          >
-            {t('view_all_themes', language)}
-          </button>
         </div>
 
         {/* Theme Pills Row */}
@@ -183,13 +183,13 @@ export default function DiscoverView({
         </div>
 
         {/* Packages Cards Grid */}
-        {filteredPackages.length === 0 ? (
+        {curatedPackages.length === 0 ? (
           <div className="bg-white/80 border border-[#84D175]/30 rounded-2xl p-10 text-center text-[#4a5e4a] text-xs font-medium">
             {t('no_packages_found', language)}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {filteredPackages.map((pkg) => {
+            {curatedPackages.map((pkg) => {
               const isSelected = selectedPackageId === pkg.package_id;
               const badgeConfig = THEME_BADGES[pkg.theme];
               const badgeLabel = badgeConfig ? t(badgeConfig.labelKey, language).toUpperCase() : (pkg.theme || 'TOUR').toUpperCase();
@@ -202,8 +202,12 @@ export default function DiscoverView({
                 pilgrimage: 'https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=600&q=80',
                 family: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=600&q=80',
                 heritage: 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=600&q=80',
+                wildlife: 'https://images.unsplash.com/photo-1561731216-c3a4d99437d5?auto=format&fit=crop&w=600&q=80',
+                food_trail: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80',
               };
               const imageUrl = pkg.image_url || defaultImages[pkg.theme] || defaultImages.adventure;
+              const displayTitle = pkg.title_translated || pkg.title || pkg.name;
+              const displayCity = pkg.city_name_translated || pkg.city_name || 'Goa, India';
 
               return (
                 <div
@@ -219,7 +223,7 @@ export default function DiscoverView({
                   <div className="relative h-36 w-full overflow-hidden bg-[#0C2D45]">
                     <img
                       src={imageUrl}
-                      alt={pkg.name || pkg.title}
+                      alt={displayTitle}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0C2D45]/85 via-transparent to-black/20 p-3 flex flex-col justify-between">
@@ -234,7 +238,7 @@ export default function DiscoverView({
                       </div>
                       <div className="text-xs font-semibold text-white flex items-center gap-1 drop-shadow-sm">
                         <MapPin className="w-3.5 h-3.5 text-[#84D175]" />
-                        {pkg.city_name || 'Goa, India'}
+                        {displayCity}
                       </div>
                     </div>
                   </div>
@@ -243,7 +247,7 @@ export default function DiscoverView({
                   <div className="p-4 space-y-3 flex-1 flex flex-col justify-between bg-white/90">
                     <div className="space-y-2">
                       <h3 className="font-bold text-[#1a2e1a] text-base leading-snug group-hover:text-[#3C8B30] transition-colors">
-                        {pkg.name || pkg.title}
+                        {displayTitle}
                       </h3>
                       <div className="text-xs text-[#4a5e4a] font-medium">
                         {pkg.duration_days || 5} {t('days', language)} • {Math.max(1, (pkg.duration_days || 5) - 1)} {t('nights', language)}
@@ -280,6 +284,21 @@ export default function DiscoverView({
             })}
           </div>
         )}
+
+        {/* Explore All 60+ Packages Catalog Banner */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-white/85 border border-[#84D175]/40 shadow-sm mt-4">
+          <div className="space-y-0.5">
+            <h4 className="text-sm font-bold text-[#1a2e1a]">{t('all_packages_title', language)}</h4>
+            <p className="text-xs text-[#4a5e4a] font-medium">{t('all_packages_subtitle', language)}</p>
+          </div>
+          <button
+            onClick={handleExplore}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] text-xs font-black transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
+          >
+            <span>{t('explore_all_packages', language)}</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* ── 3. Recommended for You ── */}
@@ -291,36 +310,40 @@ export default function DiscoverView({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-[#1a2e1a]">Recommended for You</h3>
+                <h3 className="text-sm font-bold text-[#1a2e1a]">{t('recommended_for_you', language)}</h3>
                 <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#84D175]/20 text-[#3C8B30] font-bold border border-[#84D175]/30">
-                  Personalized
+                  {t('personalized_badge', language)}
                 </span>
               </div>
               <p className="text-xs text-[#4a5e4a] mt-0.5 font-medium">
-                Recommended based on your preferences & booking history
+                {t('recommended_subtitle', language)}
               </p>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {[
-            { id: 'pkg_rec_1', name: 'Goa Heritage & Culinary Express', detail: 'Heritage • 4 Days', price: '₹38,500' },
-            { id: 'pkg_rec_2', name: 'South Goa Quiet Retreat', detail: 'Honeymoon • 5 Days', price: '₹34,000' },
-            { id: 'pkg_rec_3', name: 'North Goa Adventure Special', detail: 'Adventure • 6 Days', price: '₹41,200' },
-          ].map((item) => (
-            <div
-              key={item.id}
-              onClick={() => onSelectPackage(packages[0]?.package_id || 'pkg_001')}
-              className="bg-white/80 border border-[#84D175]/25 hover:border-[#84D175] rounded-xl p-3.5 flex items-center justify-between cursor-pointer transition-all shadow-sm hover:shadow-md"
-            >
-              <div>
-                <div className="text-xs font-bold text-[#1a2e1a]">{item.name}</div>
-                <div className="text-[11px] text-[#4a5e4a] mt-0.5">{item.detail}</div>
+          {displayPackages.slice(0, 3).map((pkgItem) => {
+            const title = pkgItem.title_translated || pkgItem.title || pkgItem.name;
+            const price = parseFloat(pkgItem.base_price || 35000);
+            return (
+              <div
+                key={pkgItem.package_id}
+                onClick={() => onSelectPackage(pkgItem.package_id)}
+                className="bg-white/80 border border-[#84D175]/25 hover:border-[#84D175] rounded-xl p-3.5 flex items-center justify-between cursor-pointer transition-all shadow-sm hover:shadow-md"
+              >
+                <div>
+                  <div className="text-xs font-bold text-[#1a2e1a] line-clamp-1">{title}</div>
+                  <div className="text-[11px] text-[#4a5e4a] mt-0.5 capitalize">
+                    {pkgItem.theme || 'Curated'} • {pkgItem.duration_days || 4} {t('days', language)}
+                  </div>
+                </div>
+                <div className="text-sm font-bold text-[#3C8B30] font-mono shrink-0 ml-2">
+                  ₹{price.toLocaleString('en-IN')}
+                </div>
               </div>
-              <div className="text-sm font-bold text-[#3C8B30] font-mono">{item.price}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

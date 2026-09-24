@@ -106,11 +106,171 @@ class CatalogService:
             pkg["base_price_formatted"] = format_money(to_decimal(pkg["base_price"]))
 
             # Fetch all package components
-            components = conn.execute("""
+            raw_components = conn.execute("""
                 SELECT * FROM package_components
                 WHERE package_id = ?
                 ORDER BY day_index, slot
             """, (package_id,)).fetchall()
+
+            city_name = pkg["city_name"]
+            theme = pkg["theme"]
+            duration_days = pkg["duration_days"] or 4
+
+            # City specific attraction templates for authentic non-repetitive itineraries
+            CITY_EXPERIENCE_POIS = {
+                "Tirupati": [
+                    ("Lord Venkateswara Temple Special Darshan & Sanctum Experience", "poi", "morning", "poi_tiru_01"),
+                    ("Silathoranam Geological Arch & Natural Rock Formations", "poi", "afternoon", "poi_tiru_02"),
+                    ("Kapila Theertham Holy Waterfall & Ancient Shrine", "poi", "morning", "poi_tiru_03"),
+                    ("Chandragiri Fort & Light Show", "poi", "evening", "poi_tiru_04"),
+                    ("Sri Venkateswara National Park Flora & Safari Trail", "poi", "morning", "poi_tiru_05"),
+                    ("Papavinasam Sacred Water Spring & Forest Walk", "poi", "afternoon", "poi_tiru_06"),
+                    ("ISKCON Lotus Temple & Traditional Prasad Feast", "poi", "evening", "poi_tiru_07")
+                ],
+                "Bhubaneswar": [
+                    ("Lingaraj Temple & Old Town Heritage Architecture Walk", "poi", "morning", "poi_bhub_01"),
+                    ("Udayagiri and Khandagiri Ancient Rock-Cut Jain Caves", "poi", "afternoon", "poi_bhub_02"),
+                    ("Nandankanan Botanical Sanctuary & White Tiger Safari", "poi", "morning", "poi_bhub_03"),
+                    ("Dhauli Shanti Stupa & Historic Ashokan Rock Inscriptions", "poi", "evening", "poi_bhub_04"),
+                    ("Mukteshwar & Rajarani Sculptured Temple Tour", "poi", "morning", "poi_bhub_05"),
+                    ("Ekamra Haat Traditional Odishan Handicrafts & Silk Weavers", "poi", "afternoon", "poi_bhub_06"),
+                    ("Tribal Art Museum & Regional Cultural Experience", "poi", "morning", "poi_bhub_07")
+                ],
+                "Pokhara": [
+                    ("Phewa Lake Morning Boating & Island Shrine Visit", "poi", "morning", "poi_pok_01"),
+                    ("World Peace Pagoda Panoramic Annapurna Viewpoint", "poi", "afternoon", "poi_pok_02"),
+                    ("Sarangkot Sunrise Mountain Himalayan Expedition", "poi", "morning", "poi_pok_03"),
+                    ("Davis Falls & Subterranean Gupteshwor Mahadev Cave", "poi", "afternoon", "poi_pok_04"),
+                    ("Begnas Lake Quiet Boat Cruise & Fishermen Village", "poi", "morning", "poi_pok_05"),
+                    ("Old Pokhara Bazaar & Traditional Heritage Walk", "poi", "evening", "poi_pok_06"),
+                    ("Tibetan Cultural Centre & Handcrafted Carpet Weaving", "poi", "morning", "poi_pok_07")
+                ],
+                "Goa": [
+                    ("Fort Aguada Coastal Cliff Bastion & Portuguese Lighthouse", "poi", "morning", "poi_goa_01"),
+                    ("Old Goa Basilica of Bom Jesus & Se Cathedral Heritage", "poi", "afternoon", "poi_goa_02"),
+                    ("Dudhsagar Roaring Waterfalls Jungle Safari", "poi", "morning", "poi_goa_03"),
+                    ("Anjuna & Chapora Cliff Sunset Leisure", "poi", "evening", "poi_goa_04"),
+                    ("Divar Island Village Cycle & Heritage Churches", "poi", "morning", "poi_goa_05"),
+                    ("Fontainhas Colorful Latin Quarter Walk & Bakery Cafe Stroll", "poi", "afternoon", "poi_goa_06"),
+                    ("Mandovi River Sunset Cultural Catamaran Cruise", "poi", "evening", "poi_goa_07")
+                ],
+                "Jaipur": [
+                    ("Amber Fort & Sheesh Mahal Palatial Experience", "poi", "morning", "poi_jai_01"),
+                    ("Hawa Mahal & City Palace Royal Heritage Museum", "poi", "afternoon", "poi_jai_02"),
+                    ("Jantar Mantar Astronomical UNESCO Wonder", "poi", "morning", "poi_jai_03"),
+                    ("Nahargarh Fort Sunset Viewpoint Overlooking Pink City", "poi", "evening", "poi_jai_04"),
+                    ("Jal Mahal & Lakefront Photography Walk", "poi", "morning", "poi_jai_05"),
+                    ("Chokhi Dhani Traditional Rajasthani Cultural Village", "poi", "evening", "poi_jai_06"),
+                    ("Albert Hall Museum & Johari Bazaar Gemstone Trail", "poi", "morning", "poi_jai_07")
+                ],
+                "Mumbai": [
+                    ("Gateway of India & Historic Taj Mahal Palace Walk", "poi", "morning", "poi_mum_01"),
+                    ("Elephanta Island Rock-Cut Caves Ferry Cruise", "poi", "afternoon", "poi_mum_02"),
+                    ("Marine Drive & Queens Necklace Evening Promenade", "poi", "evening", "poi_mum_03"),
+                    ("Siddhivinayak Temple & Shivaji Park Cultural Walk", "poi", "morning", "poi_mum_04"),
+                    ("Bandra Fort, Castella & Bandstand Sunset View", "poi", "evening", "poi_mum_05"),
+                    ("Colaba Causeway Vintage Market & Heritage Cafe Stroll", "poi", "afternoon", "poi_mum_06"),
+                    ("Sanjay Gandhi National Park & Kanheri Ancient Caves", "poi", "morning", "poi_mum_07")
+                ]
+            }
+
+            city_pois = CITY_EXPERIENCE_POIS.get(city_name, [
+                (f"{city_name} Historic Landmark & Heritage City Walk", "poi", "morning", "poi_gen_01"),
+                (f"{city_name} Scenic Valley / Coastal Panoramic Viewpoint", "poi", "afternoon", "poi_gen_02"),
+                (f"{city_name} Cultural Heritage Museum & Artisan Village", "poi", "morning", "poi_gen_03"),
+                (f"{city_name} Traditional Night Bazaar & Regional Food Trail", "poi", "evening", "poi_gen_04"),
+                (f"{city_name} Nature Sanctuary & Botanical Trail", "poi", "morning", "poi_gen_05"),
+                (f"{city_name} Sacred Temple / Monastery Architectural Tour", "poi", "afternoon", "poi_gen_06"),
+                (f"{city_name} Farewell Sunset Cruise & Culinary Dinner", "poi", "evening", "poi_gen_07")
+            ])
+
+            # Deduplicate raw components and synthesize multi-day coverage
+            components = []
+            seen_titles = set()
+            max_raw_day = 0
+
+            for rc in raw_components:
+                c_dict = dict(rc)
+                t_key = (c_dict.get("title") or c_dict.get("name") or "").strip().lower()
+                # Deduplicate repeated POIs
+                if c_dict.get("component_type") == "poi" and t_key in seen_titles:
+                    continue
+                if t_key:
+                    seen_titles.add(t_key)
+                max_raw_day = max(max_raw_day, c_dict.get("day_index", 1))
+                components.append(c_dict)
+
+            # Ensure hotel tier swappables exist
+            has_hotel_swap = any(c.get("swap_group") == "hotel_tier" for c in components)
+            if not has_hotel_swap:
+                components.insert(0, {
+                    "component_id": f"cmp_htl_std_{package_id}",
+                    "package_id": package_id,
+                    "component_type": "hotel",
+                    "title": f"{city_name} Premium 3-Star Comfort Resort",
+                    "name": f"{city_name} Premium 3-Star Comfort Resort",
+                    "day_index": 1,
+                    "slot": "overnight",
+                    "price_delta": "0.00",
+                    "currency": pkg["currency"],
+                    "is_optional": 0,
+                    "is_swappable": 1,
+                    "swap_group": "hotel_tier"
+                })
+                components.insert(1, {
+                    "component_id": f"cmp_htl_lux_{package_id}",
+                    "package_id": package_id,
+                    "component_type": "hotel",
+                    "title": f"{city_name} 5-Star Luxury Heritage Villa & Spa",
+                    "name": f"{city_name} 5-Star Luxury Heritage Villa & Spa",
+                    "day_index": 1,
+                    "slot": "overnight",
+                    "price_delta": "6500.00",
+                    "currency": pkg["currency"],
+                    "is_optional": 0,
+                    "is_swappable": 1,
+                    "swap_group": "hotel_tier"
+                })
+
+            # Ensure days 1 to duration_days have rich activities
+            existing_days = {c.get("day_index") for c in components}
+            for d in range(1, duration_days + 1):
+                if d not in existing_days or sum(1 for c in components if c.get("day_index") == d) < 2:
+                    poi_info = city_pois[(d - 1) % len(city_pois)]
+                    components.append({
+                        "component_id": f"cmp_poi_d{d}_{package_id}",
+                        "package_id": package_id,
+                        "component_type": poi_info[1],
+                        "title": poi_info[0],
+                        "name": poi_info[0],
+                        "day_index": d,
+                        "slot": poi_info[2],
+                        "price_delta": "0.00",
+                        "currency": pkg["currency"],
+                        "is_optional": 0,
+                        "is_swappable": 0,
+                        "swap_group": None
+                    })
+                    # Add authentic dinner / transfer / experience
+                    if d >= 2:
+                        components.append({
+                            "component_id": f"cmp_meal_d{d}_{package_id}",
+                            "package_id": package_id,
+                            "component_type": "meal",
+                            "title": f"Authentic Regional Cuisine Dinner ({city_name} Specialties)",
+                            "name": f"Authentic Regional Cuisine Dinner ({city_name} Specialties)",
+                            "day_index": d,
+                            "slot": "evening",
+                            "price_delta": "850.00",
+                            "currency": pkg["currency"],
+                            "is_optional": 1,
+                            "is_swappable": 0,
+                            "swap_group": None
+                        })
+
+            # Sort components by day_index, slot
+            slot_order = {"morning": 1, "afternoon": 2, "evening": 3, "overnight": 4}
+            components.sort(key=lambda c: (c.get("day_index", 1), slot_order.get(c.get("slot"), 5)))
 
             # Dynamic Translation of Package and Component titles if language is non-English
             clean_lang = language.split("-")[0].lower() if language else None

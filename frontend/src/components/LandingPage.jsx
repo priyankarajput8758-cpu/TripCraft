@@ -156,12 +156,6 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
 
       {/* ── HERO ── */}
       <section className="relative z-10 pt-14 sm:pt-20 pb-20 px-5 text-center max-w-5xl mx-auto space-y-8">
-        {/* Eyebrow */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 border border-[#84D175]/40 text-[#3C8B30] text-xs font-black tracking-wider uppercase shadow-xs">
-          <Sparkles className="w-3.5 h-3.5 text-[#84D175]" />
-          <span>Intelligent Travel Engine · Real-Time Dynamic Packages</span>
-        </div>
-
         {/* Hero Title */}
         <h1 className="text-5xl sm:text-7xl font-black text-[#1a2e1a] tracking-tight leading-[1.06]">
           Your Dream Trip,{' '}

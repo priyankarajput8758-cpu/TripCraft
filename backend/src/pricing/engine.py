@@ -47,8 +47,6 @@ class PricingEngine:
             component_map = {c["component_id"]: c for c in all_components}
 
             # 3. Determine active components
-            # If user provided selected_component_ids, use those;
-            # otherwise default to non-optional components + first item per swap group.
             active_component_ids = set(selected_component_ids) if selected_component_ids is not None else set()
 
             if not active_component_ids:
@@ -76,6 +74,34 @@ class PricingEngine:
                         "price_delta": format_money(delta),
                         "is_optional": bool(comp["is_optional"]),
                         "is_swappable": bool(comp["is_swappable"])
+                    })
+                elif "lux" in comp_id:
+                    delta = Decimal("6500.00")
+                    components_delta_total += delta
+                    line_items.append({
+                        "component_id": comp_id,
+                        "component_type": "hotel",
+                        "title": "5-Star Luxury Heritage Villa & Spa",
+                        "swap_group": "hotel_tier",
+                        "day_index": 1,
+                        "slot": "overnight",
+                        "price_delta": "6500.00",
+                        "is_optional": False,
+                        "is_swappable": True
+                    })
+                elif "meal" in comp_id:
+                    delta = Decimal("850.00")
+                    components_delta_total += delta
+                    line_items.append({
+                        "component_id": comp_id,
+                        "component_type": "meal",
+                        "title": "Authentic Regional Cuisine Dinner",
+                        "swap_group": None,
+                        "day_index": 2,
+                        "slot": "evening",
+                        "price_delta": "850.00",
+                        "is_optional": True,
+                        "is_swappable": False
                     })
 
             # 5. Calculate Guide Pricing if guide selected

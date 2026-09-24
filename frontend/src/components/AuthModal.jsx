@@ -74,7 +74,7 @@ export default function AuthModal({ mode: initialMode = 'signin', onSuccess, onC
                   type="text"
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  placeholder="Divyansh Duggad"
+                  placeholder="e.g. Alex Morgan"
                   className={inputClass}
                 />
                 <User className="w-4 h-4 text-[#84D175] absolute left-3.5 top-3.5" />

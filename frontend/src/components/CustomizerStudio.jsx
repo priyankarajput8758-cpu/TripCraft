@@ -2,10 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../api';
 import GuideSelector from './GuideSelector';
 import AddOnsPanel from './AddOnsPanel';
+import RealWorldPanel from './RealWorldPanel';
 import {
   Hotel, Activity, Car, Check, Layers, ArrowRight, ShieldCheck,
   Calendar, Clock, MapPin, Receipt, Sparkles, UserCheck, Plus,
-  Trash2, X, Utensils, Ticket, Compass, Users
+  Trash2, X, Utensils, Ticket, Compass, Users, Zap
 } from 'lucide-react';
 
 export default function CustomizerStudio({
@@ -15,6 +16,8 @@ export default function CustomizerStudio({
   tripPrefs = {},
   onNextToOptimize,
   onBack,
+  realWorldEnabled = false,
+  onToggleRealWorld,
 }) {
   const pkg = packageDetailData?.package;
   const rawComponents = packageDetailData?.components || [];
@@ -488,6 +491,34 @@ export default function CustomizerStudio({
             selectedTheme={pkg.theme}
             onAddOnsChange={handleAddOnsChange}
           />
+
+          {/* 6. Live External Market Data Comparison (SerpAPI Google Hotels) */}
+          {realWorldEnabled ? (
+            <RealWorldPanel cityName={pkg.city_name || 'Goa'} />
+          ) : (
+            <div className="bg-white/90 border border-[#84D175]/35 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 rounded-2xl bg-[#84D175]/20 text-[#2D6A24]">
+                  <Zap className="w-5 h-5 text-[#2D6A24]" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#1a2e1a]">Compare Live Market Rates (Google Hotels)</h4>
+                  <p className="text-[11px] text-[#4a5e4a]">
+                    View live real-time hotel pricing in {pkg.city_name || 'this destination'} via SerpAPI
+                  </p>
+                </div>
+              </div>
+              {onToggleRealWorld && (
+                <button
+                  type="button"
+                  onClick={() => onToggleRealWorld(true)}
+                  className="px-4 py-2 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
+                >
+                  ⚡ View Live Market Rates
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ── Right Column: Sticky Live Price Summary & Breakdown ── */}

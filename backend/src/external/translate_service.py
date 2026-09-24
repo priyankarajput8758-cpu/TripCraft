@@ -49,7 +49,118 @@ AZURE_LANG_MAP = {
     "ur": "ur"
 }
 
-# Essential Travel UI & Package Vocabulary Dictionary (Zero-Latency Guarantee)
+# Dynamic Travel Dictionaries across 8 Languages
+CITIES_MAP = {
+    "hi": {
+        "Jaipur": "जयपुर", "Goa": "गोवा", "Tirupati": "तिरुपति", "Pokhara": "पोखरा", "Bhubaneswar": "भुवनेश्वर",
+        "Mumbai": "मुंबई", "Hyderabad": "हैदराबाद", "Munnar": "मुन्नार", "Amritsar": "अमृतसर", "Udaipur": "उदयपुर",
+        "Varanasi": "वाराणसी", "Bengaluru": "बेंगलुरु", "Pondicherry": "पुदुचेरी", "Kochi": "कोच्चि", "New Delhi": "नई दिल्ली",
+        "Agra": "आगरा", "Shimla": "शिमला", "Manali": "मनाली", "Ooty": "ऊटी", "Darjeeling": "दार्जिलिंग",
+        "Rishikesh": "ऋषिकेश", "Shillong": "शिलांग", "Gangtok": "गंगटोक", "Chikmagalur": "चिकमगलूर", "Gokarna": "गोकर्ण",
+        "Hampi": "हम्पी", "Alleppey": "अलप्पुझा", "Wayanad": "वायनाड", "Mysuru": "मैसूर", "Chennai": "चेन्नई",
+        "Madurai": "मदुरै", "Thanjavur": "तंजावुर", "Panaji": "पणजी", "Pune": "पुणे", "Jodhpur": "जोधपुर",
+        "Jaisalmer": "जैसलमेर", "Kandy": "कैंडी", "Colombo": "कोलंबो", "Kathmandu": "काठमांडू", "Thimphu": "थिम्पू",
+        "Dubai": "दुबई", "Abu Dhabi": "अबू धाबी", "Doha": "दोहा", "Singapore": "सिंगापुर", "Bangkok": "बैंकॉक",
+        "Bali": "बाली", "Zurich": "ज्यूरिख", "Visakhapatnam": "विशाखापट्टनम", "Puri": "पुरी", "Guwahati": "गुवाहाटी"
+    },
+    "ta": {
+        "Jaipur": "ஜெய்ப்பூர்", "Goa": "கோவா", "Tirupati": "திருப்பதி", "Pokhara": "பொக்காரா", "Bhubaneswar": "புவனேஸ்வர்",
+        "Mumbai": "மும்பை", "Hyderabad": "ஹைதராபாத்", "Munnar": "மூணார்", "Amritsar": "அமிர்தசரஸ்", "Udaipur": "உதய்பூர்",
+        "Varanasi": "வாரணாசி", "Bengaluru": "பெங்களூரு", "Pondicherry": "பாண்டிச்சேரி", "Kochi": "கொச்சி", "New Delhi": "புது தில்லி",
+        "Agra": "ஆக்ரா", "Shimla": "சிம்லா", "Manali": "மணாலி", "Ooty": "ஊட்டி", "Darjeeling": "டார்ஜிலிங்",
+        "Rishikesh": "ரிஷிகேஷ்", "Shillong": "ஷில்லாங்", "Gangtok": "கேங்டாக்", "Chikmagalur": "சிக்மகளூர்", "Gokarna": "கோகர்ணா",
+        "Hampi": "ஹம்பி", "Alleppey": "ஆலப்புழா", "Wayanad": "வயநாடு", "Mysuru": "மைசூர்", "Chennai": "சென்னை",
+        "Madurai": "மதுரை", "Thanjavur": "தஞ்சாவூர்", "Panaji": "பனாஜி", "Pune": "புனே", "Jodhpur": "ஜோத்பூர்",
+        "Jaisalmer": "ஜெய்சல்மேர்", "Kandy": "கண்டி", "Colombo": "கொழும்பு", "Kathmandu": "காத்மாண்டு", "Thimphu": "திம்பு",
+        "Dubai": "துபாய்", "Abu Dhabi": "அபுதாபி", "Singapore": "சிங்கப்பூர்", "Bangkok": "பாங்காக்", "Bali": "பாலி", "Zurich": "சூரிச்"
+    },
+    "te": {
+        "Jaipur": "జైపూర్", "Goa": "గోవా", "Tirupati": "తిరుపతి", "Pokhara": "పోఖరా", "Bhubaneswar": "భువనేశ్వర్",
+        "Mumbai": "ముంబై", "Hyderabad": "హైదరాబాద్", "Munnar": "మున్నార్", "Amritsar": "అమృతసర్", "Udaipur": "ఉదయపూర్",
+        "Varanasi": "వారణాసి", "Bengaluru": "బెంగళూరు", "Pondicherry": "పాండిచ్చేరి", "Kochi": "కొచ్చి", "New Delhi": "న్యూఢిల్లీ",
+        "Agra": "ఆగ్రా", "Shimla": "సిమ్లా", "Manali": "మనాలి", "Ooty": "ఊటీ", "Darjeeling": "డార్జిలింగ్",
+        "Rishikesh": "రిషికేశ్", "Shillong": "షిల్లాంగ్", "Gangtok": "గాంగ్‌టక్", "Chikmagalur": "చిక్కమగళూరు", "Gokarna": "గోకర్ణ",
+        "Hampi": "హంపీ", "Alleppey": "అలప్పుళా", "Wayanad": "వయనాడ్", "Mysuru": "మైసూర్", "Chennai": "చెన్నై",
+        "Madurai": "మదురై", "Thanjavur": "తంజావూరు", "Panaji": "పనాజీ", "Pune": "పుణె", "Dubai": "దుబాయ్"
+    },
+    "kn": {
+        "Jaipur": "ಜೈಪುರ", "Goa": "ಗೋವಾ", "Tirupati": "ತಿರುಪತಿ", "Pokhara": "ಪೋಖರಾ", "Bhubaneswar": "ಭುವನೇಶ್ವರ",
+        "Mumbai": "ಮುಂಬೈ", "Hyderabad": "ಹೈದರಾಬಾದ್", "Munnar": "ಮುನ್ನಾರ್", "Amritsar": "ಅಮೃತಸರ", "Udaipur": "ಉದಯಪುರ",
+        "Varanasi": "ವಾರಣಾಸಿ", "Bengaluru": "ಬೆಂಗಳೂರು", "Pondicherry": "ಪಾಂಡಿಚೇರಿ", "Kochi": "ಕೊಚ್ಚಿ", "New Delhi": "ನವದೆಹಲಿ",
+        "Agra": "ಆಗ್ರಾ", "Shimla": "ಶಿಮ್ಲಾ", "Manali": "ಮನಾಲಿ", "Ooty": "ಊಟಿ", "Darjeeling": "ಡಾರ್ಜಿಲಿಂಗ್",
+        "Rishikesh": "ಋಷಿಕೇಶ", "Shillong": "ಶಿಲ್ಲಾಂಗ್", "Gangtok": "ಗ್ಯಾಂಗ್ಟಾಕ್", "Chikmagalur": "ಚಿಕ್ಕಮಗಳೂರು", "Gokarna": "ಗೋಕರ್ಣ",
+        "Hampi": "ಹಂಪಿ", "Alleppey": "ಅಲಪ್ಪುಳ", "Wayanad": "ವಯನಾಡ್", "Mysuru": "ಮೈಸೂರು", "Chennai": "ಚೆನ್ನೈ"
+    },
+    "mr": {
+        "Jaipur": "जयपूर", "Goa": "गोवा", "Tirupati": "तिरुपती", "Pokhara": "पोखरा", "Bhubaneswar": "भुवनेश्वर",
+        "Mumbai": "मुंबई", "Hyderabad": "हैदराबाद", "Munnar": "मुन्नार", "Amritsar": "अमृतसर", "Udaipur": "उदयपूर",
+        "Varanasi": "वाराणसी", "Bengaluru": "बंगळुरू", "Pondicherry": "पाँडिचेरी", "Kochi": "कोची", "New Delhi": "नवी दिल्ली",
+        "Agra": "आग्रा", "Shimla": "शिमला", "Manali": "मनाली", "Ooty": "उटी", "Darjeeling": "दार्जिलिंग",
+        "Rishikesh": "ऋषिकेश", "Shillong": "शिलाँग", "Gangtok": "गंगटोक", "Chikmagalur": "चिकमंगळूर", "Gokarna": "गोकर्ण",
+        "Hampi": "हम्पी", "Alleppey": "अलेप्पी", "Wayanad": "वायनाड", "Mysuru": "म्हैसूर", "Chennai": "चेन्नई", "Pune": "पुणे"
+    },
+    "bn": {
+        "Jaipur": "জয়পুর", "Goa": "গোয়া", "Tirupati": "তিরুপতি", "Pokhara": "পোখরা", "Bhubaneswar": "ভুবনেশ্বর",
+        "Mumbai": "মুম্বাই", "Hyderabad": "হায়দ্রাবাদ", "Munnar": "মুন্নার", "Amritsar": "অমৃতসর", "Udaipur": "উদয়পুর",
+        "Varanasi": "বারাণসী", "Bengaluru": "বেঙ্গালুরু", "Pondicherry": "পন্ডিচেরি", "Kochi": "কোচি", "New Delhi": "নতুন দিল্লি",
+        "Agra": "আগ্রা", "Shimla": "শিমলা", "Manali": "মানালি", "Ooty": "উটি", "Darjeeling": "দার্জিলিং", "Kolkata": "কলকাতা"
+    },
+    "gu": {
+        "Jaipur": "જયપુર", "Goa": "ગોવા", "Tirupati": "તિરુપતિ", "Pokhara": "પોખરા", "Bhubaneswar": "ભુવનેશ્વર",
+        "Mumbai": "મુંબઈ", "Hyderabad": "હૈદરાબાદ", "Munnar": "મુન્નાર", "Amritsar": "અમૃતસર", "Udaipur": "ઉદયપુર",
+        "Varanasi": "વારાણસી", "Bengaluru": "બેંગલુરુ", "Pondicherry": "પોંડિચેરી", "Kochi": "કોચી", "New Delhi": "નવી દિલ્હી",
+        "Ahmedabad": "અમદાવાદ", "Bhuj": "ભુજ", "Shimla": "શિમલા", "Manali": "મનાલી", "Ooty": "ઊટી"
+    }
+}
+
+THEMES_MAP = {
+    "hi": {
+        "Honeymoon": "हनीमून", "Adventure": "एडवेंचर", "Food Trail": "फूड ट्रेल", "Food": "भोजन",
+        "Pilgrimage": "तीर्थयात्रा", "Wildlife": "वन्यजीव", "Family": "पारिवारिक", "Heritage": "विरासत",
+        "Romantic": "रोमांटिक", "Beach": "बीच", "Nature": "प्रकृति", "Culture": "संस्कृति", "Spiritual": "आध्यात्मिक"
+    },
+    "ta": {
+        "Honeymoon": "தேன்நிலவு", "Adventure": "சாகசம்", "Food Trail": "உணவுப் பயணம்", "Food": "உணவு",
+        "Pilgrimage": "புனித யாத்திரை", "Wildlife": "வனவிலங்கு", "Family": "குடும்பம்", "Heritage": "பாரம்பரியம்",
+        "Romantic": "காதல்", "Beach": "கடற்கரை", "Nature": "இயற்கை", "Culture": "கலாச்சாரம்", "Spiritual": "ஆன்மீகம்"
+    },
+    "te": {
+        "Honeymoon": "హనీమూన్", "Adventure": "సాహసం", "Food Trail": "ఫుడ్ ట్రయిల్", "Food": "ఆహారం",
+        "Pilgrimage": "తీర్థయాత్ర", "Wildlife": "వన్యప్రాణులు", "Family": "కుటుంబం", "Heritage": "వారసత్వం",
+        "Romantic": "రొమాంటిక్", "Beach": "బీచ్", "Nature": "ప్రకృతి", "Culture": "సంస్కృతి", "Spiritual": "ధార్మికం"
+    },
+    "kn": {
+        "Honeymoon": "ಮಧುಚಂದ್ರ", "Adventure": "ಸಾಹಸ", "Food Trail": "ಆಹಾರ ಯಾನ", "Food": "ಆಹಾರ",
+        "Pilgrimage": "ತೀರ್ಥಯಾತ್ರೆ", "Wildlife": "ವನ್ಯಜೀವಿ", "Family": "ಕುಟುಂಬ", "Heritage": "ಪರಂಪರೆ",
+        "Romantic": "ರೋಮ್ಯಾಂಟಿಕ್", "Beach": "ಕಡಲತೀರ", "Nature": "ಪ್ರಕೃತಿ", "Culture": "ಸಂಸ್ಕೃತಿ", "Spiritual": "ಧಾರ್ಮಿಕ"
+    },
+    "mr": {
+        "Honeymoon": "हनिमून", "Adventure": "साहस", "Food Trail": "फूड ट्रेल", "Food": "अन्न",
+        "Pilgrimage": "तीर्थक्षेत्र", "Wildlife": "वन्यजीव", "Family": "कौटुंबिक", "Heritage": "वारसा",
+        "Romantic": "रोमँटिक", "Beach": "बीच", "Nature": "निसर्ग", "Culture": "संस्कृती", "Spiritual": "धार्मिक"
+    },
+    "bn": {
+        "Honeymoon": "হানিমুন", "Adventure": "অভিযান", "Food Trail": "ফুড ট্রেইল", "Food": "খাবার",
+        "Pilgrimage": "তীর্থযাত্রা", "Wildlife": "বন্যপ্রাণী", "Family": "পারিবারিক", "Heritage": "ঐতিহ্য",
+        "Romantic": "রোমান্টিক", "Beach": "সৈকত", "Nature": "প্রকৃতি", "Culture": "সংস্কৃতি", "Spiritual": "ধর্মীয়"
+    },
+    "gu": {
+        "Honeymoon": "હનીમૂન", "Adventure": "સાહસ", "Food Trail": "ફૂડ ટ્રેઇલ", "Food": "ખોરાક",
+        "Pilgrimage": "યાત્રાધામ", "Wildlife": "વન્યજીવન", "Family": "કૌટુંબિક", "Heritage": "વારસો",
+        "Romantic": "રોમેન્ટિક", "Beach": "બીચ", "Nature": "કુદરત", "Culture": "સંસ્કૃતિ", "Spiritual": "ધાર્મિક"
+    }
+}
+
+DAYS_LABEL_MAP = {
+    "hi": ("दिन", "रातें"),
+    "ta": ("நாட்கள்", "இரவுகள்"),
+    "te": ("రోజులు", "రాత్రులు"),
+    "kn": ("ದಿನಗಳು", "ರಾತ್ರಿಗಳು"),
+    "mr": ("दिवस", "रात्री"),
+    "bn": ("দিন", "রাত"),
+    "gu": ("દિવસ", "રાત")
+}
+
 COMMON_TRANSLATIONS = {
     "hi": {
         "Customise Tour Package": "टूर पैकेज कस्टमाइज़ करें",
@@ -87,11 +198,12 @@ COMMON_TRANSLATIONS = {
         "Standard Hillview Stay": "स्टैंडर्ड हिलव्यू स्टे",
         "Luxury Coffee Estate Resort": "लक्जरी कॉफी एस्टेट रिसॉर्ट",
         "Eco Nature Homestay": "इको नेचर होमस्टे",
-        "Adventure": "साहसिक",
-        "Honeymoon": "हनीमून",
-        "Pilgrimage": "तीर्थयात्रा",
-        "Family": "पारिवारिक",
-        "Food Trail": "फूड ट्रेल"
+        "Recommended for You": "आपके लिए अनुशंसित",
+        "Personalized": "व्यक्तिगत",
+        "Recommended based on your preferences & booking history": "आपकी प्राथमिकताओं और बुकिंग इतिहास पर आधारित सिफारिशें",
+        "Starting from": "शुरुआती कीमत",
+        "Curated Packages": "क्यूरेटेड पैकेज",
+        "Explore Packages": "पैकेज देखें"
     },
     "ta": {
         "Customise Tour Package": "சுற்றுலா தொகுப்பை தனிப்பயனாக்குங்கள்",
@@ -122,44 +234,26 @@ COMMON_TRANSLATIONS = {
         "Ancient Temples Trail": "பண்டைய கோயில்கள் பாதை",
         "Family Beach & Wildlife": "குடும்ப கடற்கரை & வனவிலங்கு",
         "Goa Heritage & Coastal Experience": "கோவா பாரம்பரியம் & கடற்கரை அனுபவம்",
-        "4-Star Beachfront Resort": "4-நட்சத்திர கடற்கரை ரிசார்ட்",
-        "5-Star Heritage Villa": "5-நட்சத்திர பாரம்பரிய வில்லா",
-        "Grande Island Scuba Diving": "கிராண்டே தீவு ஸ்கூபா டைவிங்",
-        "Private AC SUV Transfer": "சொந்த ஏசி எஸ்யூவி வாகனம்",
-        "Standard Hillview Stay": "ஹில்வியூ தங்குமிடம்",
-        "Luxury Coffee Estate Resort": "சொகுசு காபி எஸ்டேட் ரிசார்ட்",
-        "Eco Nature Homestay": "இயற்கை சூழல் இல்லம்",
-        "Adventure": "சாகசம்",
-        "Honeymoon": "தேன்நிலவு",
-        "Pilgrimage": "ஆன்மீகப் பயணம்",
-        "Family": "குடும்பம்",
-        "Food Trail": "உணவுப் பயணம்"
+        "Recommended for You": "உங்களுக்கான பரிந்துரைகள்",
+        "Personalized": "தனிப்பயனாக்கப்பட்டது",
+        "Recommended based on your preferences & booking history": "உங்கள் விருப்பங்களின் அடிப்படையில் பரிந்துரைக்கப்படுகிறது",
+        "Starting from": "ஆரம்ப விலை",
+        "Curated Packages": "தொகுக்கப்பட்ட சுற்றுலாக்கள்",
+        "Explore Packages": "சுற்றுலாக்களை ஆராயுங்கள்"
     },
     "te": {
         "Customise Tour Package": "టూర్ ప్యాకేజీని అనుకూలీకరించండి",
         "Select Tour Guide": "టూర్ గైడ్‌ని ఎంచుకోండి",
         "Live Repricing": "లైవ్ ధరల నవీకరణ",
         "Book Now": "ఇప్పుడే బుక్ చేయండి",
-        "Package Inclusions": "ప్యాకేజీ చేరికలు",
-        "Day": "రోజు",
-        "Hotel": "హోటల్",
-        "Activity": "కార్యకలాపం",
-        "Transfer": "రవాణా",
         "Total Price": "మొత్తం ధర",
         "Base Price": "ప్రాథమిక ధర",
         "Substitute Guide": "ప్రత్యామ్నాయ గైడ్",
-        "Heritage": "వారసత్వం",
-        "Food": "ఆహారం",
-        "Religious": "ధార్మికం",
-        "Goa Coastal Trek": "గోవా తీరప్రాంత ట్రెక్",
-        "Romantic Beach Resort": "రొమాంటిక్ బీచ్ రిసార్ట్",
-        "Ancient Temples Trail": "పురాతన దేవాలయాల యాత్ర",
-        "Family Beach & Wildlife": "ఫ్యామిలీ బీచ్ & వన్యప్రాణులు",
-        "Goa Heritage & Coastal Experience": "గోవా వారసత్వం & తీర అనుభవం",
-        "Adventure": "సాహసం",
-        "Honeymoon": "హనీమూన్",
-        "Pilgrimage": "తీర్థయాత్ర",
-        "Family": "కుటుంబం"
+        "Recommended for You": "మీ కోసం సిఫార్సు చేయబడినవి",
+        "Personalized": "వ్యక్తిగతీకరించిన",
+        "Starting from": "ప్రారంభ ధర",
+        "Curated Packages": "క్యూరేటెడ్ ప్యాకేజీలు",
+        "Explore Packages": "ప్యాకేజీలను అన్వేషించండి"
     },
     "kn": {
         "Customise Tour Package": "ಪ್ರವಾಸ ಪ್ಯಾಕೇಜ್ ಅನ್ನು ಕಸ್ಟಮೈಸ್ ಮಾಡಿ",
@@ -168,18 +262,9 @@ COMMON_TRANSLATIONS = {
         "Book Now": "ಈಗಲೇ ಕಾಯ್ದಿರಿಸಿ",
         "Total Price": "ಒಟ್ಟು ಬೆಲೆ",
         "Base Price": "ಮೂಲ ಬೆಲೆ",
-        "Heritage": "ಪರಂಪರೆ",
-        "Food": "ಆಹಾರ",
-        "Religious": "ಧಾರ್ಮಿಕ",
-        "Goa Coastal Trek": "ಗೋವಾ ಕರಾವಳಿ ಚಾರಣ",
-        "Romantic Beach Resort": "ರೋಮ್ಯಾಂಟಿಕ್ ಬೀಚ್ ರೆಸಾರ್ಟ್",
-        "Ancient Temples Trail": "ಪ್ರಾಚೀನ ದೇವಾಲಯಗಳ ಪ್ರವಾಸ",
-        "Family Beach & Wildlife": "ಕುಟುಂಬ ಕಡಲತೀರ & ವನ್ಯಜೀವಿ",
-        "Goa Heritage & Coastal Experience": "ಗೋವಾ ಪರಂಪರೆ ಮತ್ತು ಕರಾವಳಿ ಅನುಭವ",
-        "Adventure": "ಸಾಹಸ",
-        "Honeymoon": "ಮಧುಚಂದ್ರ",
-        "Pilgrimage": "ತೀರ್ಥಯಾತ್ರೆ",
-        "Family": "ಕುಟುಂಬ"
+        "Recommended for You": "ನಿಮಗಾಗಿ ಶಿಫಾರಸು ಮಾಡಲಾಗಿದೆ",
+        "Starting from": "ಪ್ರಾರಂಭಿಕ ಬೆಲೆ",
+        "Curated Packages": "ಕ್ಯುರೇಟೆಡ್ ಪ್ಯಾಕೇಜ್‌ಗಳು"
     },
     "mr": {
         "Customise Tour Package": "टूर पॅकेज कस्टमाइझ करा",
@@ -188,17 +273,9 @@ COMMON_TRANSLATIONS = {
         "Book Now": "आता बुक करा",
         "Total Price": "एकूण किंमत",
         "Base Price": "मूळ किंमत",
-        "Heritage": "वारसा",
-        "Food": "अन्न",
-        "Religious": "धार्मिक",
-        "Goa Coastal Trek": "गोवा कोस्टल ट्रेक",
-        "Romantic Beach Resort": "रोमँटिक बीच रिसॉर्ट",
-        "Ancient Temples Trail": "प्राचीन मंदिरे ट्रेल",
-        "Family Beach & Wildlife": "कौटुंबिक बीच आणि वन्यजीव",
-        "Adventure": "साहस",
-        "Honeymoon": "हनिमून",
-        "Pilgrimage": "तीर्थक्षेत्र",
-        "Family": "कौटुंबिक"
+        "Recommended for You": "तुमच्यासाठी शिफारस केलेले",
+        "Starting from": "किमान किंमत",
+        "Curated Packages": "क्युरेट केलेले पॅकेजेस"
     },
     "bn": {
         "Customise Tour Package": "ট্যুর প্যাকেজ কাস্টমাইজ করুন",
@@ -207,17 +284,9 @@ COMMON_TRANSLATIONS = {
         "Book Now": "এখন বুক করুন",
         "Total Price": "মোট মূল্য",
         "Base Price": "মূল মূল্য",
-        "Heritage": "ঐতিহ্য",
-        "Food": "খাবার",
-        "Religious": "ধর্মীয়",
-        "Goa Coastal Trek": "গোয়া উপকূলীয় ট্রেক",
-        "Romantic Beach Resort": "রোমান্টিক বিচ রিসোর্ট",
-        "Ancient Temples Trail": "প্রাচীন মন্দিরের পথ",
-        "Family Beach & Wildlife": "পারিবারিক সৈকত ও বন্যপ্রাণী",
-        "Adventure": "অভিযান",
-        "Honeymoon": "হানিমুন",
-        "Pilgrimage": "তীর্থযাত্রা",
-        "Family": "পারিবারিক"
+        "Recommended for You": "আপনার জন্য প্রস্তাবিত",
+        "Starting from": "শুরু হচ্ছে",
+        "Curated Packages": "কিউরেটেড প্যাকেজ"
     },
     "gu": {
         "Customise Tour Package": "ટૂર પેકેજ કસ્ટમાઇઝ કરો",
@@ -226,21 +295,57 @@ COMMON_TRANSLATIONS = {
         "Book Now": "હમણાં બુક કરો",
         "Total Price": "કુલ કિંમત",
         "Base Price": "મૂળ કિંમત",
-        "Heritage": "વારસો",
-        "Food": "ખોરાક",
-        "Religious": "ધાર્મિક",
-        "Goa Coastal Trek": "ગોવા કોસ્ટલ ટ્રેક",
-        "Romantic Beach Resort": "રોમેન્ટિક બીચ રિસોર્ટ",
-        "Ancient Temples Trail": "પ્રાચીન મંદિરો પગદંડી",
-        "Family Beach & Wildlife": "કૌટુંબિક બીચ અને વન્યજીવન",
-        "Adventure": "સાહસ",
-        "Honeymoon": "હનીમૂન",
-        "Pilgrimage": "યાત્રાધામ",
-        "Family": "કૌટુંબિક"
+        "Recommended for You": "તમારા માટે ભલામણ કરેલ",
+        "Starting from": "પ્રારંભિક કિંમત",
+        "Curated Packages": "ક્યુરેટેડ પેકેજો"
     }
 }
 
 class TranslationService:
+    @classmethod
+    def _decompose_and_translate_title(cls, text: str, clean_target: str) -> Optional[str]:
+        """
+        Deconstructs standard catalog titles like 'Bhubaneswar Wildlife — 6 Days' or 'Jaipur Heritage - 5 Days'
+        and translates them cleanly into target language.
+        """
+        if clean_target not in CITIES_MAP:
+            return None
+
+        clean_text = text.replace("–", "—").replace("-", "—")
+        parts = [p.strip() for p in clean_text.split("—")]
+        if len(parts) >= 2:
+            left = parts[0]
+            right = parts[1]
+            # Match City & Theme from left
+            matched_city = None
+            matched_theme = None
+            city_dict = CITIES_MAP.get(clean_target, {})
+            theme_dict = THEMES_MAP.get(clean_target, {})
+
+            for city_en in city_dict.keys():
+                if city_en.lower() in left.lower():
+                    matched_city = city_dict[city_en]
+                    # Check remaining string for theme
+                    rem = left.lower().replace(city_en.lower(), "").strip()
+                    for theme_en in theme_dict.keys():
+                        if theme_en.lower() in rem:
+                            matched_theme = theme_dict[theme_en]
+                            break
+                    break
+
+            # Parse days from right
+            import re
+            day_match = re.search(r"(\d+)\s*Day", right, re.IGNORECASE)
+            num_days = day_match.group(1) if day_match else None
+
+            if matched_city:
+                theme_str = f" {matched_theme}" if matched_theme else ""
+                days_label = DAYS_LABEL_MAP.get(clean_target, ("Days", "Nights"))[0]
+                days_str = f" — {num_days} {days_label}" if num_days else ""
+                return f"{matched_city}{theme_str}{days_str}"
+
+        return None
+
     @staticmethod
     def translate(
         text: str,
@@ -272,7 +377,17 @@ class TranslationService:
                 "target_lang": target_lang
             }
 
-        # 1. Local Travel Dictionary (Instant 0ms Fallback)
+        # 1. Pattern Decomposition & Translation for Package Titles (Instant 0ms)
+        decomposed = TranslationService._decompose_and_translate_title(text.strip(), clean_target)
+        if decomposed:
+            _TRANSLATION_CACHE[cache_key] = decomposed
+            return {
+                "translated_text": decomposed,
+                "source": "pattern_decomposer",
+                "target_lang": target_lang
+            }
+
+        # 2. Local Travel Dictionary (Instant 0ms Fallback)
         if clean_target in COMMON_TRANSLATIONS and text.strip() in COMMON_TRANSLATIONS[clean_target]:
             res = COMMON_TRANSLATIONS[clean_target][text.strip()]
             _TRANSLATION_CACHE[cache_key] = res
@@ -282,7 +397,7 @@ class TranslationService:
                 "target_lang": target_lang
             }
 
-        # 2. Microsoft Azure Cognitive Services Translator Text API v3.0
+        # 3. Microsoft Azure Cognitive Services Translator Text API v3.0
         if settings.AZURE_TRANSLATOR_KEY:
             try:
                 endpoint = f"{settings.AZURE_TRANSLATOR_ENDPOINT.rstrip('/')}/translate?api-version=3.0&to={clean_target}"

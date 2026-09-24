@@ -4,6 +4,7 @@ import LandingPage   from './components/LandingPage';
 import AuthModal     from './components/AuthModal';
 import Navbar        from './components/Navbar';
 import DiscoverView  from './components/DiscoverView';
+import PackageCatalog from './components/PackageCatalog';
 import BuildView     from './components/BuildView';
 import CustomizerStudio from './components/CustomizerStudio';
 import OptimizeView  from './components/OptimizeView';
@@ -307,8 +308,21 @@ export default function App() {
               selectedPackageId={selectedPackageId}
               onSelectPackage={handleSelectPackage}
               onOpenAiBuild={() => setIsAiModalOpen(true)}
-              onStartBuild={() => navigateToStep('build')}
+              onStartBuild={() => navigateToStep('catalog')}
+              onExploreCatalog={() => navigateToStep('catalog')}
               language={currentLanguage}
+            />
+          )}
+
+          {/* ── STEP 1B: ALL PACKAGES CATALOG (FULL 60+ PACKAGES) ── */}
+          {activeStep === 'catalog' && (
+            <PackageCatalog
+              packages={packages}
+              selectedPackageId={selectedPackageId}
+              onSelectPackage={handleSelectPackage}
+              onBack={() => navigateToStep('discover')}
+              onOpenAiBuild={() => setIsAiModalOpen(true)}
+              preferredLanguage={currentLanguage}
             />
           )}
 
@@ -359,6 +373,8 @@ export default function App() {
               <CustomizerStudio
                 packageDetailData={packageDetailData}
                 preferredLanguage={currentLanguage}
+                realWorldEnabled={realWorldEnabled}
+                onToggleRealWorld={setRealWorldEnabled}
                 onOpenBooking={(d) => {
                   setBookingData(d);
                   setIsBookingModalOpen(true);
