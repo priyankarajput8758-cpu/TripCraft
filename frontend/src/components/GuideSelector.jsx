@@ -13,7 +13,9 @@ export default function GuideSelector({
   selectedGuide,
   onSelectGuide,
   preferredLanguage,
-  availableGuides = []
+  availableGuides = [],
+  currencySymbol = '₹',
+  packageCurrency = 'INR'
 }) {
   const [guides, setGuides] = useState(availableGuides || []);
   const [loading, setLoading] = useState(false);
@@ -149,7 +151,7 @@ export default function GuideSelector({
             onChange={(e) => handleGuideChange(e.target.value)}
             className="w-full bg-white border border-amber-300 rounded-2xl p-3 text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-500 cursor-pointer shadow-xs"
           >
-            <option value="">-- No Guide Selected (Self-Guided / ₹0) --</option>
+            <option value="">-- No Guide Selected (Self-Guided / {currencySymbol}0) --</option>
             {guideList.map((g) => {
               const name = g.display_name || g.name || 'Guide';
               const rate = parseFloat(g.day_rate || 2500);
@@ -159,7 +161,7 @@ export default function GuideSelector({
 
               return (
                 <option key={g.guide_id} value={g.guide_id}>
-                  {name} ★ {rating} ({langs}) • {spec} • ₹{rate.toLocaleString('en-IN')}/day
+                  {name} ★ {rating} ({langs}) • {spec} • {currencySymbol}{rate.toLocaleString('en-IN')}/day
                 </option>
               );
             })}
@@ -195,11 +197,11 @@ export default function GuideSelector({
 
             <div className="text-right">
               <div className="text-sm font-black text-slate-900 font-mono">
-                ₹{parseFloat(selectedGuide.day_rate || 3500).toLocaleString('en-IN')}
+                {currencySymbol}{parseFloat(selectedGuide.day_rate || 3500).toLocaleString('en-IN')}
                 <span className="text-xs font-normal text-slate-500"> /day</span>
               </div>
               <div className="text-[10px] text-slate-400">
-                ₹{(parseFloat(selectedGuide.day_rate || 3500) * durationDays).toLocaleString('en-IN')} total ({durationDays} days)
+                {currencySymbol}{(parseFloat(selectedGuide.day_rate || 3500) * durationDays).toLocaleString('en-IN')} total ({durationDays} days)
               </div>
             </div>
           </div>

@@ -13,9 +13,11 @@ const API_BASE_CANDIDATES = [
 let workingApiBase = '/api';
 
 async function smartFetch(endpoint, options = {}) {
+  let lastResponse = null;
   try {
     const res = await fetch(`${workingApiBase}${endpoint}`, options);
     if (res.ok) return res;
+    lastResponse = res;
   } catch (e) {
     // Failover to candidate bases
   }
@@ -28,9 +30,14 @@ async function smartFetch(endpoint, options = {}) {
         workingApiBase = candidate;
         return res;
       }
+      lastResponse = res;
     } catch (err) {
       // Continue searching
     }
+  }
+
+  if (lastResponse) {
+    return lastResponse;
   }
 
   throw new Error(`Unable to connect to backend endpoint: ${endpoint}`);

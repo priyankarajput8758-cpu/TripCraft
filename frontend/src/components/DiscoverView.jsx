@@ -50,54 +50,59 @@ const CITY_LANDMARK_IMAGES = {
   jaipur: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/4/41/East_facade_Hawa_Mahal_Jaipur_from_ground_level_%28July_2022%29_-_img_01.jpg/960px-East_facade_Hawa_Mahal_Jaipur_from_ground_level_%28July_2022%29_-_img_01.jpg', // Hawa Mahal
   udaipur: 'https://images.unsplash.com/photo-1615836245337-f5b9b2303f10?auto=format&fit=crop&w=800&q=80', // City Palace & Lake Pichola
   varanasi: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=800&q=80', // Varanasi Ghats
-  tirupati: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b7/Shri_Jagannath_temple.jpg/960px-Shri_Jagannath_temple.jpg', // Tirupati Balaji Temple
-  madurai: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dd/Wide_angle_of_Galigopuram_of_Virupaksha_Temple%2C_Hampi_%2804%29_%28cropped%29.jpg/960px-Wide_angle_of_Galigopuram_of_Virupaksha_Temple%2C_Hampi_%2804%29_%28cropped%29.jpg', // Meenakshi Temple
-  thanjavur: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5d/Lingaraj_Temple_%2C_Bhubaneswar.jpg/960px-Lingaraj_Temple_%2C_Bhubaneswar.jpg', // Brihadeeswarar Temple
+  tirupati: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/91/Tirumala_Venkateswara_Temple.jpg/960px-Tirumala_Venkateswara_Temple.jpg', // Tirupati Balaji Temple
+  madurai: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d3/Madurai_Meenakshi_Amman_temple_Gopuram.jpg/960px-Madurai_Meenakshi_Amman_temple_Gopuram.jpg', // Meenakshi Temple
+  thanjavur: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/6/60/Brihadisvara_Temple_Thanjavur.jpg/960px-Brihadisvara_Temple_Thanjavur.jpg', // Brihadeeswarar Temple
   lucknow: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a9/Rumi_Darwaza_-_DSC2797-01.jpg/960px-Rumi_Darwaza_-_DSC2797-01.jpg', // Rumi Darwaza
-  amritsar: 'https://images.unsplash.com/photo-1514222134-b57cbb8ce073?auto=format&fit=crop&w=800&q=80', // Golden Temple
-  shimla: 'https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=800&q=80', // Shimla Hills & Ridge
-  manali: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=800&q=80', // Solang Valley & Pines
-  rishikesh: 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=800&q=80', // Ganga & Lakshman Jhula
-  nainital: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80', // Naini Lake
+  amritsar: 'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=800&q=80', // Golden Temple
+  shimla: 'https://images.unsplash.com/photo-1597074866923-dc0589150358?auto=format&fit=crop&w=800&q=80', // Shimla Hills & Ridge
+  manali: 'https://images.unsplash.com/photo-1605649487212-47bdab064df8?auto=format&fit=crop&w=800&q=80', // Solang Valley & Pines
+  rishikesh: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=800&q=80', // Ganga & Lakshman Jhula
+  nainital: 'https://images.unsplash.com/photo-1626014303757-646654714152?auto=format&fit=crop&w=800&q=80', // Naini Lake
   srinagar: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e1/Dal_Lake_Hazratbal_Srinagar.jpg/960px-Dal_Lake_Hazratbal_Srinagar.jpg', // Dal Lake Shikara
   pune: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4d/Front_view_of_Shaniwar_Wada_illuminated.jpg/960px-Front_view_of_Shaniwar_Wada_illuminated.jpg', // Shaniwar Wada
   aurangabad: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c3/Ajanta_%2863%29.jpg/960px-Ajanta_%2863%29.jpg', // Ajanta & Ellora Caves
-  ahmedabad: 'https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=800&q=80', // Sabarmati
-  bhuj: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80', // White Rann
+  ahmedabad: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/6/66/Adalaj_stepwell_01.jpg/960px-Adalaj_stepwell_01.jpg', // Adalaj Stepwell
+  bhuj: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cf/White_Rann_of_Kutch_Gujarat.jpg/960px-White_Rann_of_Kutch_Gujarat.jpg', // White Rann
   goa: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80', // Goa Beaches
   panaji: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80',
   bengaluru: 'https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=800&q=80', // Bangalore Palace
-  mysuru: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80', // Mysore Palace
+  mysuru: 'https://images.unsplash.com/photo-1600100397608-f010f4439066?auto=format&fit=crop&w=800&q=80', // Mysore Palace
   hampi: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dd/Wide_angle_of_Galigopuram_of_Virupaksha_Temple%2C_Hampi_%2804%29_%28cropped%29.jpg/960px-Wide_angle_of_Galigopuram_of_Virupaksha_Temple%2C_Hampi_%2804%29_%28cropped%29.jpg', // Virupaksha Temple & Stone Chariot
   gokarna: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80', // Om Beach
   chennai: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80', // Marina Beach
-  ooty: 'https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=800&q=80', // Nilgiri Toy Train
-  puducherry: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80', // Promenade Beach
-  pondicherry: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
-  kochi: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=800&q=80', // Chinese Fishing Nets
-  alleppey: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=800&q=80', // Backwaters
-  munnar: 'https://images.unsplash.com/photo-1596895111956-bf1cf0599ce5?auto=format&fit=crop&w=800&q=80', // Munnar Tea Gardens
-  thiruvananthapuram: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80', // Kovalam & Temple
-  wayanad: 'https://images.unsplash.com/photo-1596895111956-bf1cf0599ce5?auto=format&fit=crop&w=800&q=80', // Chembra Peak
+  ooty: 'https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=800&q=80', // Nilgiri Hills
+  puducherry: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80', // Promenade & French Quarter
+  pondicherry: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80',
+  kochi: 'https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?auto=format&fit=crop&w=800&q=80', // Chinese Fishing Nets
+  alleppey: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=800&q=80', // Backwaters Houseboat
+  munnar: 'https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=800&q=80', // Munnar Tea Gardens
+  thiruvananthapuram: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/7/77/Sree_Padmanabhaswamy_Temple_Thiruvananthapuram.jpg/960px-Sree_Padmanabhaswamy_Temple_Thiruvananthapuram.jpg', // Padmanabhaswamy Temple
+  wayanad: 'https://images.unsplash.com/photo-1616489953149-8d48f7601b31?auto=format&fit=crop&w=800&q=80', // Chembra Peak & Banasura
   chikmagalur: 'https://images.unsplash.com/photo-1596895111956-bf1cf0599ce5?auto=format&fit=crop&w=800&q=80', // Mullayanagiri
   coorg: 'https://images.unsplash.com/photo-1598894101832-61a7a02c3809?auto=format&fit=crop&w=800&q=80', // Abbey Falls
-  visakhapatnam: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80', // RK Beach
-  kolkata: 'https://images.unsplash.com/photo-1558431382-27e303142255?auto=format&fit=crop&w=800&q=80', // Victoria Memorial
+  visakhapatnam: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/91/Dolphin%27s_nose_and_harbour_in_Visakhapatnam.jpg/960px-Dolphin%27s_nose_and_harbour_in_Visakhapatnam.jpg', // RK Beach & Dolphin Nose
+  kolkata: 'https://images.unsplash.com/photo-1558431382-27e303142255?auto=format&fit=crop&w=800&q=80', // Victoria Memorial / Howrah Bridge
   darjeeling: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/96/DarjeelingTrainFruitshop_%282%29.jpg/960px-DarjeelingTrainFruitshop_%282%29.jpg', // Himalayan Toy Train
   puri: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b7/Shri_Jagannath_temple.jpg/960px-Shri_Jagannath_temple.jpg', // Jagannath Temple
   bhubaneswar: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5d/Lingaraj_Temple_%2C_Bhubaneswar.jpg/960px-Lingaraj_Temple_%2C_Bhubaneswar.jpg', // Lingaraj Temple
-  guwahati: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=800&q=80', // Kamakhya Temple
-  shillong: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80', // Living Root Bridges
+  guwahati: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/5/52/Kamakhya_Temple_Guwahati.jpg/960px-Kamakhya_Temple_Guwahati.jpg', // Kamakhya Temple
+  shillong: 'https://images.unsplash.com/photo-1626014303757-646654714152?auto=format&fit=crop&w=800&q=80', // Umiam Lake & Hills
   gangtok: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/99/Rumtek_Monastery_alias_Dharma_Chakra_Centre_near_Gangtok%2C_East_Sikkim_09.jpg/960px-Rumtek_Monastery_alias_Dharma_Chakra_Centre_near_Gangtok%2C_East_Sikkim_09.jpg', // Rumtek Monastery
   raipur: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b7/Arieal_View_from_Maa_Bamleshwari_Devi_Temple_on_a_hilltop.JPG/960px-Arieal_View_from_Maa_Bamleshwari_Devi_Temple_on_a_hilltop.JPG', // Marine Drive & Chhattisgarh
   kyoto: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80', // Fushimi Inari Torii Gates
   dubai: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80', // Burj Khalifa
+  'abu dhabi': 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80', // Grand Mosque
   singapore: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=800&q=80', // Marina Bay Sands
   zurich: 'https://images.unsplash.com/photo-1515488764276-beab7607c1e6?auto=format&fit=crop&w=800&q=80', // Lake Zurich
   bangkok: 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=800&q=80', // Wat Arun
   bali: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80', // Ulun Danu
   kathmandu: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80', // Pashupatinath
-  colombo: 'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=800&q=80', // Sigiriya
+  kandy: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4e/Temple_of_the_Tooth_%28Sri_Dalada_Maligawa%29.jpg/960px-Temple_of_the_Tooth_%28Sri_Dalada_Maligawa%29.jpg', // Temple of Tooth
+  colombo: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d3/Colombo_Lotus_Tower_2022.jpg/960px-Colombo_Lotus_Tower_2022.jpg', // Colombo Lotus Tower
+  doha: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80', // Museum of Islamic Art
+  'kuala lumpur': 'https://images.unsplash.com/photo-1508964942454-1a56651d54ac?auto=format&fit=crop&w=800&q=80', // Petronas Towers
+  thimphu: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80', // Buddha Dordenma
   male: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=800&q=80' // Maldives Overwater
 };
 
@@ -247,9 +252,7 @@ export default function DiscoverView({
               const nameKey = (pkg.name || '').toLowerCase();
               const cityImg = CITY_LANDMARK_IMAGES[cityKey] || Object.entries(CITY_LANDMARK_IMAGES).find(([k]) => cityKey.includes(k) || nameKey.includes(k))?.[1];
 
-              const heroImg = (pkg.hero_image && (pkg.hero_image.startsWith('http') || pkg.hero_image.startsWith('/')))
-                ? pkg.hero_image
-                : (cityImg || THEME_FALLBACK_IMAGES[pkg.theme] || THEME_FALLBACK_IMAGES.adventure);
+              const heroImg = cityImg || (pkg.hero_image && !pkg.hero_image.includes('photo-1507525428034-b723cf961d3e') ? pkg.hero_image : null) || THEME_FALLBACK_IMAGES[pkg.theme] || THEME_FALLBACK_IMAGES.adventure;
               const rawTitle = String(pkg.name || pkg.title || 'Tour Package');
               const displayTitle = rawTitle.replace(/[\ufffd\uFFFD\u2014\u2013\u2015]+/g, '—').replace(/^[—\-\s]+|[—\-\s]+$/g, '').trim();
               const tagsList = Array.isArray(pkg.tags)

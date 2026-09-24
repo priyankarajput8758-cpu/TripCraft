@@ -206,7 +206,7 @@ export default function App() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [bookingData, setBookingData]             = useState(null);
   const [bookingResult, setBookingResult]         = useState(null);
-  const [realWorldEnabled, setRealWorldEnabled]   = useState(false);
+  const [realWorldEnabled, setRealWorldEnabled]   = useState(true);
   const [architectInitialState, setArchitectInitialState] = useState(null);
 
   /* User Preference Inputs */

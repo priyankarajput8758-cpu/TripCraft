@@ -33,7 +33,16 @@ class PricingEngine:
             ).fetchone()
 
             if not pkg:
-                raise ValueError(f"Package not found: {package_id}")
+                if package_id == "pkg_custom_architect" or str(package_id).startswith("pkg_custom"):
+                    pkg = {
+                        "package_id": "pkg_custom_architect",
+                        "name": "Custom Destination Architect Tour",
+                        "base_price": "25000.00",
+                        "currency": "INR",
+                        "duration_days": duration_days or 3
+                    }
+                else:
+                    raise ValueError(f"Package not found: {package_id}")
 
             base_price = to_decimal(pkg["base_price"])
             currency = pkg["currency"]
@@ -176,7 +185,22 @@ class PricingEngine:
 
                 if guide:
                     day_rate = to_decimal(guide["day_rate"])
+                    guide_curr = guide["currency"] or "INR"
                     days = Decimal(str(trip_duration))
+
+                    # If guide currency differs from package currency, convert via exchange parity
+                    EXCHANGE_RATES_TO_INR = {
+                        "INR": Decimal("1.00"), "USD": Decimal("86.50"), "EUR": Decimal("92.00"),
+                        "GBP": Decimal("110.00"), "JPY": Decimal("0.58"), "CHF": Decimal("98.00"),
+                        "AED": Decimal("23.55"), "SGD": Decimal("64.50"), "THB": Decimal("2.45"),
+                        "NPR": Decimal("0.625"), "LKR": Decimal("0.29"), "QAR": Decimal("23.75"),
+                        "MYR": Decimal("19.50"), "MVR": Decimal("5.60"), "BTN": Decimal("1.00"),
+                        "IDR": Decimal("0.0053")
+                    }
+                    if guide_curr != currency:
+                        guide_inr = day_rate * EXCHANGE_RATES_TO_INR.get(guide_curr, Decimal("1.00"))
+                        pkg_unit_inr = EXCHANGE_RATES_TO_INR.get(currency, Decimal("1.00"))
+                        day_rate = (guide_inr / pkg_unit_inr).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
                     multiplier = Decimal("1.00")
                     if start_date:
@@ -200,6 +224,7 @@ class PricingEngine:
                         "specialisation": guide["specialisation"],
                         "rating": float(guide["rating"]) if guide["rating"] else 0.0,
                         "day_rate": format_money(day_rate),
+                        "currency": currency,
                         "days_booked": trip_duration,
                         "price_multiplier": str(multiplier),
                         "total_cost": format_money(guide_cost)
@@ -210,11 +235,18 @@ class PricingEngine:
             total_package_portion = per_person_subtotal * Decimal(str(travelers))
             total_price = (total_package_portion + guide_cost + market_hotel_cost).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
+            CURRENCY_SYMBOLS = {
+                "INR": "₹", "JPY": "¥", "USD": "$", "EUR": "€", "GBP": "£",
+                "CHF": "CHF ", "AED": "AED ", "SGD": "S$", "THB": "฿",
+                "NPR": "NPR ", "LKR": "LKR ", "QAR": "QAR ", "MYR": "MYR ",
+                "MVR": "MVR ", "BTN": "BTN ", "IDR": "Rp "
+            }
+
             return {
                 "package_id": package_id,
                 "package_name": pkg["name"],
                 "currency": currency,
-                "currency_symbol": "₹" if currency == "INR" else f"{currency} ",
+                "currency_symbol": CURRENCY_SYMBOLS.get(currency, f"{currency} "),
                 "base_price": format_money(base_price),
                 "num_travelers": travelers,
                 "per_person_subtotal": format_money(per_person_subtotal),

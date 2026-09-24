@@ -195,10 +195,15 @@ export default function CustomizerStudio({
       endDate,
       durationDays,
       numTravelers,
+      partySize: numTravelers,
+      currency: pkgCurrency,
+      currencySymbol: currencySymbol,
+      totalPrice: grandCalculatedTotal.toFixed(2),
       pricing: pricingResult || {
         base_price: pkg.base_price,
-        total_price: displayTotal,
-        currency: pkg.currency || 'INR'
+        total_price: grandCalculatedTotal.toFixed(2),
+        currency: pkgCurrency,
+        currency_symbol: currencySymbol
       }
     });
   };
@@ -566,6 +571,8 @@ export default function CustomizerStudio({
             onSelectGuide={setSelectedGuide}
             preferredLanguage={preferredLanguage}
             availableGuides={packageDetailData?.available_guides || []}
+            currencySymbol={currencySymbol}
+            packageCurrency={pkgCurrency}
           />
 
           {/* 5. Recommended Add-ons Panel */}

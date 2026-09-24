@@ -41,7 +41,7 @@ L.Icon.Default.mergeOptions({
 });
 
 export default function DestinationExplorer({
-  externalSupplyMode = false,
+  externalSupplyMode = true,
   onBookingComplete,
   initialState = null,
   preferredLanguage = 'en',
@@ -75,6 +75,8 @@ export default function DestinationExplorer({
     price_per_night: 3500,
     type: 'standard'
   });
+  const userSelectedHotelRef = useRef(false);
+  const [spotSearchTerms, setSpotSearchTerms] = useState({});
 
   // Day-wise matrix state: array of { day_number, selected_activities: [], selected_hotel: {} }
   const [dayMatrix, setDayMatrix] = useState([]);
@@ -189,6 +191,7 @@ export default function DestinationExplorer({
 
     setLoadingExplore(true);
     setSynthesizedTrip(null);
+    userSelectedHotelRef.current = false;
     try {
       const res = await api.exploreDestination(query, radiusMeters);
       if (res && res.status === 'success') {
@@ -246,7 +249,7 @@ export default function DestinationExplorer({
       const res = await api.searchLiveHotels(cityName);
       const list = Array.isArray(res) ? res : (res?.hotels || res?.data || []);
       setLiveHotels(list);
-      if (externalSupplyMode && list.length > 0) {
+      if (externalSupplyMode && list.length > 0 && !userSelectedHotelRef.current) {
         const topH = list[0];
         const rateNum = topH.rate_per_night || 3500;
         setMasterHotel({
@@ -263,9 +266,9 @@ export default function DestinationExplorer({
     }
   };
 
-  // When externalSupplyMode toggles, auto-select live Google hotel
+  // When externalSupplyMode toggles, auto-select live Google hotel only if user has not picked a specific stay
   useEffect(() => {
-    if (externalSupplyMode && liveHotels.length > 0) {
+    if (externalSupplyMode && liveHotels.length > 0 && !userSelectedHotelRef.current) {
       const topH = liveHotels[0];
       const rateNum = topH.rate_per_night || 3500;
       setMasterHotel({
@@ -284,7 +287,7 @@ export default function DestinationExplorer({
         }
       })));
     }
-  }, [externalSupplyMode]);
+  }, [externalSupplyMode, liveHotels]);
 
   // Setup Leaflet Map whenever geoData or attractions update
   useEffect(() => {
@@ -382,6 +385,7 @@ export default function DestinationExplorer({
 
   // Select master hotel (applies to all days in 'same' stay mode)
   const handleSelectMasterHotel = (hotelObj) => {
+    userSelectedHotelRef.current = true;
     setMasterHotel(hotelObj);
     setDayMatrix(prev => prev.map(d => ({ ...d, selected_hotel: hotelObj })));
   };
@@ -530,25 +534,26 @@ export default function DestinationExplorer({
   return (
     <div className="space-y-8 animate-fadeIn">
       {/* Hero Search & Geocoding Bar */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-teal-950/70 border border-teal-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 shadow-xl border border-[#84D175]/35 bg-[#0C2D45] text-[#FFF8D2] space-y-5">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-[#84D175]/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
-              <span className="px-3 py-1 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30 text-xs font-bold flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-teal-400" />
+              <span className="px-3 py-1 rounded-full bg-[#84D175]/20 text-[#84D175] border border-[#84D175]/40 text-xs font-bold flex items-center gap-1.5 backdrop-blur-sm">
+                <Sparkles className="w-3.5 h-3.5 text-[#84D175]" />
                 Autonomous Custom Package Engine
               </span>
               {externalSupplyMode && (
-                <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 text-amber-400" />
+                <span className="px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-bold flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5 text-amber-300" />
                   Live Google Hotels Active
                 </span>
               )}
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-black text-[#FFF8D2] tracking-tight">
               {t('custom_architect_title', selectedLang)}
             </h2>
-            <p className="text-sm text-slate-300 max-w-2xl leading-relaxed">
+            <p className="text-sm text-[#D3E8D0] max-w-2xl leading-relaxed">
               {t('custom_architect_desc', selectedLang)}
             </p>
           </div>
@@ -560,16 +565,16 @@ export default function DestinationExplorer({
             e.preventDefault();
             handleExploreDestination();
           }}
-          className="flex flex-col sm:flex-row gap-3 pt-2"
+          className="relative z-10 flex flex-col sm:flex-row gap-3 pt-1"
         >
           <div className="relative flex-1">
-            <MapPin className="w-5 h-5 text-teal-400 absolute left-3.5 top-3.5" />
+            <MapPin className="w-5 h-5 text-[#2D6A24] absolute left-3.5 top-3.5" />
             <input
               type="text"
               value={destinationQuery}
               onChange={(e) => setDestinationQuery(e.target.value)}
               placeholder="Enter destination (e.g. Chikmagalur, Ooty, Coorg, Wayanad)..."
-              className="w-full bg-slate-950/80 border border-slate-700 text-white rounded-2xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+              className="w-full bg-white/95 border border-[#84D175]/40 text-[#1a2e1a] rounded-2xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-[#84D175] focus:ring-2 focus:ring-[#84D175]/20 placeholder:text-slate-400 font-medium shadow-xs"
             />
           </div>
 
@@ -577,28 +582,28 @@ export default function DestinationExplorer({
             <select
               value={radiusMeters}
               onChange={(e) => setRadiusMeters(Number(e.target.value))}
-              className="bg-slate-950 border border-slate-700 text-slate-200 text-xs font-bold rounded-2xl px-3 py-3 focus:outline-none focus:border-teal-500 cursor-pointer"
+              className="bg-white border border-[#84D175]/40 text-[#1a2e1a] text-xs font-bold rounded-2xl px-3 py-3 focus:outline-none focus:border-[#84D175] cursor-pointer shadow-xs"
             >
-              <option value={15000} className="bg-slate-900 text-white font-bold">15 km (City & Core Hub)</option>
-              <option value={30000} className="bg-slate-900 text-white font-bold">30 km (Suburbs & Hilltops)</option>
-              <option value={50000} className="bg-slate-900 text-white font-bold">50 km (Regional Excursion)</option>
-              <option value={90000} className="bg-slate-900 text-white font-bold">90 km (Full 90km Exploration)</option>
+              <option value={15000} className="text-[#1a2e1a] font-bold">15 km (City & Core Hub)</option>
+              <option value={30000} className="text-[#1a2e1a] font-bold">30 km (Suburbs & Hilltops)</option>
+              <option value={50000} className="text-[#1a2e1a] font-bold">50 km (Regional Excursion)</option>
+              <option value={90000} className="text-[#1a2e1a] font-bold">90 km (Full 90km Exploration)</option>
             </select>
 
             <button
               type="submit"
               disabled={loadingExplore}
-              className="px-6 py-3 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold text-sm rounded-2xl transition-all shadow-lg shadow-teal-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              className="px-6 py-3 bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-sm rounded-2xl transition-all shadow-md shadow-[#84D175]/30 flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95"
             >
               {loadingExplore ? (
                 <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  Scanning...
+                  <RefreshCw className="w-4 h-4 animate-spin text-[#1a2e1a]" />
+                  <span>Scanning...</span>
                 </>
               ) : (
                 <>
-                  <Compass className="w-4 h-4" />
-                  Discover Spots
+                  <Compass className="w-4 h-4 text-[#1a2e1a]" />
+                  <span>Discover Spots</span>
                 </>
               )}
             </button>
@@ -607,15 +612,15 @@ export default function DestinationExplorer({
 
         {/* Destination Discovery Status Pill */}
         {geoData && (
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800/80 text-xs text-slate-300">
+          <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#84D175]/30 text-xs text-[#D3E8D0]">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span className="w-2 h-2 rounded-full bg-[#84D175] animate-ping" />
               <span className="font-semibold text-white">Geocoded Location:</span>
-              <span className="text-teal-300">{geoData.display_name || geoData.name}</span>
-              <span className="text-slate-500 font-mono">({geoData.lat?.toFixed(4)}, {geoData.lng?.toFixed(4)})</span>
+              <span className="text-[#FFF8D2] font-bold">{geoData.display_name || geoData.name}</span>
+              <span className="text-[#D3E8D0]/70 font-mono">({geoData.lat?.toFixed(4)}, {geoData.lng?.toFixed(4)})</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-md bg-teal-500/10 text-teal-400 border border-teal-500/20 font-mono">
+              <span className="px-2.5 py-0.5 rounded-md bg-[#84D175]/20 text-[#FFF8D2] border border-[#84D175]/40 font-mono font-bold">
                 {attractions.length} Tourist Landmarks Discovered (within {radiusMeters / 1000}km)
               </span>
             </div>
@@ -626,11 +631,11 @@ export default function DestinationExplorer({
       {/* Interactive Map & Tourist Spots Discovery Row */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Leaflet Map Column */}
-        <div className="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl flex flex-col justify-between">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+        <div className="lg:col-span-7 bg-white/95 border border-[#84D175]/35 rounded-3xl p-5 space-y-4 shadow-sm flex flex-col justify-between text-[#1a2e1a]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#84D175]/30 pb-3">
             <div className="flex items-center space-x-2">
-              <Compass className="w-5 h-5 text-teal-400" />
-              <h3 className="text-sm font-bold text-white">
+              <Compass className="w-5 h-5 text-[#2D6A24]" />
+              <h3 className="text-sm font-black text-[#1a2e1a]">
                 {t('interactive_map_title', selectedLang)}
               </h3>
             </div>
@@ -646,10 +651,10 @@ export default function DestinationExplorer({
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
                     selectedCategory === cat.id
-                      ? 'bg-teal-500 text-slate-950 font-bold'
-                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                      ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs'
+                      : 'bg-slate-100 text-[#4a5e4a] hover:bg-slate-200'
                   }`}
                 >
                   {cat.label}
@@ -661,33 +666,33 @@ export default function DestinationExplorer({
           {/* Leaflet Map Canvas */}
           <div
             ref={mapRef}
-            className="w-full h-80 rounded-2xl overflow-hidden border border-slate-700/80 shadow-inner z-0"
+            className="w-full h-80 rounded-2xl overflow-hidden border border-[#84D175]/30 shadow-inner z-0"
             style={{ minHeight: '360px' }}
           />
 
-          <div className="text-[11px] text-slate-400 flex items-center justify-between pt-1">
+          <div className="text-[11px] text-[#4a5e4a] flex items-center justify-between pt-1 font-medium">
             <span>Powered by OpenStreetMap + OpenTripMap Live POIs (Click spot pin for details)</span>
-            <span className="text-teal-400 font-mono">Showing {filteredAttractions.length} spots</span>
+            <span className="text-[#2D6A24] font-bold font-mono">Showing {filteredAttractions.length} spots</span>
           </div>
         </div>
 
         {/* Tourist Spots Directory Column */}
-        <div className="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl flex flex-col">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="lg:col-span-5 bg-white/95 border border-[#84D175]/35 rounded-3xl p-5 space-y-4 shadow-sm flex flex-col text-[#1a2e1a]">
+          <div className="flex items-center justify-between border-b border-[#84D175]/30 pb-3">
             <div className="flex items-center space-x-2">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <h3 className="text-sm font-bold text-white">
+              <Sparkles className="w-4 h-4 text-[#2D6A24]" />
+              <h3 className="text-sm font-black text-[#1a2e1a]">
                 {t('discovered_attractions_heading', selectedLang)}
               </h3>
             </div>
-            <span className="text-[11px] text-slate-400">
+            <span className="text-[11px] text-[#4a5e4a] font-medium">
               {t('click_spot_inspect_add', selectedLang)}
             </span>
           </div>
 
           <div className="space-y-2 overflow-y-auto max-h-[360px] pr-1">
             {filteredAttractions.length === 0 ? (
-              <div className="text-center py-12 text-xs text-slate-400">
+              <div className="text-center py-12 text-xs text-[#4a5e4a]">
                 No spots found in this category. Expand radius or select "All".
               </div>
             ) : (
@@ -702,22 +707,22 @@ export default function DestinationExplorer({
                         mapInstanceRef.current.flyTo([spot.lat, spot.lng], 14, { duration: 1.0 });
                       }
                     }}
-                    className="p-3 bg-slate-800/50 hover:bg-slate-800 border border-slate-700/60 hover:border-teal-500/50 rounded-xl transition-all cursor-pointer flex items-start justify-between gap-3 group"
+                    className="p-3 bg-slate-50/80 hover:bg-[#FFF8D2]/40 border border-slate-200 hover:border-[#84D175] rounded-xl transition-all cursor-pointer flex items-start justify-between gap-3 group shadow-2xs"
                   >
                     <div className="space-y-1 min-w-0 flex-1">
-                      <div className="text-xs font-bold text-white group-hover:text-teal-300 truncate">
+                      <div className="text-xs font-bold text-[#1a2e1a] group-hover:text-[#2D6A24] truncate">
                         {spot.name}
                       </div>
-                      <div className="text-[10px] text-slate-400 flex items-center gap-2">
-                        <span className="px-1.5 py-0.5 rounded bg-slate-900 text-teal-400 font-medium">
+                      <div className="text-[10px] text-[#4a5e4a] flex items-center gap-2">
+                        <span className="px-1.5 py-0.5 rounded bg-[#84D175]/15 text-[#2D6A24] font-bold">
                           {spot.category}
                         </span>
                         <span>📍 {distText}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0 mt-1">
-                      <Eye className="w-3.5 h-3.5 text-slate-400 group-hover:text-teal-300" />
-                      <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-teal-400 transition-transform group-hover:translate-x-0.5" />
+                      <Eye className="w-3.5 h-3.5 text-[#4a5e4a] group-hover:text-[#2D6A24]" />
+                      <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#2D6A24] transition-transform group-hover:translate-x-0.5" />
                     </div>
                   </div>
                 );
@@ -729,8 +734,8 @@ export default function DestinationExplorer({
 
       {/* Spot Detail Modal Card */}
       {activeSpotModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in">
-          <div className="bg-slate-900 border border-teal-500/50 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 bg-[#0C2D45]/70 backdrop-blur-md flex items-center justify-center p-4 animate-in">
+          <div className="bg-white border border-[#84D175]/40 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl space-y-4 text-[#1a2e1a]">
             {/* Modal Image Hero */}
             <div className="relative h-48 w-full bg-slate-950 overflow-hidden">
               <img
@@ -738,15 +743,15 @@ export default function DestinationExplorer({
                 alt={activeSpotModal.name}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-black/40" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
               <button
                 onClick={() => setActiveSpotModal(null)}
-                className="absolute top-3 right-3 p-2 rounded-full bg-black/60 text-white hover:bg-black/90 transition-colors cursor-pointer"
+                className="absolute top-3 right-3 p-2 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
               <div className="absolute bottom-3 left-4 right-4">
-                <span className="px-2.5 py-0.5 rounded-full bg-teal-500 text-slate-950 text-[10px] font-extrabold uppercase tracking-wider">
+                <span className="px-2.5 py-0.5 rounded-full bg-[#84D175] text-[#1a2e1a] text-[10px] font-extrabold uppercase tracking-wider">
                   {activeSpotModal.category}
                 </span>
                 <h3 className="text-lg font-black text-white truncate mt-1">
@@ -757,9 +762,9 @@ export default function DestinationExplorer({
 
             {/* Modal Content & Distance */}
             <div className="p-5 space-y-4 pt-0">
-              <div className="flex items-center justify-between text-xs text-slate-300 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
-                <div className="flex items-center gap-1.5 text-teal-300 font-semibold">
-                  <MapPin className="w-4 h-4 text-teal-400 shrink-0" />
+              <div className="flex items-center justify-between text-xs text-[#1a2e1a] bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <div className="flex items-center gap-1.5 text-[#2D6A24] font-semibold">
+                  <MapPin className="w-4 h-4 text-[#2D6A24] shrink-0" />
                   <span>Distance: {activeSpotModal.dist_formatted || (activeSpotModal.dist_meters ? (activeSpotModal.dist_meters >= 1000 ? (activeSpotModal.dist_meters / 1000).toFixed(1) + ' km' : activeSpotModal.dist_meters + ' m') : 'Central Hub')}</span>
                 </div>
                 {activeSpotModal.lat && activeSpotModal.lng && (
@@ -769,13 +774,13 @@ export default function DestinationExplorer({
                 )}
               </div>
 
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <p className="text-xs text-[#4a5e4a] leading-relaxed">
                 {activeSpotModal.short_desc || `Explore ${activeSpotModal.name}, a distinguished ${activeSpotModal.category?.toLowerCase() || 'attraction'} in the region.`}
               </p>
 
               {/* Quick Add to Day Matrix Buttons */}
-              <div className="space-y-2 pt-2 border-t border-slate-800">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              <div className="space-y-2 pt-2 border-t border-[#84D175]/20">
+                <span className="text-[11px] font-bold text-[#4a5e4a] uppercase tracking-wider block">
                   Quick Add to Itinerary Matrix:
                 </span>
                 <div className="flex flex-wrap gap-2">
@@ -787,8 +792,8 @@ export default function DestinationExplorer({
                         onClick={() => handleAddActivityFromModal(day.day_number, activeSpotModal.name)}
                         className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                           isAdded
-                            ? 'bg-teal-500 text-slate-950 shadow-sm'
-                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700'
+                            ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs font-black'
+                            : 'bg-white text-[#4a5e4a] hover:bg-[#FFF8D2] hover:text-[#1a2e1a] border border-[#84D175]/30'
                         }`}
                       >
                         {isAdded ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <Plus className="w-3.5 h-3.5" />}
@@ -801,7 +806,7 @@ export default function DestinationExplorer({
 
               <button
                 onClick={() => setActiveSpotModal(null)}
-                className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-colors cursor-pointer mt-2"
+                className="w-full py-2.5 rounded-xl bg-[#1a2e1a] hover:bg-slate-800 text-white font-bold text-xs transition-colors cursor-pointer mt-2"
               >
                 Close Window
               </button>
@@ -811,14 +816,14 @@ export default function DestinationExplorer({
       )}
 
       {/* Day-Wise Multi-Select Experience Matrix Studio */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+      <div className="bg-white/95 border border-[#84D175]/35 rounded-3xl p-6 sm:p-8 space-y-6 shadow-sm text-[#1a2e1a]">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#84D175]/30 pb-5">
           <div className="space-y-1">
-            <h3 className="text-xl font-bold text-white flex items-center gap-2.5">
-              <Calendar className="w-5 h-5 text-teal-400" />
+            <h3 className="text-xl font-black text-[#1a2e1a] flex items-center gap-2.5">
+              <Calendar className="w-5 h-5 text-[#2D6A24]" />
               {t('day_wise_matrix_title', selectedLang)}
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[#4a5e4a] font-medium">
               {t('day_wise_matrix_sub', selectedLang)}
             </p>
           </div>
@@ -826,41 +831,41 @@ export default function DestinationExplorer({
           {/* Duration, Party Size & Pace Controls */}
           <div className="flex flex-wrap items-center gap-3">
             {/* Party Size Selector */}
-            <div className="flex items-center space-x-2 bg-slate-800/90 px-3 py-1.5 rounded-xl border border-slate-700">
-              <span className="text-xs font-bold text-slate-300">Travelers:</span>
+            <div className="flex items-center space-x-2 bg-white px-3 py-1.5 rounded-xl border border-[#84D175]/40 shadow-2xs">
+              <span className="text-xs font-bold text-[#4a5e4a]">Travelers:</span>
               <select
                 value={numTravelers}
                 onChange={(e) => setNumTravelers(Number(e.target.value))}
-                className="bg-slate-900 border border-slate-700 text-xs font-bold text-teal-300 rounded-lg px-2.5 py-1 focus:outline-none cursor-pointer"
+                className="bg-white border border-[#84D175]/30 text-xs font-bold text-[#1a2e1a] rounded-lg px-2.5 py-1 focus:outline-none cursor-pointer"
               >
-                <option value={1} className="bg-slate-900 text-white font-bold">1 Person (Solo)</option>
-                <option value={2} className="bg-slate-900 text-white font-bold">2 Persons (Couple/Twin)</option>
-                <option value={3} className="bg-slate-900 text-white font-bold">3 Persons (Triple)</option>
-                <option value={4} className="bg-slate-900 text-white font-bold">4 Persons (Family/Group)</option>
-                <option value={6} className="bg-slate-900 text-white font-bold">6 Persons (Large Group)</option>
+                <option value={1} className="text-[#1a2e1a] font-bold">1 Person (Solo)</option>
+                <option value={2} className="text-[#1a2e1a] font-bold">2 Persons (Couple/Twin)</option>
+                <option value={3} className="text-[#1a2e1a] font-bold">3 Persons (Triple)</option>
+                <option value={4} className="text-[#1a2e1a] font-bold">4 Persons (Family/Group)</option>
+                <option value={6} className="text-[#1a2e1a] font-bold">6 Persons (Large Group)</option>
               </select>
             </div>
 
             {/* Duration Selector */}
-            <div className="flex items-center space-x-2 bg-slate-800/90 px-3 py-1.5 rounded-xl border border-slate-700">
-              <span className="text-xs font-bold text-slate-300">Duration:</span>
+            <div className="flex items-center space-x-2 bg-white px-3 py-1.5 rounded-xl border border-[#84D175]/40 shadow-2xs">
+              <span className="text-xs font-bold text-[#4a5e4a]">Duration:</span>
               <select
                 value={durationDays}
                 onChange={(e) => setDurationDays(Number(e.target.value))}
-                className="bg-slate-900 border border-slate-700 text-xs font-bold text-teal-300 rounded-lg px-2.5 py-1 focus:outline-none cursor-pointer"
+                className="bg-white border border-[#84D175]/30 text-xs font-bold text-[#1a2e1a] rounded-lg px-2.5 py-1 focus:outline-none cursor-pointer"
               >
-                <option value={1} className="bg-slate-900 text-white font-bold">1 Day (Express)</option>
-                <option value={2} className="bg-slate-900 text-white font-bold">2 Days (Weekend)</option>
-                <option value={3} className="bg-slate-900 text-white font-bold">3 Days (Standard)</option>
-                <option value={4} className="bg-slate-900 text-white font-bold">4 Days (Extended)</option>
-                <option value={5} className="bg-slate-900 text-white font-bold">5 Days (Complete)</option>
-                <option value={6} className="bg-slate-900 text-white font-bold">6 Days</option>
-                <option value={7} className="bg-slate-900 text-white font-bold">7 Days (Grand)</option>
+                <option value={1} className="text-[#1a2e1a] font-bold">1 Day (Express)</option>
+                <option value={2} className="text-[#1a2e1a] font-bold">2 Days (Weekend)</option>
+                <option value={3} className="text-[#1a2e1a] font-bold">3 Days (Standard)</option>
+                <option value={4} className="text-[#1a2e1a] font-bold">4 Days (Extended)</option>
+                <option value={5} className="text-[#1a2e1a] font-bold">5 Days (Complete)</option>
+                <option value={6} className="text-[#1a2e1a] font-bold">6 Days</option>
+                <option value={7} className="text-[#1a2e1a] font-bold">7 Days (Grand)</option>
               </select>
             </div>
 
             {/* Pace Selector */}
-            <div className="flex items-center space-x-1.5 bg-slate-800/90 p-1 rounded-xl border border-slate-700 text-xs">
+            <div className="flex items-center space-x-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
               {[
                 { id: 'relaxed', label: t('relaxed_pace', selectedLang) },
                 { id: 'balanced', label: t('balanced_pace', selectedLang) },
@@ -871,8 +876,8 @@ export default function DestinationExplorer({
                   onClick={() => setPacePreference(p.id)}
                   className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
                     pacePreference === p.id
-                      ? 'bg-teal-500 text-slate-950 shadow-xs'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs font-black'
+                      : 'text-[#4a5e4a] hover:text-[#1a2e1a]'
                   }`}
                 >
                   {p.label}
@@ -883,37 +888,37 @@ export default function DestinationExplorer({
         </div>
 
         {/* ── MASTER STAY SELECTOR & RADIO TOGGLE ── */}
-        <div className="bg-slate-950/70 border border-teal-500/30 rounded-2xl p-5 space-y-4 shadow-lg">
+        <div className="bg-[#FFF8D2]/40 border border-[#84D175]/35 rounded-2xl p-5 space-y-4 shadow-2xs text-[#1a2e1a]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center space-x-2">
-              <Building2 className="w-5 h-5 text-teal-400" />
-              <h4 className="text-sm font-bold text-white">
+              <Building2 className="w-5 h-5 text-[#2D6A24]" />
+              <h4 className="text-sm font-black text-[#1a2e1a]">
                 Accommodation Preference Across All Days
               </h4>
             </div>
 
             {/* Radio Toggle: Same Stay Throughout vs Different Stays */}
-            <div className="flex items-center space-x-4 bg-slate-900 p-2 rounded-xl border border-slate-800 text-xs font-bold">
-              <label className="flex items-center space-x-2 cursor-pointer text-slate-200 hover:text-white">
+            <div className="flex items-center space-x-4 bg-white p-2 rounded-xl border border-[#84D175]/30 text-xs font-bold text-[#1a2e1a] shadow-2xs">
+              <label className="flex items-center space-x-2 cursor-pointer text-[#1a2e1a] hover:text-[#2D6A24]">
                 <input
                   type="radio"
                   name="stay_mode"
                   value="same"
                   checked={stayMode === 'same'}
                   onChange={() => setStayMode('same')}
-                  className="accent-teal-500 w-4 h-4 cursor-pointer"
+                  className="accent-[#2D6A24] w-4 h-4 cursor-pointer"
                 />
                 <span>Same Stay Throughout Trip</span>
               </label>
 
-              <label className="flex items-center space-x-2 cursor-pointer text-slate-200 hover:text-white">
+              <label className="flex items-center space-x-2 cursor-pointer text-[#1a2e1a] hover:text-[#2D6A24]">
                 <input
                   type="radio"
                   name="stay_mode"
                   value="different"
                   checked={stayMode === 'different'}
                   onChange={() => setStayMode('different')}
-                  className="accent-teal-500 w-4 h-4 cursor-pointer"
+                  className="accent-[#2D6A24] w-4 h-4 cursor-pointer"
                 />
                 <span>Different Stays Per Day</span>
               </label>
@@ -922,12 +927,12 @@ export default function DestinationExplorer({
 
           {/* Master Hotel Selector (Rendered when stayMode === 'same') */}
           {stayMode === 'same' ? (
-            <div className="space-y-2 pt-2 border-t border-slate-800">
+            <div className="space-y-2 pt-2 border-t border-[#84D175]/20">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-teal-300 uppercase tracking-wider">
+                <span className="text-xs font-bold text-[#2D6A24] uppercase tracking-wider">
                   {t('select_master_stay', selectedLang).replace('{days}', durationDays)}
                 </span>
-                <span className="text-[11px] text-slate-400 bg-teal-500/10 text-teal-300 px-2 py-0.5 rounded border border-teal-500/20 font-medium">
+                <span className="text-[11px] bg-[#84D175]/20 text-[#2D6A24] px-2 py-0.5 rounded border border-[#84D175]/40 font-bold">
                   🔒 Individual day stays locked
                 </span>
               </div>
@@ -949,17 +954,17 @@ export default function DestinationExplorer({
                         })}
                         className={`p-3 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
                           isSelected
-                            ? 'bg-amber-950/50 border-amber-500 text-white font-semibold shadow-md'
-                            : 'bg-slate-900/80 border-slate-800 text-slate-300 hover:bg-slate-900'
+                            ? 'bg-amber-50/80 border-2 border-amber-500 text-[#1a2e1a] font-bold shadow-xs'
+                            : 'bg-white border-slate-200 text-[#1a2e1a] hover:bg-slate-50'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-1 mb-2">
-                          <span className="text-xs font-bold text-white line-clamp-1">{h.name}</span>
-                          {isSelected && <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />}
+                          <span className="text-xs font-bold text-[#1a2e1a] line-clamp-1">{h.name}</span>
+                          {isSelected && <CheckCircle2 className="w-4 h-4 text-amber-600 shrink-0" />}
                         </div>
                         <div className="flex items-baseline justify-between text-[11px]">
-                          <span className="text-slate-400 font-medium">Live Google Rate:</span>
-                          <span className="text-amber-400 font-mono font-bold">₹{parseFloat(rateNum).toLocaleString('en-IN')}/night</span>
+                          <span className="text-[#4a5e4a] font-medium">Live Google Rate:</span>
+                          <span className="text-amber-800 font-mono font-black">₹{parseFloat(rateNum).toLocaleString('en-IN')}/night</span>
                         </div>
                       </div>
                     );
@@ -979,19 +984,19 @@ export default function DestinationExplorer({
                         onClick={() => handleSelectMasterHotel(tier)}
                         className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
                           isSelected
-                            ? 'bg-teal-950/50 border-teal-500 text-white font-semibold shadow-md'
-                            : 'bg-slate-900/80 border-slate-800 text-slate-300 hover:bg-slate-900'
+                            ? 'bg-[#84D175]/20 border-2 border-[#2D6A24] text-[#1a2e1a] font-bold shadow-xs'
+                            : 'bg-white border-slate-200 text-[#1a2e1a] hover:bg-slate-50'
                         }`}
                       >
                         <div>
-                          <div className="text-xs font-bold text-white">{tier.name}</div>
-                          <div className="text-[11px] text-slate-400 mt-0.5">Applies to all nights</div>
+                          <div className="text-xs font-bold text-[#1a2e1a]">{tier.name}</div>
+                          <div className="text-[11px] text-[#4a5e4a] mt-0.5">Applies to all nights</div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <span className="text-teal-400 font-mono font-bold text-xs">
+                          <span className="text-[#2D6A24] font-mono font-black text-xs">
                             ₹{tier.price_per_night.toLocaleString('en-IN')}/night
                           </span>
-                          {isSelected && <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0" />}
+                          {isSelected && <CheckCircle2 className="w-4 h-4 text-[#2D6A24] shrink-0" />}
                         </div>
                       </div>
                     );
@@ -1000,16 +1005,16 @@ export default function DestinationExplorer({
               )}
             </div>
           ) : (
-            <div className="text-xs text-slate-400 italic pt-1">
+            <div className="text-xs text-[#4a5e4a] italic pt-1 font-medium">
               ✓ Different stays mode active: Select custom hotels per day in the matrix cards below.
             </div>
           )}
         </div>
 
         {/* ── CUSTOM USER PREFERENCE & TIMING PROMPT INPUT ── */}
-        <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-2">
-          <label className="flex items-center space-x-2 text-xs font-bold text-slate-300 uppercase tracking-wider">
-            <Clock className="w-4 h-4 text-teal-400" />
+        <div className="bg-slate-50 border border-[#84D175]/30 rounded-2xl p-4 space-y-2 text-[#1a2e1a]">
+          <label className="flex items-center space-x-2 text-xs font-bold text-[#1a2e1a] uppercase tracking-wider">
+            <Clock className="w-4 h-4 text-[#2D6A24]" />
             <span>{t('custom_scheduling_label', selectedLang)}</span>
           </label>
           <div className="relative">
@@ -1018,7 +1023,7 @@ export default function DestinationExplorer({
               onChange={(e) => setUserCustomRequests(e.target.value)}
               rows={2}
               placeholder="e.g., 'I want to visit Mullayanagiri Peak specifically for sunset on Day 2', or 'Keep mornings relaxed with coffee tastings before 11 AM'..."
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+              className="w-full bg-white border border-[#84D175]/40 rounded-xl p-3 text-xs text-[#1a2e1a] placeholder:text-slate-400 focus:outline-none focus:border-[#84D175] focus:ring-2 focus:ring-[#84D175]/20 font-medium"
             />
           </div>
         </div>
@@ -1033,73 +1038,92 @@ export default function DestinationExplorer({
             return (
               <div
                 key={dayNum}
-                className="bg-slate-800/40 border border-slate-700/80 rounded-2xl p-5 space-y-4 flex flex-col justify-between hover:border-teal-500/40 transition-all shadow-md"
+                className="bg-white border border-[#84D175]/35 rounded-2xl p-5 space-y-4 flex flex-col justify-between hover:border-[#84D175] transition-all shadow-xs text-[#1a2e1a]"
               >
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between border-b border-slate-700/60 pb-2.5">
-                    <span className="px-2.5 py-1 rounded-lg bg-teal-500/10 text-teal-300 font-extrabold text-xs font-mono">
+                  <div className="flex items-center justify-between border-b border-[#84D175]/25 pb-2.5">
+                    <span className="px-2.5 py-1 rounded-lg bg-[#84D175]/20 text-[#2D6A24] font-extrabold text-xs font-mono">
                       DAY {dayNum}
                     </span>
-                    <span className="text-[11px] text-slate-400 font-mono">
+                    <span className="text-[11px] text-[#4a5e4a] font-mono font-bold">
                       {currentActs.length} Selected
                     </span>
                   </div>
 
                   {/* Multi-Select Checkboxes for Experiences */}
                   <div className="space-y-2">
-                    <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block">
-                      Experiences & Spots (Multi-Select):
-                    </span>
-                    <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-[#4a5e4a] uppercase tracking-wider block">
+                        Experiences & Spots ({attractions.length} Available):
+                      </span>
+                    </div>
+
+                    {attractions.length > 8 && (
+                      <input
+                        type="text"
+                        placeholder={`Search ${attractions.length} spots for Day ${dayNum}...`}
+                        value={spotSearchTerms[dayNum] || ''}
+                        onChange={(e) => setSpotSearchTerms(prev => ({ ...prev, [dayNum]: e.target.value }))}
+                        className="w-full text-[11px] px-2.5 py-1 rounded-lg border border-[#84D175]/30 bg-slate-50 text-[#1a2e1a] placeholder:text-slate-400 focus:outline-none focus:border-[#84D175]"
+                      />
+                    )}
+
+                    <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
                       {attractions.length === 0 ? (
-                        <div className="text-[11px] text-slate-500 italic py-2">
+                        <div className="text-[11px] text-[#4a5e4a] italic py-2">
                           Discovering local attractions...
                         </div>
                       ) : (
-                        attractions.slice(0, 10).map((spot, i) => {
-                          const isChecked = currentActs.includes(spot.name);
-                          return (
-                            <div
-                              key={i}
-                              onClick={() => handleToggleActivity(dayNum, spot.name)}
-                              className={`p-2 rounded-xl text-xs flex items-center space-x-2.5 cursor-pointer transition-all ${
-                                isChecked
-                                  ? 'bg-teal-950/40 border border-teal-500/60 text-white font-semibold'
-                                  : 'bg-slate-900/60 border border-slate-800 text-slate-300 hover:bg-slate-900'
-                              }`}
-                            >
-                              <div className="shrink-0 text-teal-400">
-                                {isChecked ? (
-                                  <CheckSquare className="w-4 h-4 fill-teal-500 text-slate-950" />
-                                ) : (
-                                  <Square className="w-4 h-4 text-slate-600" />
-                                )}
+                        attractions
+                          .filter(spot => {
+                            const term = (spotSearchTerms[dayNum] || '').toLowerCase().trim();
+                            if (!term) return true;
+                            return (spot.name || '').toLowerCase().includes(term) || (spot.category && spot.category.toLowerCase().includes(term));
+                          })
+                          .map((spot, i) => {
+                            const isChecked = currentActs.includes(spot.name);
+                            return (
+                              <div
+                                key={i}
+                                onClick={() => handleToggleActivity(dayNum, spot.name)}
+                                className={`p-2 rounded-xl text-xs flex items-center space-x-2.5 cursor-pointer transition-all ${
+                                  isChecked
+                                    ? 'bg-[#84D175]/25 border border-[#84D175] text-[#1a2e1a] font-bold'
+                                    : 'bg-slate-50/80 border border-slate-200 text-[#1a2e1a] hover:bg-[#FFF8D2]/40'
+                                }`}
+                              >
+                                <div className="shrink-0 text-[#2D6A24]">
+                                  {isChecked ? (
+                                    <CheckSquare className="w-4 h-4 fill-[#84D175] text-[#1a2e1a]" />
+                                  ) : (
+                                    <Square className="w-4 h-4 text-slate-400" />
+                                  )}
+                                </div>
+                                <span className="truncate flex-1 font-medium">{spot.name}</span>
                               </div>
-                              <span className="truncate flex-1 font-medium">{spot.name}</span>
-                            </div>
-                          );
-                        })
+                            );
+                          })
                       )}
                     </div>
                   </div>
 
                   {/* Radio Buttons for Stay / Hotel (Locked if stayMode === 'same') */}
-                  <div className="space-y-2 pt-2 border-t border-slate-700/40">
+                  <div className="space-y-2 pt-2 border-t border-[#84D175]/20">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+                      <span className="text-[11px] font-bold text-[#4a5e4a] uppercase tracking-wider">
                         Night {dayNum} Stay:
                       </span>
                       {stayMode === 'same' && (
-                        <span className="text-[10px] text-teal-300 bg-teal-500/10 px-1.5 py-0.5 rounded font-mono">
+                        <span className="text-[10px] bg-[#84D175]/20 text-[#2D6A24] px-1.5 py-0.5 rounded font-mono font-bold">
                           Locked (Same Stay)
                         </span>
                       )}
                     </div>
 
                     {stayMode === 'same' ? (
-                      <div className="p-2.5 bg-slate-950/60 border border-teal-500/30 rounded-xl text-xs flex items-center justify-between text-slate-200">
-                        <span className="truncate font-medium">{masterHotel?.name || 'Selected Master Stay'}</span>
-                        <span className="text-teal-400 font-mono font-bold shrink-0 ml-2">
+                      <div className="p-2.5 bg-[#FFF8D2]/40 border border-[#84D175]/30 rounded-xl text-xs flex items-center justify-between text-[#1a2e1a]">
+                        <span className="truncate font-semibold">{masterHotel?.name || 'Selected Master Stay'}</span>
+                        <span className="text-[#2D6A24] font-mono font-bold shrink-0 ml-2">
                           ₹{masterHotel?.price_per_night?.toLocaleString('en-IN')}/nt
                         </span>
                       </div>
@@ -1121,19 +1145,19 @@ export default function DestinationExplorer({
                                 })}
                                 className={`p-2 rounded-xl text-xs flex items-center justify-between cursor-pointer border transition-all ${
                                   isSelected
-                                    ? 'bg-amber-950/40 border-amber-500 text-white font-semibold'
-                                    : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:bg-slate-900'
+                                    ? 'bg-amber-50 border-amber-500 text-amber-950 font-bold'
+                                    : 'bg-white border-slate-200 text-[#1a2e1a] hover:bg-slate-50'
                                 }`}
                               >
                                 <div className="flex items-center space-x-2 truncate">
                                   <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                                    isSelected ? 'border-amber-400 bg-amber-400' : 'border-slate-600'
+                                    isSelected ? 'border-amber-500 bg-amber-500' : 'border-slate-300'
                                   }`}>
-                                    {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-slate-950" />}
+                                    {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                                   </div>
-                                  <span className="truncate font-semibold text-white">{h.name}</span>
+                                  <span className="truncate font-semibold text-[#1a2e1a]">{h.name}</span>
                                 </div>
-                                <span className="font-mono text-amber-400 text-[11px] shrink-0 font-bold">
+                                <span className="font-mono text-amber-800 text-[11px] shrink-0 font-bold">
                                   ₹{parseFloat(rateNum).toLocaleString('en-IN')}
                                 </span>
                               </div>
@@ -1155,19 +1179,19 @@ export default function DestinationExplorer({
                                 onClick={() => handleSelectHotel(dayNum, tier)}
                                 className={`p-2 rounded-xl text-xs flex items-center justify-between cursor-pointer border transition-all ${
                                   isSelected
-                                    ? 'bg-teal-950/40 border-teal-500 text-white font-semibold'
-                                    : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:bg-slate-900'
+                                    ? 'bg-[#84D175]/25 border-[#84D175] text-[#1a2e1a] font-bold'
+                                    : 'bg-white border-slate-200 text-[#1a2e1a] hover:bg-slate-50'
                                 }`}
                               >
                                 <div className="flex items-center space-x-2 truncate">
                                   <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                                    isSelected ? 'border-teal-400 bg-teal-400' : 'border-slate-600'
+                                    isSelected ? 'border-[#2D6A24] bg-[#2D6A24]' : 'border-slate-300'
                                   }`}>
-                                    {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-slate-950" />}
+                                    {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                                   </div>
-                                  <span className="truncate font-medium text-slate-200">{tier.name}</span>
+                                  <span className="truncate font-medium text-[#1a2e1a]">{tier.name}</span>
                                 </div>
-                                <span className="font-mono text-teal-400 text-[11px] shrink-0 font-bold">
+                                <span className="font-mono text-[#2D6A24] text-[11px] shrink-0 font-bold">
                                   ₹{tier.price_per_night.toLocaleString('en-IN')}
                                 </span>
                               </div>
@@ -1183,13 +1207,13 @@ export default function DestinationExplorer({
           })}
         </div>
         {/* Synthesize Action Banner */}
-        <div className="bg-slate-950/90 border border-teal-500/50 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+        <div className="bg-[#0C2D45] border border-[#84D175]/40 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl text-[#FFF8D2]">
           <div className="space-y-1">
-            <h4 className="text-sm font-bold text-white flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-teal-400" />
+            <h4 className="text-sm font-black text-white flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#84D175]" />
               <span>{t('ready_synthesize_heading', selectedLang)}</span>
             </h4>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[#D3E8D0]">
               {t('gemini_resolve_clashes', selectedLang).replace('{travelers}', numTravelers)}
             </p>
           </div>
@@ -1197,17 +1221,17 @@ export default function DestinationExplorer({
           <button
             onClick={handleSynthesizeCustomTrip}
             disabled={synthesizing}
-            className="px-8 py-3.5 bg-gradient-to-r from-teal-400 via-emerald-400 to-teal-500 hover:from-teal-300 hover:to-emerald-300 text-slate-950 font-extrabold text-sm rounded-xl transition-all shadow-xl shadow-teal-500/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="px-8 py-3.5 bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-sm rounded-xl transition-all shadow-xl shadow-[#84D175]/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95"
           >
             {synthesizing ? (
               <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                {t('synthesizing_itinerary', selectedLang)}
+                <RefreshCw className="w-4 h-4 animate-spin text-[#1a2e1a]" />
+                <span>{t('synthesizing_itinerary', selectedLang)}</span>
               </>
             ) : (
               <>
-                <Zap className="w-4 h-4" />
-                {t('synthesize_itinerary', selectedLang)}
+                <Zap className="w-4 h-4 text-[#1a2e1a]" />
+                <span>{t('synthesize_itinerary', selectedLang)}</span>
               </>
             )}
           </button>
@@ -1218,34 +1242,34 @@ export default function DestinationExplorer({
       {synthesizedTrip && (
         <div
           id="custom-itinerary-output"
-          className="bg-slate-900 border border-teal-500/40 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl animate-fadeIn"
+          className="bg-white/95 border border-[#84D175]/35 rounded-3xl p-6 sm:p-8 space-y-6 shadow-sm animate-fadeIn text-[#1a2e1a]"
         >
           {/* Header & Translation Bar */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#84D175]/30 pb-5">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                   Gemini Optimized & Verified
                 </span>
-                <span className="px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 text-xs font-mono">
+                <span className="px-2.5 py-1 rounded-full bg-slate-100 text-[#4a5e4a] text-xs font-mono font-bold">
                   {synthesizedTrip.duration_days} Days / {synthesizedTrip.duration_days - 1} Nights
                 </span>
-                <span className="px-2.5 py-1 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30 text-xs font-bold">
+                <span className="px-2.5 py-1 rounded-full bg-[#84D175]/20 text-[#2D6A24] border border-[#84D175]/40 text-xs font-bold">
                   {numTravelers} Traveler{numTravelers > 1 ? 's' : ''} ({Math.ceil(numTravelers / 2)} Room{Math.ceil(numTravelers / 2) > 1 ? 's' : ''})
                 </span>
-                <span className="px-2.5 py-1 rounded-full bg-slate-800 text-teal-300 text-xs font-bold uppercase">
+                <span className="px-2.5 py-1 rounded-full bg-[#FFF8D2] text-[#2D6A24] border border-[#84D175]/30 text-xs font-bold uppercase">
                   {synthesizedTrip.pace} Pace
                 </span>
               </div>
-              <h3 className="text-2xl font-black text-white tracking-tight">
+              <h3 className="text-2xl font-black text-[#1a2e1a] tracking-tight">
                 {translatedTripTitle || synthesizedTrip.trip_title}
               </h3>
             </div>
 
             {/* Translation Action Buttons */}
-            <div className="flex flex-wrap items-center gap-1.5 bg-slate-800/80 p-1.5 rounded-xl border border-slate-700 text-xs">
-              <div className="flex items-center text-slate-400 px-1 font-bold gap-1 text-[11px]">
+            <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl border border-slate-200 text-xs">
+              <div className="flex items-center text-[#4a5e4a] px-1 font-bold gap-1 text-[11px]">
                 <Languages className="w-3.5 h-3.5" />
                 <span>{translating ? t('translating_plan', selectedLang) : t('translate_plan', selectedLang)}:</span>
               </div>
@@ -1265,8 +1289,8 @@ export default function DestinationExplorer({
                   disabled={translating}
                   className={`px-2 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     selectedLang === lang.code
-                      ? 'bg-teal-500 text-slate-950 shadow-xs'
-                      : 'text-slate-300 hover:bg-slate-700'
+                      ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs font-black'
+                      : 'text-[#4a5e4a] hover:bg-slate-200'
                   }`}
                 >
                   {lang.label}
@@ -1278,29 +1302,29 @@ export default function DestinationExplorer({
           {/* AI Optimization Intelligence Cards with Interactive Action Buttons */}
           {synthesizedTrip.ai_optimizations && (
             <div className="space-y-3">
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-teal-400" />
+              <div className="text-xs font-bold text-[#1a2e1a] uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#2D6A24]" />
                 <span>Actionable AI Recommendations & Optimizations (Click to Apply):</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Conflicts Resolved Card */}
-                <div className="bg-slate-950/70 border border-amber-500/40 rounded-2xl p-4 space-y-3 flex flex-col justify-between shadow-sm">
+                <div className="bg-amber-50/80 border border-amber-300 rounded-2xl p-4 space-y-3 flex flex-col justify-between shadow-2xs">
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between text-amber-400 font-bold text-xs">
+                    <div className="flex items-center justify-between text-amber-900 font-black text-xs">
                       <div className="flex items-center space-x-1.5">
-                        <AlertTriangle className="w-4 h-4" />
+                        <AlertTriangle className="w-4 h-4 text-amber-700" />
                         <span>Schedule Conflicts</span>
                       </div>
-                      <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-mono">
+                      <span className="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded font-mono font-bold">
                         {synthesizedTrip.ai_optimizations.conflicts_resolved?.length || 0} Resolved
                       </span>
                     </div>
-                    <ul className="text-xs text-slate-300 space-y-1.5">
+                    <ul className="text-xs text-amber-950 space-y-1.5">
                       {synthesizedTrip.ai_optimizations.conflicts_resolved?.map((item, i) => (
                         <li key={i} className="flex items-start gap-1.5">
-                          <span className="text-amber-400 mt-0.5">•</span>
-                          <span>{item}</span>
+                          <span className="text-amber-600 mt-0.5">•</span>
+                          <span className="leading-snug">{item}</span>
                         </li>
                       ))}
                     </ul>
@@ -1309,10 +1333,10 @@ export default function DestinationExplorer({
                   <button
                     onClick={() => handleApplyConflictResolution(0, 'All conflicts resolved')}
                     disabled={appliedSuggestions['conflict_0']}
-                    className={`w-full py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`w-full py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       appliedSuggestions['conflict_0']
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 cursor-default'
-                        : 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md active:scale-95'
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 cursor-default'
+                        : 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-xs active:scale-95'
                     }`}
                   >
                     {appliedSuggestions['conflict_0'] ? (
@@ -1329,22 +1353,22 @@ export default function DestinationExplorer({
                 </div>
 
                 {/* Voids Filled Card */}
-                <div className="bg-slate-950/70 border border-teal-500/40 rounded-2xl p-4 space-y-3 flex flex-col justify-between shadow-sm">
+                <div className="bg-emerald-50/80 border border-emerald-300 rounded-2xl p-4 space-y-3 flex flex-col justify-between shadow-2xs">
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between text-teal-400 font-bold text-xs">
+                    <div className="flex items-center justify-between text-emerald-900 font-black text-xs">
                       <div className="flex items-center space-x-1.5">
-                        <Sparkles className="w-4 h-4" />
+                        <Sparkles className="w-4 h-4 text-emerald-700" />
                         <span>Activity Voids Filled</span>
                       </div>
-                      <span className="text-[10px] bg-teal-500/20 text-teal-300 px-2 py-0.5 rounded font-mono">
+                      <span className="text-[10px] bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded font-mono font-bold">
                         {synthesizedTrip.ai_optimizations.voids_filled?.length || 0} Filled
                       </span>
                     </div>
-                    <ul className="text-xs text-slate-300 space-y-1.5">
+                    <ul className="text-xs text-emerald-950 space-y-1.5">
                       {synthesizedTrip.ai_optimizations.voids_filled?.map((item, i) => (
                         <li key={i} className="flex items-start gap-1.5">
-                          <span className="text-teal-400 mt-0.5">•</span>
-                          <span>{item}</span>
+                          <span className="text-emerald-600 mt-0.5">•</span>
+                          <span className="leading-snug">{item}</span>
                         </li>
                       ))}
                     </ul>
@@ -1353,10 +1377,10 @@ export default function DestinationExplorer({
                   <button
                     onClick={() => handleApplyVoidFill(0, 'Added experiences to schedule')}
                     disabled={appliedSuggestions['void_0']}
-                    className={`w-full py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`w-full py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       appliedSuggestions['void_0']
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 cursor-default'
-                        : 'bg-teal-500 hover:bg-teal-400 text-slate-950 shadow-md active:scale-95'
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 cursor-default'
+                        : 'bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] shadow-xs active:scale-95'
                     }`}
                   >
                     {appliedSuggestions['void_0'] ? (
@@ -1373,18 +1397,18 @@ export default function DestinationExplorer({
                 </div>
 
                 {/* Cost Optimization Card */}
-                <div className="bg-slate-950/70 border border-emerald-500/40 rounded-2xl p-4 space-y-3 flex flex-col justify-between shadow-sm">
+                <div className="bg-[#FFF8D2]/60 border border-[#84D175]/40 rounded-2xl p-4 space-y-3 flex flex-col justify-between shadow-2xs">
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between text-emerald-400 font-bold text-xs">
+                    <div className="flex items-center justify-between text-[#2D6A24] font-black text-xs">
                       <div className="flex items-center space-x-1.5">
-                        <TrendingDown className="w-4 h-4" />
+                        <TrendingDown className="w-4 h-4 text-[#2D6A24]" />
                         <span>Cost & Date Optimization</span>
                       </div>
-                      <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono">
+                      <span className="text-[10px] bg-[#84D175]/20 text-[#2D6A24] px-2 py-0.5 rounded font-mono font-bold border border-[#84D175]/30">
                         Surge Analyzed
                       </span>
                     </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">
+                    <p className="text-xs text-[#4a5e4a] leading-relaxed font-medium">
                       {synthesizedTrip.ai_optimizations.cost_optimization_tip || 'Trip date selected avoids peak weekend surcharges. Stays and transfers locked with best available rates.'}
                     </p>
                   </div>
@@ -1392,10 +1416,10 @@ export default function DestinationExplorer({
                   <button
                     onClick={handleApplyCostOptimization}
                     disabled={appliedSuggestions['cost_optimization']}
-                    className={`w-full py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`w-full py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       appliedSuggestions['cost_optimization']
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 cursor-default'
-                        : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md active:scale-95'
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 cursor-default'
+                        : 'bg-[#2D6A24] hover:bg-[#1a4a15] text-white shadow-xs active:scale-95'
                     }`}
                   >
                     {appliedSuggestions['cost_optimization'] ? (
@@ -1416,8 +1440,8 @@ export default function DestinationExplorer({
 
           {/* Day-by-Day Timeline Schedule */}
           <div className="space-y-4 pt-2">
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-              <Clock className="w-4 h-4 text-teal-400" />
+            <h4 className="text-sm font-black text-[#1a2e1a] uppercase tracking-wider flex items-center gap-2">
+              <Clock className="w-4 h-4 text-[#2D6A24]" />
               Day-by-Day Synthesized Itinerary
             </h4>
 
@@ -1425,14 +1449,14 @@ export default function DestinationExplorer({
               {synthesizedTrip.itinerary?.map((dayObj, dIdx) => (
                 <div
                   key={dIdx}
-                  className="bg-slate-800/50 border border-slate-700/70 rounded-2xl p-5 space-y-3"
+                  className="bg-slate-50/90 border border-slate-200 rounded-2xl p-5 space-y-3"
                 >
-                  <div className="flex items-center justify-between border-b border-slate-700/50 pb-2.5">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
                     <div className="flex items-center space-x-2.5">
-                      <span className="px-2.5 py-1 rounded-lg bg-teal-500 text-slate-950 font-black text-xs font-mono">
+                      <span className="px-2.5 py-1 rounded-lg bg-[#84D175] text-[#1a2e1a] font-black text-xs font-mono">
                         DAY {dayObj.day}
                       </span>
-                      <span className="text-sm font-bold text-white">
+                      <span className="text-sm font-black text-[#1a2e1a]">
                         {dayObj.title}
                       </span>
                     </div>
@@ -1442,15 +1466,15 @@ export default function DestinationExplorer({
                     {dayObj.slots?.map((slot, sIdx) => (
                       <div
                         key={sIdx}
-                        className="bg-slate-900/80 border border-slate-800 rounded-xl p-3 space-y-1"
+                        className="bg-white border border-slate-200 hover:border-[#84D175] rounded-xl p-3 space-y-1 shadow-2xs transition-all"
                       >
-                        <div className="text-[10px] font-mono text-teal-400 font-semibold">
+                        <div className="text-[10px] font-mono text-[#2D6A24] font-black">
                           {slot.time}
                         </div>
-                        <div className="text-xs font-bold text-white line-clamp-1">
+                        <div className="text-xs font-bold text-[#1a2e1a] line-clamp-1">
                           {slot.title}
                         </div>
-                        <div className="text-[11px] text-slate-400 line-clamp-2">
+                        <div className="text-[11px] text-[#4a5e4a] line-clamp-2">
                           {slot.description}
                         </div>
                       </div>
@@ -1458,7 +1482,7 @@ export default function DestinationExplorer({
                   </div>
 
                   {dayObj.notes && (
-                    <div className="text-[11px] text-slate-400 italic pt-1">
+                    <div className="text-[11px] text-[#4a5e4a] italic pt-1 font-medium">
                       💡 Note: {dayObj.notes}
                     </div>
                   )}
@@ -1468,20 +1492,20 @@ export default function DestinationExplorer({
           </div>
 
           {/* Decimal Financial Breakdown & Booking Action */}
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="bg-[#0C2D45] border border-[#84D175]/35 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 text-[#FFF8D2] shadow-xl">
             <div className="space-y-2">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              <span className="text-[11px] font-bold text-[#D3E8D0] uppercase tracking-wider block">
                 Total Synthesized Package Price (Decimal Precision for {numTravelers} Traveler{numTravelers > 1 ? 's' : ''}):
               </span>
               <div className="flex flex-wrap items-baseline gap-3">
                 <span className="text-3xl font-black text-white font-mono">
                   ₹{parseFloat(synthesizedTrip.estimated_pricing?.grand_total || '32000.00').toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </span>
-                <span className="text-xs text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
+                <span className="text-xs text-white font-bold bg-[#84D175]/30 px-2.5 py-1 rounded-lg border border-[#84D175]/40">
                   Includes {Math.ceil(numTravelers / 2)} Hotel Room(s) + Transfers + 5% GST
                 </span>
               </div>
-              <div className="text-[11px] text-slate-400 flex flex-wrap gap-4 font-mono pt-1">
+              <div className="text-[11px] text-[#D3E8D0] flex flex-wrap gap-4 font-mono pt-1">
                 <span>Stays: ₹{synthesizedTrip.estimated_pricing?.hotel_total || '14000.00'}</span>
                 <span>•</span>
                 <span>Activities ({numTravelers}p): ₹{synthesizedTrip.estimated_pricing?.activities_total || '9000.00'}</span>
@@ -1502,7 +1526,7 @@ export default function DestinationExplorer({
                 hotelName: stayMode === 'same' ? masterHotel.name : 'Custom Multi-Stay Plan',
                 selectedHotel: stayMode === 'same' ? masterHotel : undefined
               })}
-              className="px-8 py-3.5 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-emerald-500/20 transition-all cursor-pointer flex items-center gap-2 shrink-0"
+              className="px-8 py-3.5 bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-sm rounded-xl shadow-lg shadow-[#84D175]/30 transition-all cursor-pointer flex items-center gap-2 shrink-0 active:scale-95"
             >
               <span>Book Custom Package</span>
               <ArrowRight className="w-4 h-4" />

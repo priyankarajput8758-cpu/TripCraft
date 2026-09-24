@@ -76,7 +76,50 @@ class CatalogService:
                 "varanasi": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=800&q=80",
                 "agra": "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=800&q=80",
                 "delhi": "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=800&q=80",
-                "mumbai": "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=800&q=80"
+                "new delhi": "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=800&q=80",
+                "mumbai": "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=800&q=80",
+                "leh": "https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?auto=format&fit=crop&w=800&q=80",
+                "munnar": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=800&q=80",
+                "colombo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d3/Colombo_Lotus_Tower_2022.jpg/960px-Colombo_Lotus_Tower_2022.jpg",
+                "abu dhabi": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80",
+                "kyoto": "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80",
+                "shimla": "https://images.unsplash.com/photo-1597074866923-dc0589150358?auto=format&fit=crop&w=800&q=80",
+                "ahmedabad": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/66/Adalaj_stepwell_01.jpg/960px-Adalaj_stepwell_01.jpg",
+                "kathmandu": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80",
+                "kandy": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4e/Temple_of_the_Tooth_%28Sri_Dalada_Maligawa%29.jpg/960px-Temple_of_the_Tooth_%28Sri_Dalada_Maligawa%29.jpg",
+                "rishikesh": "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=800&q=80",
+                "wayanad": "https://images.unsplash.com/photo-1616489953149-8d48f7601b31?auto=format&fit=crop&w=800&q=80",
+                "male": "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=800&q=80",
+                "zurich": "https://images.unsplash.com/photo-1515488764276-beab7607c1e6?auto=format&fit=crop&w=800&q=80",
+                "kolkata": "https://images.unsplash.com/photo-1558431382-27e303142255?auto=format&fit=crop&w=800&q=80",
+                "visakhapatnam": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/91/Dolphin%27s_nose_and_harbour_in_Visakhapatnam.jpg/960px-Dolphin%27s_nose_and_harbour_in_Visakhapatnam.jpg",
+                "shillong": "https://images.unsplash.com/photo-1626014303757-646654714152?auto=format&fit=crop&w=800&q=80",
+                "pondicherry": "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80",
+                "mysuru": "https://images.unsplash.com/photo-1600100397608-f010f4439066?auto=format&fit=crop&w=800&q=80",
+                "alleppey": "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=800&q=80",
+                "manali": "https://images.unsplash.com/photo-1605649487212-47bdab064df8?auto=format&fit=crop&w=800&q=80",
+                "amritsar": "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=800&q=80",
+                "bali": "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80",
+                "bangkok": "https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=800&q=80",
+                "bengaluru": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=800&q=80",
+                "bhuj": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cf/White_Rann_of_Kutch_Gujarat.jpg/960px-White_Rann_of_Kutch_Gujarat.jpg",
+                "chennai": "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80",
+                "doha": "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80",
+                "dubai": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80",
+                "gokarna": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+                "guwahati": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/52/Kamakhya_Temple_Guwahati.jpg/960px-Kamakhya_Temple_Guwahati.jpg",
+                "kochi": "https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?auto=format&fit=crop&w=800&q=80",
+                "kuala lumpur": "https://images.unsplash.com/photo-1508964942454-1a56651d54ac?auto=format&fit=crop&w=800&q=80",
+                "madurai": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d3/Madurai_Meenakshi_Amman_temple_Gopuram.jpg/960px-Madurai_Meenakshi_Amman_temple_Gopuram.jpg",
+                "nainital": "https://images.unsplash.com/photo-1626014303757-646654714152?auto=format&fit=crop&w=800&q=80",
+                "ooty": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=800&q=80",
+                "panaji": "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80",
+                "pokhara": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80",
+                "singapore": "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=800&q=80",
+                "thanjavur": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/60/Brihadisvara_Temple_Thanjavur.jpg/960px-Brihadisvara_Temple_Thanjavur.jpg",
+                "thimphu": "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80",
+                "thiruvananthapuram": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/77/Sree_Padmanabhaswamy_Temple_Thiruvananthapuram.jpg/960px-Sree_Padmanabhaswamy_Temple_Thiruvananthapuram.jpg",
+                "tirupati": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/91/Tirumala_Venkateswara_Temple.jpg/960px-Tirumala_Venkateswara_Temple.jpg"
             }
             for pkg in packages:
                 pkg["base_price_formatted"] = format_money(to_decimal(pkg["base_price"]))
@@ -88,7 +131,7 @@ class CatalogService:
                             landmark_img = v
                             break
 
-                pkg["hero_image"] = landmark_img or "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"
+                pkg["hero_image"] = landmark_img or "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=800&q=80"
                 pkg["hero_alt"] = pkg.get("name")
 
             # Translate package names and titles if non-English language is requested

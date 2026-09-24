@@ -58,6 +58,11 @@ export default function BookingModal({
   const calculatedGrandTotal = (perPersonRate * activeTravelerCount) + guideRateTotal;
   const totalPrice = calculatedGrandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+  const currencyCode = bookingDetails?.currency || pkg?.currency || pricing?.currency || 'INR';
+  const currencySymbol = bookingDetails?.currencySymbol || {
+    INR: '₹', USD: '$', EUR: '€', GBP: '£', JPY: '¥', CHF: 'CHF ', AED: 'AED ', SGD: 'S$', AUD: 'A$', CAD: 'C$', NPR: 'NPR ', LKR: 'LKR '
+  }[currencyCode] || '₹';
+
   const dateRange = startDate
     ? (endDate ? `${startDate} → ${endDate}` : startDate)
     : '2026-09-24';
@@ -173,7 +178,7 @@ export default function BookingModal({
                     )}
                   </div>
                   <div className="text-right">
-                    <div className="text-base font-black text-[#2D6A24] font-mono">₹{totalPrice}</div>
+                    <div className="text-base font-black text-[#2D6A24] font-mono">{currencySymbol}{totalPrice}</div>
                     <div className="text-[10px] text-[#4a5e4a]">Tax Inclusive (5% GST)</div>
                   </div>
                 </div>
@@ -216,7 +221,7 @@ export default function BookingModal({
                   </div>
                   <div className="text-right">
                     <div className="text-lg font-black text-[#2D6A24] font-mono">
-                      ₹{totalPrice}
+                      {currencySymbol}{totalPrice}
                     </div>
                     <div className="text-[10px] text-[#4a5e4a] font-medium">All Taxes Included (5% GST)</div>
                   </div>
@@ -312,7 +317,7 @@ export default function BookingModal({
                 ) : (
                   <>
                     <CreditCard className="w-4 h-4 text-[#1a2e1a]" />
-                    <span>Confirm & Book — ₹{totalPrice}</span>
+                    <span>Confirm & Book — {currencySymbol}{totalPrice}</span>
                   </>
                 )}
               </button>

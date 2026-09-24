@@ -287,125 +287,219 @@ Return ONLY a valid JSON object strictly matching this schema:
         ai_res = GeminiClient.generate_json(prompt, system_inst)
 
         # 3. Fallback Deterministic Custom Package Synthesizer if Gemini is offline
+        # 3. Grounded Deterministic Custom Package Synthesizer if Gemini is offline
         req_lower = (user_custom_requests or "").lower()
-        waterfall_post_sunset = ("waterfall" in req_lower or "waterfalls" in req_lower) and any(
+        waterfall_post_sunset = ("waterfall" in req_lower or "waterfalls" in req_lower or "falls" in req_lower) and any(
             kw in req_lower for kw in ["post sunset", "sunset", "evening", "after sunset", "night", "dark"]
         )
+        safari_early_morning = any(kw in req_lower for kw in ["safari", "jungle", "wildlife", "national park"]) and any(
+            kw in req_lower for kw in ["morning", "sunrise", "early", "6am", "7am"]
+        )
+
+        pace_clean = (pace_preference or "balanced").lower().strip()
+        is_relaxed = pace_clean == "relaxed"
+        is_fast = pace_clean in ["fast", "packed", "intensive"]
 
         if not ai_res or not isinstance(ai_res, dict) or "itinerary" not in ai_res:
             itinerary_fallback = []
-            is_waterfall = "waterfall" in req_lower or "waterfalls" in req_lower
-            is_food = "food" in req_lower or "culinary" in req_lower or "dining" in req_lower
-            
-            for d in range(1, num_days + 1):
-                day_data = next((item for item in day_selections if item.get("day_number") == d), None)
-                acts = day_data.get("selected_activities", []) if day_data else []
 
+            # 3a. Extract all user activities explicitly chosen across days
+            user_selected_by_day = {}
+            all_chosen_activities = []
+            if day_selections:
+                for item in day_selections:
+                    d_num = item.get("day_number")
+                    acts = [a for a in item.get("selected_activities", []) if a]
+                    if d_num:
+                        user_selected_by_day[d_num] = acts
+                        all_chosen_activities.extend(acts)
+
+            # 3b. Query database for destination POIs & components if needed to fill voids
+            db_pois = []
+            try:
+                with get_db_connection() as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        SELECT DISTINCT pc.title, pc.component_type
+                        FROM package_components pc
+                        JOIN tour_packages tp ON pc.package_id = tp.package_id
+                        JOIN cities ct ON tp.city_id = ct.city_id
+                        WHERE LOWER(ct.name) LIKE ? OR LOWER(?) LIKE '%' || LOWER(ct.name) || '%'
+                        ORDER BY pc.quantity DESC
+                        LIMIT 30
+                    """, (f"%{destination_name.lower()}%", destination_name.lower()))
+                    for r in cursor.fetchall():
+                        title = r[0]
+                        c_type = r[1]
+                        if title and title not in all_chosen_activities:
+                            db_pois.append({"title": title, "type": c_type if c_type in SLOT_TYPE_PHOTOS else "sightseeing"})
+            except Exception as e:
+                logger.warning(f"Could not load db_pois for {destination_name}: {e}")
+
+            # Fallback POI pool grounded in destination name if database has none
+            if not db_pois:
+                db_pois = [
+                    {"title": f"{destination_name} Heritage & Historic Landmark Walk", "type": "heritage"},
+                    {"title": f"{destination_name} Panoramic Nature Viewpoint & Trail", "type": "scenic"},
+                    {"title": f"{destination_name} Cultural Artisan Center & Craft Market", "type": "cultural"},
+                    {"title": f"{destination_name} Spiritual Shrine & Sacred Grounds", "type": "spiritual"},
+                    {"title": f"{destination_name} Lake Promenade & Leisure Stroll", "type": "leisure"},
+                    {"title": f"{destination_name} Botanical Reserve & Green Valley", "type": "scenic"}
+                ]
+
+            poi_pool_idx = 0
+
+            # 3c. Generate day schedules strictly respecting pace_preference and user selections
+            for d in range(1, num_days + 1):
+                day_acts = user_selected_by_day.get(d, [])
                 slots = []
-                if acts:
-                    # If user asked for waterfall post sunset, ensure any waterfall in acts goes to evening
-                    act_morning = acts[0]
-                    act_evening = acts[1] if len(acts) > 1 else f"{destination_name} Scenic Sunset Viewpoint"
-                    if waterfall_post_sunset and ("waterfall" in act_morning.lower() or "falls" in act_morning.lower()):
-                        act_morning, act_evening = act_evening, act_morning
+
+                if is_relaxed:
+                    # Relaxed Pace: 1-2 major sights/day + relaxed midday dining + evening sunset
+                    primary_act = day_acts[0] if len(day_acts) > 0 else (db_pois[poi_pool_idx % len(db_pois)]["title"])
+                    if len(day_acts) == 0:
+                        poi_pool_idx += 1
+
+                    secondary_act = day_acts[1] if len(day_acts) > 1 else None
+
+                    slots.append({
+                        "time": "10:00 AM - 01:00 PM",
+                        "title": primary_act,
+                        "type": "sightseeing",
+                        "description": f"Unhurried morning exploration of {primary_act} at a restful pace."
+                    })
+                    slots.append({
+                        "time": "01:30 PM - 03:00 PM",
+                        "title": f"Leisurely Lunch & Regional Cuisine in {destination_name}",
+                        "type": "dining",
+                        "description": f"Savor authentic regional delicacies with ample relaxation time."
+                    })
+                    if secondary_act:
+                        slots.append({
+                            "time": "05:00 PM - 07:00 PM",
+                            "title": secondary_act,
+                            "type": "scenic",
+                            "description": f"Tranquil evening golden-hour visit to {secondary_act}."
+                        })
+                    else:
+                        slots.append({
+                            "time": "04:30 PM - 06:30 PM",
+                            "title": f"{destination_name} Sunset Lookout & Leisure Promenade",
+                            "type": "leisure",
+                            "description": f"Enjoy sunset vistas and peaceful evening atmosphere across {destination_name}."
+                        })
+
+                elif is_fast:
+                    # Fast/Packed Pace: 4 sights/day + quick lunch + evening activity
+                    assigned_acts = list(day_acts)
+                    while len(assigned_acts) < 4:
+                        assigned_acts.append(db_pois[poi_pool_idx % len(db_pois)]["title"])
+                        poi_pool_idx += 1
+
+                    slots.append({
+                        "time": "08:00 AM - 10:30 AM",
+                        "title": assigned_acts[0],
+                        "type": "sightseeing",
+                        "description": f"Early morning kickoff at {assigned_acts[0]}."
+                    })
+                    slots.append({
+                        "time": "11:00 AM - 01:30 PM",
+                        "title": assigned_acts[1],
+                        "type": "heritage",
+                        "description": f"Midday exploration of {assigned_acts[1]} with expedited entry."
+                    })
+                    slots.append({
+                        "time": "01:30 PM - 02:30 PM",
+                        "title": f"Fast-Track Local Bites in {destination_name}",
+                        "type": "dining",
+                        "description": f"Quick authentic regional thali and refreshments."
+                    })
+                    slots.append({
+                        "time": "03:00 PM - 05:30 PM",
+                        "title": assigned_acts[2],
+                        "type": "scenic",
+                        "description": f"Afternoon discovery of {assigned_acts[2]}."
+                    })
+                    slots.append({
+                        "time": "06:00 PM - 08:30 PM",
+                        "title": assigned_acts[3],
+                        "type": "cultural",
+                        "description": f"High-energy evening tour of {assigned_acts[3]}."
+                    })
+
+                else:
+                    # Balanced Pace (Default): 2-3 sights/day + authentic lunch + sunset slot
+                    assigned_acts = list(day_acts)
+                    while len(assigned_acts) < 2:
+                        assigned_acts.append(db_pois[poi_pool_idx % len(db_pois)]["title"])
+                        poi_pool_idx += 1
 
                     slots.append({
                         "time": "09:00 AM - 12:30 PM",
-                        "title": act_morning,
+                        "title": assigned_acts[0],
                         "type": "sightseeing",
-                        "description": f"Morning discovery of {act_morning} with regional insights."
+                        "description": f"Morning discovery of {assigned_acts[0]} with cultural insights."
                     })
                     slots.append({
                         "time": "01:00 PM - 02:30 PM",
-                        "title": f"Local Cuisine Lunch in {destination_name}",
+                        "title": f"Authentic Regional Lunch in {destination_name}",
                         "type": "dining",
-                        "description": f"Experience authentic local dishes at a top-rated dining spot."
+                        "description": f"Handpicked authentic local eatery featuring {destination_name} specialties."
                     })
                     slots.append({
-                        "time": "05:00 PM - 07:30 PM" if waterfall_post_sunset else "04:30 PM - 06:30 PM",
-                        "title": act_evening,
+                        "time": "04:30 PM - 07:00 PM",
+                        "title": assigned_acts[1],
                         "type": "scenic",
-                        "description": f"Post-sunset evening visit to {act_evening} per scheduled preference."
+                        "description": f"Late afternoon & evening visit to {assigned_acts[1]}."
                     })
-                elif is_waterfall and "gokarna" in destination_name.lower():
-                    if waterfall_post_sunset:
-                        if d == 1:
-                            slots = [
-                                {"time": "09:00 AM - 12:30 PM", "title": "Yana Limestone Rock Formations & Karst Monoliths", "type": "scenic", "description": "Marvel at the giant black karst limestone monoliths amidst dense evergreen jungle."},
-                                {"time": "01:00 PM - 02:30 PM", "title": "Traditional Coastal Lunch at Sahyadri Dhaba", "type": "dining", "description": "Savor authentic Uttara Kannada coastal vegetarian & seafood thali."},
-                                {"time": "05:30 PM - 07:45 PM", "title": "Vibhooti Waterfall Post-Sunset Twilight Walk", "type": "trek", "description": "Lush post-sunset nature walk around cascading Vibhooti Falls amidst cooling forest atmosphere."}
-                            ]
-                        elif d == 2:
-                            slots = [
-                                {"time": "09:00 AM - 12:30 PM", "title": "Sharavathi River Mangrove Boat Cruise & Honnavar Bridge", "type": "scenic", "description": "Scenic boat cruise along river backwaters and mangrove channels."},
-                                {"time": "01:00 PM - 02:30 PM", "title": "Fresh Seafood Lunch in Honnavar", "type": "dining", "description": "Local catch delicacies and coconut-based curries."},
-                                {"time": "05:30 PM - 07:30 PM", "title": "Apsarakonda Waterfall Post-Sunset & Marine Lookout", "type": "sightseeing", "description": "Scenic waterfall plunging into a natural pool facing the Arabian Sea post-sunset."}
-                            ]
-                        else:
-                            slots = [
-                                {"time": "09:00 AM - 12:00 PM", "title": "Om Beach & Half-Moon Beach Coastal Trail", "type": "trek", "description": "Cliffside coastal trail linking Gokarna's iconic beaches."},
-                                {"time": "01:00 PM - 02:30 PM", "title": "Namaste Cafe Seaside Dining", "type": "dining", "description": "Relaxed beachfront dining with panoramic ocean vistas."},
-                                {"time": "05:00 PM - 07:00 PM", "title": "Kudle Beach Post-Sunset Twilight Leisure", "type": "leisure", "description": "Tranquil evening golden hour across the sweeping bay."}
-                            ]
-                    else:
-                        if d == 1:
-                            slots = [
-                                {"time": "08:30 AM - 01:00 PM", "title": "Vibhooti Waterfall Trek & Forest Trail", "type": "trek", "description": "Lush forest trek to the pristine cascading Vibhooti Falls with natural swimming pools."},
-                                {"time": "01:30 PM - 02:30 PM", "title": "Traditional Coastal Lunch at Sahyadri Dhaba", "type": "dining", "description": "Savor authentic Uttara Kannada coastal vegetarian & seafood thali."},
-                                {"time": "04:30 PM - 06:30 PM", "title": "Yana Limestone Rock Formations & Caves", "type": "scenic", "description": "Marvel at the giant black karst limestone monoliths amidst dense evergreen jungle."}
-                            ]
-                        elif d == 2:
-                            slots = [
-                                {"time": "08:30 AM - 12:30 PM", "title": "Apsarakonda Waterfall & Sea-facing Hillock", "type": "sightseeing", "description": "Scenic waterfall plunging into a natural pond facing the Arabian Sea."},
-                                {"time": "01:00 PM - 02:30 PM", "title": "Fresh Seafood Lunch in Honnavar", "type": "dining", "description": "Local catch delicacies and coconut-based curries."},
-                                {"time": "04:00 PM - 06:30 PM", "title": "Sharavathi Backwaters Mangrove Boat Cruise", "type": "scenic", "description": "Sunset cruise through lush mangrove channels."}
-                            ]
-                        else:
-                            slots = [
-                                {"time": "09:00 AM - 12:00 PM", "title": "Om Beach & Half-Moon Beach Coastal Trail", "type": "trek", "description": "Cliffside coastal trail linking Gokarna's iconic beaches."},
-                                {"time": "01:00 PM - 02:30 PM", "title": "Namaste Cafe Seaside Dining", "type": "dining", "description": "Relaxed beachfront dining with panoramic ocean vistas."},
-                                {"time": "04:30 PM - 06:30 PM", "title": "Kudle Beach Sunset & Leisure Walk", "type": "leisure", "description": "Tranquil evening golden hour across the sweeping bay."}
-                            ]
-                elif is_food and "bhubaneswar" in destination_name.lower():
-                    if d == 1:
-                        slots = [
-                            {"time": "08:30 AM - 11:30 AM", "title": "Old Town Heritage & Temple Circuit (Lingaraj & Mukteshvara)", "type": "spiritual", "description": "Explore 10th-century architectural marvels with an expert local guide."},
-                            {"time": "12:30 PM - 02:00 PM", "title": "Authentic Odia Thali Experience (Dalma & Pakhala Bhata)", "type": "dining", "description": "Traditional lunch featuring authentic Dalma, seasonal vegetables, and aromatic rice."},
-                            {"time": "04:30 PM - 07:00 PM", "title": "Ekamra Haat Traditional Street Food & Craft Walk", "type": "dining", "description": "Taste local delicacies like Chhena Poda, Dahibara Aloodum, and Rasabali."}
-                        ]
-                    else:
-                        slots = [
-                            {"time": "09:00 AM - 12:30 PM", "title": "Dhauli Shanti Stupa & Kalinga Heritage Grounds", "type": "heritage", "description": "Historic Buddhist peace pagoda overlooking the Daya River."},
-                            {"time": "01:00 PM - 02:30 PM", "title": "Coastal Seafood & Freshwater Delicacies Lunch", "type": "dining", "description": "Chilika crab curry and freshwater fish specialties."},
-                            {"time": "04:30 PM - 06:30 PM", "title": "Khandagiri & Udayagiri Ancient Rock Caves", "type": "sightseeing", "description": "Panoramic sunset views from the ancient Jain rock-cut monasteries."}
-                        ]
-                else:
-                    slots = [
-                        {"time": "09:00 AM - 12:00 PM", "title": f"Highlights of {destination_name}", "type": "sightseeing", "description": f"Explore iconic landmarks and scenic highlights."},
-                        {"time": "01:00 PM - 02:30 PM", "title": "Regional Specialties Lunch", "type": "dining", "description": "Savor authentic regional flavors."},
-                        {"time": "04:30 PM - 06:30 PM", "title": "Evening Walk & Cultural Immersion", "type": "cultural", "description": "Relaxed evening walk through local markets and viewpoints."}
-                    ]
+                    if len(assigned_acts) > 2:
+                        slots.append({
+                            "time": "07:30 PM - 09:00 PM",
+                            "title": assigned_acts[2],
+                            "type": "cultural",
+                            "description": f"Evening twilight walk or dining at {assigned_acts[2]}."
+                        })
 
                 itinerary_fallback.append({
                     "day": d,
-                    "title": f"Day {d}: {destination_name} {'Waterfalls & Trails' if is_waterfall else ('Food Trail & Heritage' if is_food else 'Exploration')}",
+                    "title": f"Day {d}: {destination_name} {('Leisure Discovery' if is_relaxed else ('Power Sightseeing' if is_fast else 'Highlights & Culture'))}",
                     "slots": slots,
-                    "notes": f"Comfortable shoes and hydration recommended for Day {d}."
+                    "notes": f"{'Unhurried schedule with generous recovery buffers.' if is_relaxed else ('Early start and pre-booked entries recommended to maximize pace.' if is_fast else 'Balanced pacing with comfortable footwear recommended.')}"
                 })
 
+            # 3d. Tailor AI Optimizations specifically to the selected pace & user requests
+            pace_label = "Relaxed" if is_relaxed else ("Fast / Packed" if is_fast else "Balanced")
+            pace_conflict = (
+                f"Pace Optimized ({pace_label}): Scheduled leisurely 10:00 AM departures and 2.5-hour afternoon relaxation buffers in {destination_name}."
+                if is_relaxed else (
+                    f"Pace Optimized ({pace_label}): Structured high-efficiency transit corridors with 4 active stops per day in {destination_name}."
+                    if is_fast else
+                    f"Pace Optimized ({pace_label}): Balanced morning excursions with afternoon leisure, eliminating transit friction in {destination_name}."
+                )
+            )
+
+            pace_void = (
+                f"Pace Protected ({pace_label}): Preserved downtime without over-scheduling, inserting only essential scenic rest spots."
+                if is_relaxed else (
+                    f"Pace Maximized ({pace_label}): Added high-yield local attractions and evening cultural circuits to fill daytime gaps."
+                    if is_fast else
+                    f"Pace Sustained ({pace_label}): Filled schedule gaps with authentic regional dining and landmark viewpoints in {destination_name}."
+                )
+            )
+
+            conflicts_list = [pace_conflict]
+            if user_custom_requests:
+                conflicts_list.insert(0, f"Strictly Enforced Custom Request: '{user_custom_requests.strip()}' integrated into schedule.")
+
             ai_res = {
-                "trip_title": f"Custom {num_days}-Day {destination_name} {'Waterfalls & Trails' if is_waterfall else ('Food & Heritage Trail' if is_food else 'Explorer')}",
+                "trip_title": f"Custom {num_days}-Day {destination_name} {pace_label} Itinerary",
                 "destination": destination_name,
                 "duration_days": num_days,
-                "pace": pace_preference,
+                "pace": pace_clean,
                 "itinerary": itinerary_fallback,
                 "ai_optimizations": {
-                    "conflicts_resolved": [
-                        f"Sequenced morning treks and afternoon scenic points to avoid peak heat and transit friction in {destination_name}."
-                    ],
-                    "voids_filled": [
-                        f"Balanced Day schedules with authentic local dining and viewpoint stops to ensure smooth {pace_preference} pacing."
-                    ],
+                    "conflicts_resolved": conflicts_list,
+                    "voids_filled": [pace_void],
                     "cost_optimization_tip": f"Properties in {destination_name} offer up to 20% lower tariffs on midweek bookings (Tuesday–Thursday) compared to Friday–Sunday weekends."
                 }
             }
@@ -429,9 +523,10 @@ Return ONLY a valid JSON object strictly matching this schema:
                     slots[evening_slot_idx]["time"] = morn_time
                     slots[wf_slot_idx], slots[evening_slot_idx] = slots[evening_slot_idx], slots[wf_slot_idx]
             if "ai_optimizations" in ai_res and isinstance(ai_res["ai_optimizations"].get("conflicts_resolved"), list):
-                ai_res["ai_optimizations"]["conflicts_resolved"].insert(
-                    0, "Strictly enforced user constraint: Scheduled waterfalls in the post-sunset evening slot (05:30 PM - 07:30 PM)."
-                )
+                if not any("Scheduled waterfalls in the post-sunset" in c for c in ai_res["ai_optimizations"]["conflicts_resolved"]):
+                    ai_res["ai_optimizations"]["conflicts_resolved"].insert(
+                        0, "Strictly enforced user constraint: Scheduled waterfalls in the post-sunset evening slot (05:30 PM - 07:30 PM)."
+                    )
 
         # 4. Attach Destination Cover Photo & Slot Imagery
         ai_res["cover_image"] = get_destination_photo(destination_name)

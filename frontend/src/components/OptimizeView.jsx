@@ -47,9 +47,20 @@ export default function OptimizeView({
   const endDate = bookingDetails?.endDate || '2026-09-28';
   const activeGuide = guide || bookingDetails?.selectedGuide;
   const componentsList = packageDetailData?.components || [];
+  const currencyCode = bookingDetails?.currency || pkg?.currency || pricing?.currency || 'INR';
+  const currencySymbol = bookingDetails?.currencySymbol || {
+    INR: '₹', USD: '$', EUR: '€', GBP: '£', JPY: '¥', CHF: 'CHF ', AED: 'AED ', SGD: 'S$', AUD: 'A$', CAD: 'C$', NPR: 'NPR ', LKR: 'LKR '
+  }[currencyCode] || '₹';
 
   const defaultLat = parseFloat(pkg?.city_lat || 12.9716);
   const defaultLng = parseFloat(pkg?.city_lng || 77.5946);
+
+  const rawPace = (bookingDetails?.pace || bookingDetails?.pacePreference || pkg?.pace || 'balanced').toLowerCase();
+  const paceProfileText = rawPace === 'relaxed'
+    ? 'Relaxed (1-2 stops/day)'
+    : (rawPace === 'fast' || rawPace === 'packed'
+      ? 'Fast / Packed (4+ stops/day)'
+      : 'Balanced (2-3 stops/day)');
 
   // Dynamic Day list based on actual package duration
   const daysList = useMemo(() => {
@@ -348,7 +359,7 @@ export default function OptimizeView({
           <div className="text-right">
             <div className="text-[10px] font-black uppercase tracking-wider text-[#4a5e4a]">Verified Total ({numTravelers}p)</div>
             <div className="text-xl sm:text-2xl font-black text-[#1a2e1a] font-mono">
-              ₹{currentDisplayPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              {currencySymbol}{currentDisplayPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </div>
             {optimizedDiscount > 0 && (
               <button
@@ -356,7 +367,7 @@ export default function OptimizeView({
                 onClick={() => setShowDiscountBreakdown(true)}
                 className="text-[10px] px-2.5 py-0.5 rounded-md bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold border border-emerald-300 inline-flex items-center gap-1 mt-0.5 cursor-pointer transition-all shadow-xs"
               >
-                <span>✓ ₹{optimizedDiscount.toLocaleString('en-IN')} AI Rate Discount Applied</span>
+                <span>✓ {currencySymbol}{optimizedDiscount.toLocaleString('en-IN')} AI Rate Discount Applied</span>
                 <span className="underline font-black text-emerald-900 ml-0.5">(Breakdown)</span>
               </button>
             )}
@@ -430,7 +441,7 @@ export default function OptimizeView({
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-amber-300 text-amber-900 text-xs font-semibold shadow-xs">
               <span>💡</span>
               <span>
-                AI Recommendation: Reschedule evening slot to 6:00 PM and apply smart rate optimization to save ₹{Math.round(rawBasePrice * 0.20).toLocaleString('en-IN')} (From ₹{rawBasePrice.toLocaleString('en-IN')} → ₹{(rawBasePrice * 0.80).toLocaleString('en-IN')}).
+                AI Recommendation: Reschedule evening slot to 6:00 PM and apply smart rate optimization to save {currencySymbol}{Math.round(rawBasePrice * 0.20).toLocaleString('en-IN')} (From {currencySymbol}{rawBasePrice.toLocaleString('en-IN')} → {currencySymbol}{(rawBasePrice * 0.80).toLocaleString('en-IN')}).
               </span>
             </div>
 
@@ -438,7 +449,7 @@ export default function OptimizeView({
               onClick={handleApplyOptimization}
               className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-md active:scale-95 transition-all cursor-pointer"
             >
-              Apply Optimization (Save ₹{Math.round(rawBasePrice * 0.20).toLocaleString('en-IN')})
+              Apply Optimization (Save {currencySymbol}{Math.round(rawBasePrice * 0.20).toLocaleString('en-IN')})
             </button>
           </div>
         </div>
@@ -446,7 +457,7 @@ export default function OptimizeView({
         <div className="rounded-3xl bg-emerald-50 border border-emerald-300 p-4 text-xs font-bold text-emerald-900 flex flex-wrap items-center justify-between gap-2 shadow-xs">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>✓ Optimization Applied — Schedule conflicts eliminated (shifted to 6:00 PM) & ₹{optimizedDiscount.toLocaleString('en-IN')} smart discount locked into booking!</span>
+            <span>✓ Optimization Applied — Schedule conflicts eliminated (shifted to 6:00 PM) & {currencySymbol}{optimizedDiscount.toLocaleString('en-IN')} smart discount locked into booking!</span>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -457,7 +468,7 @@ export default function OptimizeView({
               View Cost Optimization Breakdown
             </button>
             <span className="text-[10px] text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded font-bold border border-emerald-300">
-              Optimized Rate: ₹{currentDisplayPrice.toLocaleString('en-IN')}
+              Optimized Rate: {currencySymbol}{currentDisplayPrice.toLocaleString('en-IN')}
             </span>
           </div>
         </div>
@@ -608,7 +619,7 @@ export default function OptimizeView({
             <div className="text-xs text-[#4a5e4a] space-y-1 bg-[#FFF8D2]/60 p-3 rounded-xl border border-[#84D175]/30">
               <div className="flex justify-between font-semibold">
                 <span>Pace Profile:</span>
-                <span className="font-bold text-[#1a2e1a]">Balanced (2-3 stops/day)</span>
+                <span className="font-bold text-[#1a2e1a]">{paceProfileText}</span>
               </div>
               <div className="flex justify-between font-semibold">
                 <span>Guide Support:</span>
@@ -623,7 +634,7 @@ export default function OptimizeView({
               {optimizedDiscount > 0 && (
                 <div className="flex justify-between font-bold text-emerald-700 pt-1 border-t border-[#84D175]/30">
                   <span>AI Discount Applied:</span>
-                  <span>-₹{optimizedDiscount.toLocaleString('en-IN')}</span>
+                  <span>-{currencySymbol}{optimizedDiscount.toLocaleString('en-IN')}</span>
                 </div>
               )}
             </div>
@@ -668,7 +679,7 @@ export default function OptimizeView({
                   </p>
                 </div>
                 <span className="font-mono font-black text-emerald-600 text-sm whitespace-nowrap">
-                  -₹{Math.round(optimizedDiscount * 0.45).toLocaleString('en-IN')}
+                  -{currencySymbol}{Math.round(optimizedDiscount * 0.45).toLocaleString('en-IN')}
                 </span>
               </div>
 
@@ -684,7 +695,7 @@ export default function OptimizeView({
                   </p>
                 </div>
                 <span className="font-mono font-black text-emerald-600 text-sm whitespace-nowrap">
-                  -₹{Math.round(optimizedDiscount * 0.25).toLocaleString('en-IN')}
+                  -{currencySymbol}{Math.round(optimizedDiscount * 0.25).toLocaleString('en-IN')}
                 </span>
               </div>
 
@@ -700,7 +711,7 @@ export default function OptimizeView({
                   </p>
                 </div>
                 <span className="font-mono font-black text-emerald-600 text-sm whitespace-nowrap">
-                  -₹{Math.round(optimizedDiscount * 0.20).toLocaleString('en-IN')}
+                  -{currencySymbol}{Math.round(optimizedDiscount * 0.20).toLocaleString('en-IN')}
                 </span>
               </div>
 
@@ -716,7 +727,7 @@ export default function OptimizeView({
                   </p>
                 </div>
                 <span className="font-mono font-black text-emerald-600 text-sm whitespace-nowrap">
-                  -₹{Math.round(optimizedDiscount * 0.10).toLocaleString('en-IN')}
+                  -{currencySymbol}{Math.round(optimizedDiscount * 0.10).toLocaleString('en-IN')}
                 </span>
               </div>
             </div>
@@ -725,11 +736,11 @@ export default function OptimizeView({
             <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
               <div>
                 <span className="text-[10px] uppercase tracking-wider font-extrabold text-emerald-900 block">Total AI Savings</span>
-                <span className="text-lg font-black text-emerald-800 font-mono">-₹{optimizedDiscount.toLocaleString('en-IN')}</span>
+                <span className="text-lg font-black text-emerald-800 font-mono">-{currencySymbol}{optimizedDiscount.toLocaleString('en-IN')}</span>
               </div>
               <div className="text-right">
                 <span className="text-[10px] uppercase tracking-wider font-extrabold text-emerald-900 block">Optimized Final Quote</span>
-                <span className="text-lg font-black text-slate-900 font-mono">₹{currentDisplayPrice.toLocaleString('en-IN')}</span>
+                <span className="text-lg font-black text-slate-900 font-mono">{currencySymbol}{currentDisplayPrice.toLocaleString('en-IN')}</span>
               </div>
             </div>
 
