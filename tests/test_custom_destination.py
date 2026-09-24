@@ -117,10 +117,10 @@ def test_synthesize_custom_trip_timing_constraint_post_sunset_waterfall():
     assert "waterfall" in evening_text or "vibhooti" in evening_text
     assert "pm" in evening_slot.get("time", "").lower()
 
-def test_pricing_market_hotel_replaces_catalog_hotel():
+def test_pricing_market_hotel_additive_with_room_capacity():
     """
-    Punchlist Item 4: Verify that selecting a real-world market hotel replaces the package stay
-    and updates the total pricing accordingly without double-charging hotel tiers.
+    Verify that selecting a real-world market hotel adds the market hotel
+    pricing with 2 persons per room capacity ((travelers + 1) // 2), while keeping base hotel charges intact.
     """
     from src.pricing.engine import PricingEngine
     from decimal import Decimal
@@ -133,7 +133,7 @@ def test_pricing_market_hotel_replaces_catalog_hotel():
     )
     lux_total = Decimal(res_lux["total_price"])
 
-    # Reprice with market hotel (rate ₹3,000/night for 3 nights = ₹9,000)
+    # Reprice with market hotel (rate ₹3,000/night for 3 nights * 1 room = ₹9,000)
     res_market = PricingEngine.calculate_repricing(
         package_id="pkg_c3711737",
         selected_component_ids=["cmp_hotel_lux"],
@@ -142,9 +142,19 @@ def test_pricing_market_hotel_replaces_catalog_hotel():
         num_travelers=1
     )
     assert Decimal(res_market["market_hotel_cost"]) == Decimal("9000.00")
-    # cmp_hotel_lux delta must NOT be in components_delta_total
-    assert Decimal(res_market["components_delta_total"]) == Decimal("0.00")
+    # Base hotel components remain retained as requested
+    assert Decimal(res_market["components_delta_total"]) == Decimal("6500.00")
     assert res_market["market_hotel_name"] == "Seaside Grand Market Hotel"
+
+    # For 3 travelers -> 2 rooms (₹3,000 * 3 nights * 2 rooms = ₹18,000)
+    res_market_3 = PricingEngine.calculate_repricing(
+        package_id="pkg_c3711737",
+        selected_component_ids=["cmp_hotel_lux"],
+        market_hotel_rate=3000.0,
+        market_hotel_name="Seaside Grand Market Hotel",
+        num_travelers=3
+    )
+    assert Decimal(res_market_3["market_hotel_cost"]) == Decimal("18000.00")
 
 def test_full_itinerary_translation():
     """

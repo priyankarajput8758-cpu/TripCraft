@@ -41,6 +41,16 @@ def get_attraction_detail(
     """
     return OpenTripMapService.get_attraction_detail(xid=xid, lang=lang)
 
+@router.get("/spot-image")
+def get_spot_image(
+    query: str = Query(..., description="Name of spot or attraction"),
+    category: Optional[str] = Query(None, description="Category of attraction")
+):
+    """
+    Fetch authentic real-world photo for any spot using Wikimedia Commons API.
+    """
+    return OpenTripMapService.get_spot_image(query=query, category=category)
+
 @router.get("/hotels")
 def search_live_hotels(
     query: str = Query(..., description="Search query, e.g. 'Varanasi Resorts' or 'Jaipur Luxury'"),

@@ -20,8 +20,8 @@ CACHE_DIR.mkdir(parents=True, exist_ok=True)
 OTM_CACHE_FILE = CACHE_DIR / "opentripmap_cache.json"
 
 CATEGORY_IMAGES = {
-    "Temple & Spiritual": "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=800&q=80",
-    "Heritage & Architecture": "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80",
+    "Temple & Spiritual": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b7/Shri_Jagannath_temple.jpg/960px-Shri_Jagannath_temple.jpg",
+    "Heritage & Architecture": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/41/East_facade_Hawa_Mahal_Jaipur_from_ground_level_%28July_2022%29_-_img_01.jpg/960px-East_facade_Hawa_Mahal_Jaipur_from_ground_level_%28July_2022%29_-_img_01.jpg",
     "Nature & Scenic": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80",
     "Museum & Culture": "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?auto=format&fit=crop&w=800&q=80",
     "Attraction": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"
@@ -457,3 +457,52 @@ class OpenTripMapService:
             "categories_summary": cat_counts,
             "attractions": attractions
         }
+
+    @classmethod
+    def get_spot_image(cls, query: str, category: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Fetch authentic real place photo for any spot using Wikimedia Commons API with persistent cache.
+        """
+        clean_q = query.strip()
+        if not clean_q:
+            return {"status": "success", "image_url": CATEGORY_IMAGES.get(category or "Attraction")}
+
+        cls._load_cache()
+        cache_key = f"spot_img_{clean_q.lower()}"
+        if cache_key in cls._cache:
+            return {"status": "success", "image_url": cls._cache[cache_key], "source": "cache"}
+
+        headers = {
+            "User-Agent": "TripCraftBot/1.0 (https://github.com/kognivera-org/kv-hack2026-codeblooded; contact@tripcraft.app)"
+        }
+        try:
+            r = requests.get(
+                "https://en.wikipedia.org/w/api.php",
+                params={
+                    "action": "query",
+                    "generator": "search",
+                    "gsrsearch": clean_q,
+                    "gsrlimit": 1,
+                    "prop": "pageimages",
+                    "pithumbsize": 960,
+                    "format": "json"
+                },
+                headers=headers,
+                timeout=5
+            )
+            if r.status_code == 200:
+                pages = r.json().get("query", {}).get("pages", {})
+                for p in pages.values():
+                    thumb = p.get("thumbnail", {}).get("source")
+                    if thumb:
+                        cls._cache[cache_key] = thumb
+                        cls._save_cache()
+                        return {"status": "success", "image_url": thumb, "source": "wikimedia", "title": p.get("title")}
+        except Exception as e:
+            logger.warning(f"Error fetching place image from Wikimedia for '{clean_q}': {e}")
+
+        # Fallback to category image
+        fallback = CATEGORY_IMAGES.get(category or "Attraction", CATEGORY_IMAGES["Attraction"])
+        cls._cache[cache_key] = fallback
+        cls._save_cache()
+        return {"status": "success", "image_url": fallback, "source": "fallback"}

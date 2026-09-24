@@ -57,18 +57,39 @@ class CatalogService:
         with get_db_connection() as conn:
             packages = conn.execute(query, params).fetchall()
 
-            # For each package, get thumbnail or first hotel image
+            # For each package, provide verified landmark or hotel image
+            CITY_LANDMARK_IMAGES = {
+                "hyderabad": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/71/Charminar_Hyderabad_1.jpg/960px-Charminar_Hyderabad_1.jpg",
+                "jaisalmer": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/47/Jaisalmer_forteresse.jpg/960px-Jaisalmer_forteresse.jpg",
+                "jaipur": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/41/East_facade_Hawa_Mahal_Jaipur_from_ground_level_%28July_2022%29_-_img_01.jpg/960px-East_facade_Hawa_Mahal_Jaipur_from_ground_level_%28July_2022%29_-_img_01.jpg",
+                "pune": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4d/Front_view_of_Shaniwar_Wada_illuminated.jpg/960px-Front_view_of_Shaniwar_Wada_illuminated.jpg",
+                "puri": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b7/Shri_Jagannath_temple.jpg/960px-Shri_Jagannath_temple.jpg",
+                "bhubaneswar": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5d/Lingaraj_Temple_%2C_Bhubaneswar.jpg/960px-Lingaraj_Temple_%2C_Bhubaneswar.jpg",
+                "hampi": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dd/Wide_angle_of_Galigopuram_of_Virupaksha_Temple%2C_Hampi_%2804%29_%28cropped%29.jpg/960px-Wide_angle_of_Galigopuram_of_Virupaksha_Temple%2C_Hampi_%2804%29_%28cropped%29.jpg",
+                "darjeeling": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/96/DarjeelingTrainFruitshop_%282%29.jpg/960px-DarjeelingTrainFruitshop_%282%29.jpg",
+                "gangtok": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/99/Rumtek_Monastery_alias_Dharma_Chakra_Centre_near_Gangtok%2C_East_Sikkim_09.jpg/960px-Rumtek_Monastery_alias_Dharma_Chakra_Centre_near_Gangtok%2C_East_Sikkim_09.jpg",
+                "srinagar": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e1/Dal_Lake_Hazratbal_Srinagar.jpg/960px-Dal_Lake_Hazratbal_Srinagar.jpg",
+                "aurangabad": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c3/Ajanta_%2863%29.jpg/960px-Ajanta_%2863%29.jpg",
+                "lucknow": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a9/Rumi_Darwaza_-_DSC2797-01.jpg/960px-Rumi_Darwaza_-_DSC2797-01.jpg",
+                "jodhpur": "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80",
+                "udaipur": "https://images.unsplash.com/photo-1615836245337-f5b9b2303f10?auto=format&fit=crop&w=800&q=80",
+                "varanasi": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=800&q=80",
+                "agra": "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=800&q=80",
+                "delhi": "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=800&q=80",
+                "mumbai": "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=800&q=80"
+            }
             for pkg in packages:
                 pkg["base_price_formatted"] = format_money(to_decimal(pkg["base_price"]))
-                # Fetch hotel image if available
-                img = conn.execute("""
-                    SELECT hm.file_path, hm.alt_text FROM hotel_media hm
-                    JOIN hotels h ON h.hotel_id = hm.hotel_id
-                    WHERE h.city_id = ? AND hm.media_role = 'hero'
-                    LIMIT 1
-                """, (pkg["city_id"],)).fetchone()
-                pkg["hero_image"] = img["file_path"] if img else None
-                pkg["hero_alt"] = img["alt_text"] if img else pkg["name"]
+                c_name = (pkg.get("city_name") or "").lower().strip()
+                landmark_img = CITY_LANDMARK_IMAGES.get(c_name)
+                if not landmark_img:
+                    for k, v in CITY_LANDMARK_IMAGES.items():
+                        if k in c_name or k in (pkg.get("name") or "").lower():
+                            landmark_img = v
+                            break
+
+                pkg["hero_image"] = landmark_img or "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"
+                pkg["hero_alt"] = pkg.get("name")
 
             # Translate package names and titles if non-English language is requested
             if clean_lang and clean_lang != "en" and packages:

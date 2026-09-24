@@ -20,6 +20,7 @@ class CreateBookingRequest(BaseModel):
     notes: Optional[str] = Field(None, description="Booking notes")
 
 @router.post("")
+@router.post("/create")
 def create_booking(req: CreateBookingRequest):
     """
     Create a confirmed booking with live pricing, versioned itinerary,

@@ -75,13 +75,6 @@ class PricingEngine:
             for comp_id in active_component_ids:
                 comp = component_map.get(comp_id)
                 if comp:
-                    comp_type = comp.get("component_type", "component")
-                    swap_grp = comp.get("swap_group") or ""
-                    is_hotel = comp_type == "hotel" or "hotel" in swap_grp.lower() or "stay" in swap_grp.lower()
-                    if has_market_hotel and is_hotel:
-                        # Replaced by real-world market hotel
-                        continue
-
                     delta = to_decimal(comp.get("price_delta", "0.00"))
                     components_delta_total += delta
                     line_items.append({
@@ -96,8 +89,6 @@ class PricingEngine:
                         "is_swappable": bool(comp.get("is_swappable", 0))
                     })
                 elif "lux" in comp_id:
-                    if has_market_hotel:
-                        continue
                     delta = Decimal("6500.00")
                     components_delta_total += delta
                     line_items.append({
@@ -112,8 +103,6 @@ class PricingEngine:
                         "is_swappable": True
                     })
                 elif "std" in comp_id:
-                    if has_market_hotel:
-                        continue
                     delta = Decimal("0.00")
                     line_items.append({
                         "component_id": comp_id,
@@ -155,16 +144,18 @@ class PricingEngine:
                         "is_swappable": False
                     })
 
-            # 5. Market Rate Hotel Override / Integration
+            # 5. Market Rate Hotel Addition (§PS-04 Live Market Data)
+            # Rule: Keep base package hotel charges intact; scale market hotel rooms: 2 persons per room
             market_hotel_cost = Decimal("0.00")
             if market_hotel_rate is not None and market_hotel_rate > 0:
-                raw_hotel_cost = to_decimal(market_hotel_rate) * Decimal(str(nights))
+                num_rooms = (travelers + 1) // 2
+                raw_hotel_cost = to_decimal(market_hotel_rate) * Decimal(str(nights)) * Decimal(str(num_rooms))
                 market_hotel_cost = raw_hotel_cost.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
                 line_items.append({
                     "component_id": "cmp_market_hotel_selected",
                     "component_type": "hotel",
-                    "title": f"Live Market Stay: {market_hotel_name or 'Selected Hotel'} ({nights} nights @ ₹{market_hotel_rate:,.2f})",
-                    "swap_group": "hotel_tier",
+                    "title": f"Live Market Stay: {market_hotel_name or 'Selected Hotel'} ({num_rooms} room{'s' if num_rooms > 1 else ''}, {nights} nights @ ₹{market_hotel_rate:,.2f}/room/night)",
+                    "swap_group": "hotel_market",
                     "day_index": 1,
                     "slot": "overnight",
                     "price_delta": format_money(market_hotel_cost),
