@@ -72,9 +72,10 @@ export default function BookingModal({
   const handleConfirmBooking = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-
-    const componentIds = Object.values(selectedComponents).filter(Boolean);
+    const rawComponents = bookingDetails?.selectedComponentIds || selectedComponents || [];
+    const componentIds = (Array.isArray(rawComponents) ? rawComponents : Object.values(rawComponents))
+      .map(c => typeof c === 'string' ? c : (c?.component_id || c?.id))
+      .filter(Boolean);
     const idempotencyKey = 'idemp_' + Math.random().toString(36).substring(2, 15);
 
     try {
