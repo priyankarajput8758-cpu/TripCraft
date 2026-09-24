@@ -22,22 +22,37 @@ export default function CustomizerStudio({
 
   const [selectedComponents, setSelectedComponents] = useState({});
   const [selectedGuide, setSelectedGuide] = useState(null);
+  const fixedDurationDays = pkg?.duration_days || 5;
+
+  const calculateEndDate = (start, days) => {
+    if (!start) return '';
+    const d = new Date(start);
+    d.setDate(d.getDate() + Math.max(1, days) - 1);
+    return d.toISOString().split('T')[0];
+  };
+
   const [startDate, setStartDate] = useState(tripPrefs.startDate || '2026-09-24');
-  const [endDate, setEndDate] = useState(tripPrefs.endDate || '2026-09-28');
+  const [endDate, setEndDate] = useState(calculateEndDate(tripPrefs.startDate || '2026-09-24', fixedDurationDays));
   const [numTravelers, setNumTravelers] = useState(tripPrefs.numTravelers || 2);
   const [pricingResult, setPricingResult] = useState(null);
   const [isRepricing, setIsRepricing] = useState(false);
   const [addOnTotal, setAddOnTotal] = useState(0);
   const [priceFlash, setPriceFlash] = useState(false);
 
-  // Compute duration from dates or package
-  const durationDays = useMemo(() => {
-    if (startDate && endDate) {
-      const diff = Math.round((new Date(endDate) - new Date(startDate)) / 86400000) + 1;
-      return Math.max(1, diff);
+  // Keep duration locked to curated package duration
+  const durationDays = fixedDurationDays;
+
+  // Whenever startDate or package changes, auto-update locked endDate
+  const handleStartDateChange = (newStart) => {
+    setStartDate(newStart);
+    setEndDate(calculateEndDate(newStart, fixedDurationDays));
+  };
+
+  useEffect(() => {
+    if (pkg?.duration_days) {
+      setEndDate(calculateEndDate(startDate, pkg.duration_days));
     }
-    return pkg?.duration_days || 5;
-  }, [startDate, endDate, pkg?.duration_days]);
+  }, [pkg?.duration_days, startDate]);
 
   // Group components by swap_group and categorize them
   const swapGroupsMap = useMemo(() => {
@@ -255,20 +270,26 @@ export default function CustomizerStudio({
                 <input
                   type="date"
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={(e) => handleStartDateChange(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  End Date
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    End Date
+                  </label>
+                  <span className="text-[10px] text-teal-700 bg-teal-50 px-1.5 py-0.2 rounded font-bold border border-teal-200">
+                    Fixed {durationDays} Days
+                  </span>
+                </div>
                 <input
                   type="date"
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500"
+                  readOnly
+                  title={`Package duration is fixed to ${durationDays} days. Selecting a new start date automatically sets the end date.`}
+                  className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-500 cursor-not-allowed select-none"
                 />
               </div>
 
@@ -398,28 +419,50 @@ export default function CustomizerStudio({
                   const key = `standalone_${comp.component_id}`;
                   const isChecked = selectedComponents[key] !== undefined || comp.is_optional === 0;
                   const delta = parseFloat(comp.price_delta || '0');
+                  const isOptional = comp.is_optional === 1;
 
                   return (
                     <div
                       key={comp.component_id}
-                      onClick={() => comp.is_optional === 1 && handleToggleStandalone(comp.component_id)}
                       className={`p-3.5 rounded-2xl border flex items-center justify-between transition-all ${
                         isChecked
-                          ? 'bg-emerald-50/50 border-emerald-200 text-slate-900'
-                          : 'bg-slate-50 border-slate-200 text-slate-400 opacity-60'
-                      } ${comp.is_optional === 1 ? 'cursor-pointer hover:border-emerald-300' : ''}`}
+                          ? 'bg-emerald-50/70 border-emerald-300 text-slate-900 shadow-xs'
+                          : 'bg-slate-50 border-slate-200 text-slate-400 opacity-70'
+                      }`}
                     >
-                      <div className="space-y-0.5">
-                        <div className="text-xs font-bold">{comp.title || comp.name}</div>
-                        <div className="text-[10px] text-slate-500 uppercase">
-                          {comp.component_type} • {comp.is_optional === 0 ? 'Mandatory Inclusion' : 'Optional Inclusion'}
+                      <div className="space-y-0.5 min-w-0 pr-2">
+                        <div className="text-xs font-bold text-slate-900 truncate">{comp.title || comp.name}</div>
+                        <div className="text-[10px] text-slate-500 uppercase flex items-center gap-1.5">
+                          <span>{comp.component_type}</span>
+                          <span>•</span>
+                          <span className={isOptional ? 'text-amber-700 font-bold' : 'text-emerald-700 font-bold'}>
+                            {isOptional ? 'Optional Add-on' : 'Included In Package'}
+                          </span>
                         </div>
                       </div>
 
-                      <div className="text-right shrink-0">
+                      <div className="flex items-center gap-2 shrink-0">
                         <span className="text-xs font-mono font-bold text-emerald-700">
-                          +{currencySymbol}{delta.toLocaleString('en-IN')}
+                          {delta > 0 ? `+${currencySymbol}${delta.toLocaleString('en-IN')}` : 'Included'}
                         </span>
+
+                        {isOptional && (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStandalone(comp.component_id)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                              isChecked
+                                ? 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100'
+                                : 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-xs'
+                            }`}
+                          >
+                            {isChecked ? (
+                              <><Trash2 className="w-3 h-3" /><span>Remove</span></>
+                            ) : (
+                              <><Plus className="w-3 h-3" /><span>Add</span></>
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -456,7 +499,7 @@ export default function CustomizerStudio({
                   Live Repricing Quote
                 </h3>
                 <span className="text-[11px] text-slate-500 font-mono">
-                  {numTravelers} Traveler{numTravelers > 1 ? 's' : ''} • Zero Float
+                  {numTravelers} Traveler{numTravelers > 1 ? 's' : ''} • Zero Float Decimal
                 </span>
               </div>
               <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold ${
@@ -469,28 +512,33 @@ export default function CustomizerStudio({
             {/* Price Line Items */}
             <div className="space-y-3 text-xs">
               <div className="flex justify-between text-slate-700 font-medium">
-                <span>Base Package Rate ({pkgTitle})</span>
+                <div>
+                  <span className="block">Base Rate ({numTravelers}p × {currencySymbol}{parseFloat(pkg.base_price || 32000).toLocaleString('en-IN')})</span>
+                </div>
                 <span className="font-mono font-bold text-slate-900">
-                  {currencySymbol}{parseFloat(pkg.base_price || 32000).toLocaleString('en-IN')}
+                  {currencySymbol}{(parseFloat(pkg.base_price || 32000) * numTravelers).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </span>
               </div>
 
-              {pricingResult?.components_delta_total && (
+              {pricingResult?.components_delta_total && parseFloat(pricingResult.components_delta_total) !== 0 && (
                 <div className="flex justify-between text-slate-700 font-medium">
-                  <span>Custom Component Adjustments</span>
+                  <span>Component Adjustments ({numTravelers}p)</span>
                   <span className={`font-mono font-bold ${
                     parseFloat(pricingResult.components_delta_total) >= 0 ? 'text-teal-700' : 'text-emerald-700'
                   }`}>
-                    {parseFloat(pricingResult.components_delta_total) >= 0 ? '+' : ''}{currencySymbol}{parseFloat(pricingResult.components_delta_total).toLocaleString('en-IN')}
+                    {parseFloat(pricingResult.components_delta_total) >= 0 ? '+' : ''}{currencySymbol}{(parseFloat(pricingResult.components_delta_total) * numTravelers).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               )}
 
               {selectedGuide ? (
-                <div className="flex justify-between text-amber-900 font-bold bg-amber-50 p-2 rounded-xl border border-amber-200">
-                  <span>Guide: {selectedGuide.display_name || selectedGuide.name}</span>
+                <div className="flex justify-between text-amber-900 font-bold bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+                  <div className="space-y-0.5">
+                    <span className="block">Guide: {selectedGuide.display_name || selectedGuide.name}</span>
+                    <span className="text-[10px] text-amber-700 font-normal">Fixed Group Rate ({durationDays} Days)</span>
+                  </div>
                   <span className="font-mono">
-                    +{currencySymbol}{parseFloat(pricingResult?.guide_cost || selectedGuide.day_rate || 3500).toLocaleString('en-IN')}
+                    +{currencySymbol}{parseFloat(pricingResult?.guide_cost || selectedGuide.day_rate || 3500).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               ) : (
@@ -501,9 +549,9 @@ export default function CustomizerStudio({
               )}
 
               {addOnTotal > 0 && (
-                <div className="flex justify-between text-indigo-700 font-medium">
+                <div className="flex justify-between text-indigo-700 font-medium bg-indigo-50/50 p-2 rounded-xl border border-indigo-100">
                   <span>Theme Add-ons ({numTravelers}p)</span>
-                  <span className="font-mono font-bold">+{currencySymbol}{(addOnTotal * numTravelers).toLocaleString('en-IN')}</span>
+                  <span className="font-mono font-bold">+{currencySymbol}{(addOnTotal * numTravelers).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                 </div>
               )}
             </div>

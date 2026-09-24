@@ -11,14 +11,23 @@ export default function BookingModal({
   bookingDetails,
   onBookingConfirmed,
 }) {
+  const initialTravelers = Number(bookingDetails?.numTravelers || bookingDetails?.partySize || 2);
   const [leadPassengerName, setLeadPassengerName] = useState('Priyanka Rajput');
   const [email, setEmail] = useState('priyanka@example.com');
   const [phone, setPhone] = useState('+91 98765 43210');
-  const [numTravelers, setNumTravelers] = useState(2);
+  const [numTravelers, setNumTravelers] = useState(initialTravelers);
   const [specialRequests, setSpecialRequests] = useState('');
   const [loading, setLoading] = useState(false);
   const [bookingConfirmed, setBookingConfirmed] = useState(null);
   const [error, setError] = useState(null);
+
+  // Sync travelers count when bookingDetails changes
+  React.useEffect(() => {
+    if (bookingDetails) {
+      const count = Number(bookingDetails.numTravelers || bookingDetails.partySize || 2);
+      setNumTravelers(count);
+    }
+  }, [bookingDetails]);
 
   if (!isOpen || !bookingDetails) return null;
 
@@ -29,21 +38,25 @@ export default function BookingModal({
   const endDate = bookingDetails.endDate;
   const durationDays = bookingDetails.durationDays || pkg?.duration_days || 3;
   const selectedComponents = bookingDetails.selectedComponents || {};
-  const addOnTotal = bookingDetails.addOnTotal || 0;
+  const addOnTotal = Number(bookingDetails.addOnTotal || 0);
 
   const pkgTitle = pkg?.name || pkg?.title || bookingDetails.packageName || 'Custom Tour Itinerary';
   const guideName = guide?.display_name || guide?.name;
 
-  let totalPrice = '0.00';
-  if (bookingDetails.totalPrice) {
-    totalPrice = bookingDetails.totalPrice;
-  } else if (bookingDetails.total) {
-    totalPrice = parseFloat(bookingDetails.total).toLocaleString('en-IN', { minimumFractionDigits: 2 });
-  } else if (pricing?.total_price) {
-    totalPrice = (parseFloat(pricing.total_price) + addOnTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 });
-  } else if (pkg?.base_price) {
-    totalPrice = parseFloat(pkg.base_price).toLocaleString('en-IN', { minimumFractionDigits: 2 });
-  }
+  // Compute baseline per-traveler rate to scale dynamically
+  const initialTotalRaw = parseFloat(
+    (bookingDetails.optimizedTotalPrice || bookingDetails.totalPrice || bookingDetails.total || pricing?.total_price || pkg?.base_price || 32000)
+      .toString()
+      .replace(/,/g, '')
+  );
+
+  const guideRateTotal = guide ? parseFloat(pricing?.guide_cost || guide.day_rate || 3500) : 0;
+  const pkgOnlyInitial = Math.max(0, initialTotalRaw - guideRateTotal);
+  const perPersonRate = initialTravelers > 0 ? (pkgOnlyInitial / initialTravelers) : pkgOnlyInitial;
+
+  const activeTravelerCount = Math.max(1, parseInt(numTravelers) || 1);
+  const calculatedGrandTotal = (perPersonRate * activeTravelerCount) + guideRateTotal;
+  const totalPrice = calculatedGrandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const dateRange = startDate
     ? (endDate ? `${startDate} → ${endDate}` : startDate)
@@ -67,11 +80,13 @@ export default function BookingModal({
         idempotency_key: idempotencyKey,
         guide_id: guide?.guide_id || null,
         start_date: startDate,
-        party_size: parseInt(numTravelers) || 2,
+        party_size: activeTravelerCount,
+        num_travelers: activeTravelerCount,
+        total_price: calculatedGrandTotal.toFixed(2),
         guest_name: leadPassengerName,
         guest_email: email,
         guest_phone: phone,
-        notes: `Passenger: ${leadPassengerName} (${email}, ${phone}). Requests: ${specialRequests || 'None'}`
+        notes: `Passenger: ${leadPassengerName} (${email}, ${phone}). Party size: ${activeTravelerCount}. Requests: ${specialRequests || 'None'}`
       };
 
       const res = await api.createBooking(payload);

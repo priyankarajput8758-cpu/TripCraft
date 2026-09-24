@@ -268,7 +268,13 @@ Return ONLY a valid JSON object strictly matching this schema:
 
         # 3. Fallback Deterministic Custom Package Synthesizer if Gemini is offline
         if not ai_res or not isinstance(ai_res, dict) or "itinerary" not in ai_res:
+            req_lower = (user_custom_requests or "").lower()
             itinerary_fallback = []
+            
+            # Destination & theme specific defaults
+            is_waterfall = "waterfall" in req_lower or "waterfalls" in req_lower
+            is_food = "food" in req_lower or "culinary" in req_lower or "dining" in req_lower
+            
             for d in range(1, num_days + 1):
                 day_data = next((item for item in day_selections if item.get("day_number") == d), None)
                 acts = day_data.get("selected_activities", []) if day_data else []
@@ -301,6 +307,38 @@ Return ONLY a valid JSON object strictly matching this schema:
                             "type": "scenic",
                             "description": "Unwind with panoramic views of the surrounding landscapes."
                         })
+                elif is_waterfall and "gokarna" in destination_name.lower():
+                    if d == 1:
+                        slots = [
+                            {"time": "08:30 AM - 01:00 PM", "title": "Vibhooti Waterfall Trek & Forest Trail", "type": "trek", "description": "Lush forest trek to the pristine cascading Vibhooti Falls with natural swimming pools."},
+                            {"time": "01:30 PM - 02:30 PM", "title": "Traditional Coastal Lunch at Sahyadri Dhaba", "type": "dining", "description": "Savor authentic Uttara Kannada coastal vegetarian & seafood thali."},
+                            {"time": "04:30 PM - 06:30 PM", "title": "Yana Limestone Rock Formations & Caves", "type": "scenic", "description": "Marvel at the giant black karst limestone monoliths amidst dense evergreen jungle."}
+                        ]
+                    elif d == 2:
+                        slots = [
+                            {"time": "08:30 AM - 12:30 PM", "title": "Apsarakonda Waterfall & Sea-facing Hillock", "type": "sightseeing", "description": "Scenic waterfall plunging into a natural pond facing the Arabian Sea."},
+                            {"time": "01:00 PM - 02:30 PM", "title": "Fresh Seafood Lunch in Honnavar", "type": "dining", "description": "Local catch delicacies and coconut-based curries."},
+                            {"time": "04:00 PM - 06:30 PM", "title": "Sharavathi Backwaters Mangrove Boat Cruise", "type": "scenic", "description": "Sunset cruise through lush mangrove channels."}
+                        ]
+                    else:
+                        slots = [
+                            {"time": "09:00 AM - 12:00 PM", "title": "Om Beach & Half-Moon Beach Coastal Trail", "type": "trek", "description": "Cliffside coastal trail linking Gokarna's iconic beaches."},
+                            {"time": "01:00 PM - 02:30 PM", "title": "Namaste Cafe Seaside Dining", "type": "dining", "description": "Relaxed beachfront dining with panoramic ocean vistas."},
+                            {"time": "04:30 PM - 06:30 PM", "title": "Kudle Beach Sunset & Leisure Walk", "type": "leisure", "description": "Tranquil evening golden hour across the sweeping bay."}
+                        ]
+                elif is_food and "bhubaneswar" in destination_name.lower():
+                    if d == 1:
+                        slots = [
+                            {"time": "08:30 AM - 11:30 AM", "title": "Old Town Heritage & Temple Circuit (Lingaraj & Mukteshvara)", "type": "spiritual", "description": "Explore 10th-century architectural marvels with an expert local guide."},
+                            {"time": "12:30 PM - 02:00 PM", "title": "Authentic Odia Thali Experience (Dalma & Pakhala Bhata)", "type": "dining", "description": "Traditional lunch featuring authentic Dalma, seasonal vegetables, and aromatic rice."},
+                            {"time": "04:30 PM - 07:00 PM", "title": "Ekamra Haat Traditional Street Food & Craft Walk", "type": "dining", "description": "Taste local delicacies like Chhena Poda, Dahibara Aloodum, and Rasabali."}
+                        ]
+                    else:
+                        slots = [
+                            {"time": "09:00 AM - 12:30 PM", "title": "Dhauli Shanti Stupa & Kalinga Heritage Grounds", "type": "heritage", "description": "Historic Buddhist peace pagoda overlooking the Daya River."},
+                            {"time": "01:00 PM - 02:30 PM", "title": "Coastal Seafood & Freshwater Delicacies Lunch", "type": "dining", "description": "Chilika crab curry and freshwater fish specialties."},
+                            {"time": "04:30 PM - 06:30 PM", "title": "Khandagiri & Udayagiri Ancient Rock Caves", "type": "sightseeing", "description": "Panoramic sunset views from the ancient Jain rock-cut monasteries."}
+                        ]
                 else:
                     slots = [
                         {"time": "09:00 AM - 12:00 PM", "title": f"Highlights of {destination_name}", "type": "sightseeing", "description": f"Explore iconic landmarks and scenic highlights."},
@@ -310,13 +348,13 @@ Return ONLY a valid JSON object strictly matching this schema:
 
                 itinerary_fallback.append({
                     "day": d,
-                    "title": f"Day {d}: Exploring {destination_name}",
+                    "title": f"Day {d}: {destination_name} {'Waterfalls & Trails' if is_waterfall else ('Food Trail & Heritage' if is_food else 'Exploration')}",
                     "slots": slots,
                     "notes": f"Comfortable shoes and hydration recommended for Day {d}."
                 })
 
             ai_res = {
-                "trip_title": f"Custom {num_days}-Day {destination_name} Explorer",
+                "trip_title": f"Custom {num_days}-Day {destination_name} {'Waterfalls & Trails' if is_waterfall else ('Food & Heritage Trail' if is_food else 'Explorer')}",
                 "destination": destination_name,
                 "duration_days": num_days,
                 "pace": pace_preference,
@@ -382,11 +420,80 @@ Return ONLY a valid JSON object strictly matching this schema:
         interests: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        AI Trip Builder: Evaluates natural language constraints with Gemini Flash,
-        grounded strictly in SQLite database catalog, followed by strict Decimal repricing.
+        AI Trip Builder: Evaluates natural language constraints with Gemini Flash.
+        - If an exact package matching destination, exact duration_days, and budget exists in the catalog, returns curated package for Customizer Studio.
+        - Else (no exact duration or budget match, or custom destination like Gokarna), seamlessly redirects to Custom Architect with pre-selected options.
         """
+        import re
+
+        prompt_combined = f"{user_prompt} {interests or ''}".strip()
+        prompt_lower = prompt_combined.lower()
+
+        # 1. Extract constraints from prompt & inputs
+        req_days = duration_days
+        if not req_days:
+            day_match = re.search(r'(\d+)\s*(?:-?\s*day|days|nights|night)', prompt_lower)
+            if day_match:
+                try:
+                    req_days = int(day_match.group(1))
+                except Exception:
+                    pass
+
+        req_budget = max_budget
+        if not req_budget:
+            budget_match = re.search(r'(?:under|below|budget|within|max|upto|up to|less than)\s*(?:rs\.?|inr|₹)?\s*([\d,]+)', prompt_lower)
+            if budget_match:
+                try:
+                    req_budget = float(budget_match.group(1).replace(',', ''))
+                except Exception:
+                    pass
+
+        LANG_MAP = {
+            'marathi': 'mr', 'tamil': 'ta', 'hindi': 'hi', 'kannada': 'kn',
+            'telugu': 'te', 'bengali': 'bn', 'gujarati': 'gu', 'english': 'en',
+            'french': 'fr', 'german': 'de', 'spanish': 'es', 'japanese': 'ja'
+        }
+        req_lang = preferred_language or 'en'
+        for lang_name, code in LANG_MAP.items():
+            if lang_name in prompt_lower:
+                req_lang = code
+                break
+
+        # Extract user theme / activity intent
+        THEME_KEYWORDS = {
+            'adventure': ['adventure', 'waterfall', 'waterfalls', 'trek', 'trekking', 'rafting', 'scuba', 'climb', 'hike', 'hiking'],
+            'wildlife': ['wildlife', 'safari', 'national park', 'sanctuary', 'tiger', 'birds'],
+            'food_trail': ['food', 'culinary', 'dining', 'gastronomy', 'street food', 'cuisine', 'food tour'],
+            'pilgrimage': ['pilgrimage', 'temple', 'temples', 'spiritual', 'darshan', 'shrine', 'kashi', 'aarti'],
+            'honeymoon': ['honeymoon', 'romantic', 'couple', 'resort'],
+            'heritage': ['heritage', 'fort', 'forts', 'palace', 'monument', 'monuments', 'history', 'cultural', 'culture'],
+            'wellness': ['wellness', 'yoga', 'ayurveda', 'spa', 'meditation', 'retreat'],
+            'family': ['family', 'kids', 'children']
+        }
+        user_themes = [theme_name for theme_name, kws in THEME_KEYWORDS.items() if any(kw in prompt_lower for kw in kws)]
+
+        # Extract destination
+        extracted_dest = None
+        for alias_key, target_city in CITY_ALIASES.items():
+            if alias_key in prompt_lower:
+                extracted_dest = target_city.title()
+                break
+
+        if not extracted_dest:
+            for reg_name, places in REGION_MAP.items():
+                for place in places:
+                    if place in prompt_lower:
+                        extracted_dest = place.title()
+                        break
+                if extracted_dest:
+                    break
+
         with get_db_connection() as conn:
-            # 1. Retrieve all candidate packages with joined city information
+            if not extracted_dest and destination_city_id:
+                c_row = conn.execute("SELECT name FROM cities WHERE city_id = ?", (destination_city_id,)).fetchone()
+                if c_row:
+                    extracted_dest = c_row["name"]
+
             query = """
                 SELECT p.*, c.name as city_name, c.state as city_state, c.region as city_region,
                        c.lat as city_lat, c.lng as city_lng, c.primary_language as city_language
@@ -394,212 +501,159 @@ Return ONLY a valid JSON object strictly matching this schema:
                 JOIN cities c ON p.city_id = c.city_id
                 WHERE p.status = 'active'
             """
-            params = []
-            if destination_city_id:
-                query += " AND p.city_id = ?"
-                params.append(destination_city_id)
-
-            candidates = conn.execute(query, params).fetchall()
-            if not candidates:
-                candidates = conn.execute(
-                    "SELECT p.*, c.name as city_name, c.state as city_state, c.region as city_region FROM tour_packages p JOIN cities c ON p.city_id = c.city_id WHERE p.status = 'active'"
-                ).fetchall()
-
+            candidates = conn.execute(query).fetchall()
             candidates_list = [dict(c) for c in candidates]
 
-            # 2. Try Gemini Structured Package Architect First
-            chosen_pkg_id = None
-            gemini_reasoning = None
+            if not extracted_dest:
+                for c in candidates_list:
+                    if c.get("city_name") and c["city_name"].lower() in prompt_lower:
+                        extracted_dest = c["city_name"]
+                        break
 
-            prompt_combined = f"{user_prompt} {interests or ''}".strip()
+            if not extracted_dest:
+                extracted_dest = "Chikmagalur"
 
-            gemini_payload = [
-                {
-                    "package_id": c["package_id"],
-                    "name": c["name"],
-                    "duration_days": c["duration_days"],
-                    "theme": c["theme"],
-                    "base_price": str(c["base_price"]),
-                    "city": c["city_name"],
-                    "state": c.get("city_state"),
-                    "region": c.get("city_region"),
-                    "description": c.get("description", "")
-                }
-                for c in candidates_list
-            ]
+            # 2. Check for STRICT Matching Curated Packages
+            # Strict Criteria:
+            # (1) Destination matches
+            # (2) Exact same duration_days (if duration requested)
+            # (3) Base price <= max_budget (if budget requested)
+            # (4) Theme/experience matches (if specific theme like waterfalls or food requested)
+            exact_matches = []
+            dest_lower = extracted_dest.lower()
+            canonical_dest = CITY_ALIASES.get(dest_lower, dest_lower)
 
-            ai_prompt = f"""User Travel Request: "{prompt_combined}"
-Filters: Max Budget: {max_budget or 'Flexible'}, Preferred Duration: {duration_days or 'Flexible'} Days, Language: {preferred_language or 'Any'}
+            for pkg in candidates_list:
+                pkg_city_lower = (pkg.get("city_name") or "").lower()
+                pkg_canonical_city = CITY_ALIASES.get(pkg_city_lower, pkg_city_lower)
 
-Available Real Verified Packages from Database:
-{json.dumps(gemini_payload, indent=2)}
+                city_matched = (canonical_dest in pkg_canonical_city or pkg_canonical_city in canonical_dest)
+                if not city_matched and destination_city_id:
+                    city_matched = (pkg.get("city_id") == destination_city_id)
 
-Task:
-Analyze the user's travel request (region/geography, duration, theme, budget, style) and select the single best matching package from the database list above.
-Return a valid JSON object ONLY with this structure:
-{{
-  "selected_package_id": "<package_id from list>",
-  "reasoning": "<2-3 sentence personalized justification explaining why this package, destination, and duration fits their exact request>",
-  "suggested_hotel_tier": "luxury|standard|budget",
-  "highlight": "<key memorable feature>"
-}}
-"""
-            system_inst = "You are TripCraft's Grounded AI Travel Architect. Match traveller requests strictly to real database packages."
+                if not city_matched:
+                    continue
 
-            ai_response = GeminiClient.generate_json(ai_prompt, system_inst)
-            if ai_response and isinstance(ai_response, dict) and "selected_package_id" in ai_response:
-                matched_id = ai_response["selected_package_id"]
-                if any(c["package_id"] == matched_id for c in candidates_list):
-                    chosen_pkg_id = matched_id
-                    gemini_reasoning = ai_response.get("reasoning")
-                    logger.info(f"Gemini selected package {chosen_pkg_id} with reasoning: {gemini_reasoning}")
+                # Exact Duration Check
+                if req_days and pkg.get("duration_days") != req_days:
+                    continue
 
-            # 3. Fallback Deterministic Multi-Dimension Scorer if Gemini did not pick
-            if not chosen_pkg_id:
-                prompt_lower = prompt_combined.lower()
-                scored = []
+                # Budget Check
+                if req_budget:
+                    pkg_base = float(to_decimal(pkg.get("base_price", 0)))
+                    if pkg_base > req_budget:
+                        continue
 
-                for pkg in candidates_list:
-                    score = 0
-                    pkg_name = pkg["name"].lower()
+                # Theme Check if user specified a theme
+                if user_themes:
                     pkg_theme = (pkg.get("theme") or "").lower()
-                    pkg_city = (pkg.get("city_name") or "").lower()
-                    pkg_state = (pkg.get("city_state") or "").lower()
-                    pkg_region = (pkg.get("city_region") or "").lower()
-                    pkg_desc = (pkg.get("description") or "").lower()
+                    pkg_name_lower = (pkg.get("name") or "").lower()
+                    theme_matched = (pkg_theme in user_themes) or any(
+                        kw in pkg_name_lower for t in user_themes for kw in THEME_KEYWORDS[t]
+                    )
+                    if not theme_matched:
+                        continue
 
-                    # Geographic and Regional Matching
-                    for reg_name, places in REGION_MAP.items():
-                        if reg_name in prompt_lower:
-                            if pkg_region == reg_name or any(p in pkg_city or p in pkg_state for p in places):
-                                score += 80
+                exact_matches.append(pkg)
 
-                    # Check Phonetic / Common City Aliases (e.g. Bhuvaneshwar -> Bhubaneswar)
-                    for alias_key, target_city in CITY_ALIASES.items():
-                        if alias_key in prompt_lower:
-                            if target_city in pkg_city or target_city in pkg_name or target_city in pkg_desc:
-                                score += 200
+            # 3. IF Exact Curated Match Exists -> Load into Customizer Studio
+            if exact_matches:
+                # Rank if theme requested
+                def score_pkg(p):
+                    sc = 0
+                    p_theme = (p.get("theme") or "").lower()
+                    if p_theme in prompt_lower:
+                        sc += 50
+                    return sc
 
-                    # Direct city / state keyword match
-                    if pkg_city in prompt_lower:
-                        score += 120
-                    if pkg_state and pkg_state in prompt_lower:
-                        score += 70
+                exact_matches.sort(key=score_pkg, reverse=True)
+                chosen_pkg = exact_matches[0]
+                package_id = chosen_pkg["package_id"]
 
-                    # International vs Domestic protection: Prevent domestic requests from falling back to Zurich/Kyoto
-                    is_international = pkg_region == "international" or (pkg.get("currency") and pkg.get("currency") != "INR")
-                    user_wants_international = any(w in prompt_lower for w in ["international", "foreign", "abroad", "europe", "switzerland", "japan", "zurich", "kyoto", "dubai", "bali", "singapore", "thailand", "bangkok", "maldives"])
-                    if is_international and not user_wants_international:
-                        score -= 300
+                # Retrieve all real components for chosen package
+                components = conn.execute(
+                    "SELECT * FROM package_components WHERE package_id = ? ORDER BY day_index, slot",
+                    (package_id,)
+                ).fetchall()
 
-                    # Theme matching
-                    if pkg_theme and pkg_theme in prompt_lower:
-                        score += 50
-                    for kw in ["heritage", "temple", "spiritual", "adventure", "romantic", "honeymoon", "wildlife", "beach", "luxury", "family", "food", "wellness"]:
-                        if kw in prompt_lower and (kw in pkg_theme or kw in pkg_name or kw in pkg_desc):
-                            score += 30
-
-                    # Duration matching (exact = +60, 1 day diff = +20)
-                    if duration_days:
-                        diff = abs(pkg["duration_days"] - duration_days)
-                        if diff == 0:
-                            score += 60
-                        elif diff == 1:
-                            score += 25
-                    else:
-                        # Parse duration from text like "5 day" or "5 days"
-                        import re
-                        day_match = re.search(r'(\d+)\s*(?:day|days)', prompt_lower)
-                        if day_match:
-                            parsed_days = int(day_match.group(1))
-                            diff = abs(pkg["duration_days"] - parsed_days)
-                            if diff == 0:
-                                score += 60
-                            elif diff == 1:
-                                score += 25
-
-                    # Language matching
-                    if preferred_language and preferred_language in (pkg.get("languages_offered") or ""):
-                        score += 30
-
-                    # Budget matching
-                    if max_budget:
-                        pkg_price = float(to_decimal(pkg["base_price"]))
-                        if pkg_price <= max_budget:
-                            score += 30
-                        elif pkg_price <= max_budget * 1.2:
-                            score += 10
-
-                    scored.append((score, pkg))
-
-                scored.sort(key=lambda x: x[0], reverse=True)
-                chosen_pkg_id = scored[0][1]["package_id"] if scored else candidates_list[0]["package_id"]
-
-            chosen_pkg = next((c for c in candidates_list if c["package_id"] == chosen_pkg_id), candidates_list[0])
-            package_id = chosen_pkg["package_id"]
-
-            # 4. Retrieve all real components for chosen package
-            components = conn.execute(
-                "SELECT * FROM package_components WHERE package_id = ? ORDER BY day_index, slot",
-                (package_id,)
-            ).fetchall()
-
-            # 5. Select components (default non-optional + best fit per swap group)
-            selected_comp_ids = []
-            seen_swap_groups = set()
-            prompt_lower = prompt_combined.lower()
-
-            for comp in components:
-                sg = comp["swap_group"]
-                is_opt = comp["is_optional"]
-
-                if is_opt == 0:
-                    if sg:
-                        if sg not in seen_swap_groups:
-                            selected_comp_ids.append(comp["component_id"])
-                            seen_swap_groups.add(sg)
-                    else:
-                        selected_comp_ids.append(comp["component_id"])
-                else:
-                    # Contextual add-on selection based on prompt
-                    comp_title_lower = comp["title"].lower()
-                    if any(w in prompt_lower for w in ["guide", "safari", "dinner", "cruise", "temple", "darshan", "museum", "spa", "aarti", "trek"]):
-                        if any(w in comp_title_lower for w in ["safari", "cruise", "dinner", "tour", "vip", "spa", "darshan", "aarti", "trek"]):
+                selected_comp_ids = []
+                seen_swap_groups = set()
+                for comp in components:
+                    sg = comp["swap_group"]
+                    if comp["is_optional"] == 0:
+                        if sg:
+                            if sg not in seen_swap_groups:
+                                selected_comp_ids.append(comp["component_id"])
+                                seen_swap_groups.add(sg)
+                        else:
                             selected_comp_ids.append(comp["component_id"])
 
-            # 6. Best matching guide in package city
-            guide = conn.execute(
-                "SELECT * FROM tour_guides WHERE city_id = ? AND status = 'active' ORDER BY rating DESC LIMIT 1",
-                (chosen_pkg["city_id"],)
-            ).fetchone()
-            guide_dict = dict(guide) if guide else None
-            guide_id = guide_dict["guide_id"] if guide_dict else None
+                # Best matching guide in package city
+                guide = conn.execute(
+                    "SELECT * FROM tour_guides WHERE city_id = ? AND status = 'active' ORDER BY rating DESC LIMIT 1",
+                    (chosen_pkg["city_id"],)
+                ).fetchone()
+                guide_dict = dict(guide) if guide else None
+                guide_id = guide_dict["guide_id"] if guide_dict else None
 
-            # 7. Compute exact Decimal Repricing
-            reprice = PricingEngine.calculate_repricing(
-                package_id=package_id,
-                selected_component_ids=selected_comp_ids,
-                guide_id=guide_id,
-                start_date="2026-09-24"
-            )
+                reprice = PricingEngine.calculate_repricing(
+                    package_id=package_id,
+                    selected_component_ids=selected_comp_ids,
+                    guide_id=guide_id,
+                    start_date="2026-09-24"
+                )
 
-            # 8. Generate personalized explanation if not provided by Gemini
-            if not gemini_reasoning:
                 gemini_reasoning = (
                     f"Curated the '{chosen_pkg['name']}' package in {chosen_pkg.get('city_name', 'destination')} "
-                    f"to match your preference for {chosen_pkg.get('theme', 'custom')} travel. "
-                    f"Configured with {len(reprice['line_items'])} verified itinerary items "
-                    f"for a verified total of {reprice['currency']} {reprice['total_price']}."
+                    f"matching your exact {chosen_pkg['duration_days']}-day preference and budget. "
+                    f"Configured with verified itinerary inclusions for a verified total of {reprice['currency']} {reprice['total_price']}."
                 )
+
+                return {
+                    "status": "success",
+                    "action": "curated_package",
+                    "redirect_to_custom_architect": False,
+                    "grounded": True,
+                    "user_prompt": user_prompt,
+                    "package": chosen_pkg,
+                    "reprice_summary": reprice,
+                    "assigned_guide": guide_dict,
+                    "ai_explanation": gemini_reasoning.strip()
+                }
+
+            # 4. ELSE (No exact catalog match exists) -> Seamlessly Initialize Custom Architect
+            logger.info(f"No exact package match for {extracted_dest} ({req_days} days, budget: {req_budget}). Initializing Custom Architect.")
+
+            custom_res = cls.synthesize_custom_trip(
+                destination_name=extracted_dest,
+                duration_days=req_days or 3,
+                pace_preference="balanced",
+                user_custom_requests=user_prompt,
+                num_travelers=1
+            )
+
+            budget_str = f"₹{int(req_budget):,}" if req_budget else "the requested budget"
+            days_str = f"{req_days}-day" if req_days else "custom duration"
+
+            explanation = (
+                f"No pre-built catalog package matched the exact {days_str} duration under {budget_str} for {extracted_dest}. "
+                f"We have set up the Custom Destination Architect with a tailored {days_str} {extracted_dest} plan and "
+                f"pre-selected options matching your requirements for you to review and customize."
+            )
 
             return {
                 "status": "success",
+                "action": "custom_architect",
+                "redirect_to_custom_architect": True,
                 "grounded": True,
-                "user_prompt": user_prompt,
-                "package": chosen_pkg,
-                "reprice_summary": reprice,
-                "assigned_guide": guide_dict,
-                "ai_explanation": gemini_reasoning.strip()
+                "destination_name": extracted_dest,
+                "duration_days": req_days or 3,
+                "target_budget": req_budget,
+                "preferred_language": req_lang,
+                "interests": interests or "travel experiences",
+                "user_custom_requests": user_prompt,
+                "custom_package": custom_res.get("custom_package"),
+                "ai_explanation": explanation
             }
 
     @classmethod

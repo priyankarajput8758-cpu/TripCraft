@@ -17,9 +17,8 @@ export default function RealWorldPanel({ cityName = 'Bengaluru' }) {
     setLoading(true);
     try {
       const res = await api.searchLiveHotels(searchQuery);
-      if (res.status === 'success' && res.data) {
-        setHotels(res.data);
-      }
+      const list = res?.hotels || res?.data || [];
+      setHotels(list);
     } catch (err) {
       console.error('Error fetching live hotels:', err);
     } finally {

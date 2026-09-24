@@ -39,8 +39,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-export default function DestinationExplorer({ externalSupplyMode = false, onBookingComplete }) {
-  const [destinationQuery, setDestinationQuery] = useState('Chikmagalur');
+export default function DestinationExplorer({ externalSupplyMode = false, onBookingComplete, initialState = null }) {
+  const [destinationQuery, setDestinationQuery] = useState(initialState?.destination || 'Chikmagalur');
   const [radiusMeters, setRadiusMeters] = useState(15000);
   const [loadingExplore, setLoadingExplore] = useState(false);
   const [geoData, setGeoData] = useState(null);
@@ -56,10 +56,10 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
   const [loadingHotels, setLoadingHotels] = useState(false);
 
   // Configuration for Day Matrix
-  const [durationDays, setDurationDays] = useState(3);
+  const [durationDays, setDurationDays] = useState(initialState?.duration || 3);
   const [pacePreference, setPacePreference] = useState('balanced');
   const [numTravelers, setNumTravelers] = useState(2);
-  const [userCustomRequests, setUserCustomRequests] = useState('');
+  const [userCustomRequests, setUserCustomRequests] = useState(initialState?.customRequests || '');
 
   // Stay Selection Mode: 'same' (Single Stay Throughout) vs 'different' (Different Stays Per Day)
   const [stayMode, setStayMode] = useState('same');
@@ -74,11 +74,11 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
 
   // Synthesized AI Result & Interactive Suggestions State
   const [synthesizing, setSynthesizing] = useState(false);
-  const [synthesizedTrip, setSynthesizedTrip] = useState(null);
+  const [synthesizedTrip, setSynthesizedTrip] = useState(initialState?.customPackage || null);
   const [appliedSuggestions, setAppliedSuggestions] = useState({});
 
   // Translation state
-  const [selectedLang, setSelectedLang] = useState('en');
+  const [selectedLang, setSelectedLang] = useState(initialState?.language || 'en');
   const [translatedTripTitle, setTranslatedTripTitle] = useState(null);
   const [translating, setTranslating] = useState(false);
 
@@ -86,6 +86,26 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
+
+  // Sync when initialState changes
+  useEffect(() => {
+    if (initialState) {
+      const dest = initialState.destination || 'Chikmagalur';
+      const dur = initialState.duration || 3;
+      setDestinationQuery(dest);
+      setDurationDays(dur);
+      if (initialState.customRequests) {
+        setUserCustomRequests(initialState.customRequests);
+      }
+      if (initialState.language) {
+        setSelectedLang(initialState.language);
+      }
+      if (initialState.customPackage) {
+        setSynthesizedTrip(initialState.customPackage);
+      }
+      handleExploreDestination(dest);
+    }
+  }, [initialState]);
 
   // Initialize Day Matrix whenever durationDays changes
   useEffect(() => {
@@ -114,9 +134,10 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
     });
   }, [durationDays, stayMode, masterHotel]);
 
-  // Initial explore on mount
+  // Initial explore on mount with initialState support
   useEffect(() => {
-    handleExploreDestination('Chikmagalur');
+    const targetDest = initialState?.destination || destinationQuery || 'Chikmagalur';
+    handleExploreDestination(targetDest);
   }, []);
 
   // Explore Destination API Call
@@ -289,6 +310,22 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
   // Interactive AI Suggestion Handlers
   const handleApplyConflictResolution = (conflictIndex, text) => {
     setAppliedSuggestions(prev => ({ ...prev, [`conflict_${conflictIndex}`]: true }));
+    // Update itinerary timeline slots live to shift evening slot to 6:00 PM
+    if (synthesizedTrip?.itinerary) {
+      const updatedItinerary = synthesizedTrip.itinerary.map(dayObj => ({
+        ...dayObj,
+        slots: dayObj.slots?.map(slot => {
+          if (slot.time?.includes('04:30 PM') || slot.time?.includes('03:30 PM')) {
+            return { ...slot, time: '06:00 PM', title: `${slot.title} (Optimized Timing)` };
+          }
+          return slot;
+        })
+      }));
+      setSynthesizedTrip(prev => ({
+        ...prev,
+        itinerary: updatedItinerary
+      }));
+    }
   };
 
   const handleApplyVoidFill = (voidIndex, text) => {
@@ -297,6 +334,28 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
 
   const handleApplyCostOptimization = () => {
     setAppliedSuggestions(prev => ({ ...prev, 'cost_optimization': true }));
+    // Actively apply hotel rate / date shift optimization (e.g. 20% savings on hotel total and recalculate grand total)
+    if (synthesizedTrip?.estimated_pricing) {
+      const oldHotel = parseFloat(synthesizedTrip.estimated_pricing.hotel_total || '14000.00');
+      const optimizedHotel = Math.max(0, oldHotel * 0.80);
+      const actTotal = parseFloat(synthesizedTrip.estimated_pricing.activities_total || '9000.00');
+      const transferTotal = parseFloat(synthesizedTrip.estimated_pricing.transfers_total || '4200.00');
+      const guideTotal = parseFloat(synthesizedTrip.estimated_pricing.guide_total || '0.00');
+      const subtotal = optimizedHotel + actTotal + transferTotal + guideTotal;
+      const gst = subtotal * 0.05;
+      const newGrand = subtotal + gst;
+
+      setSynthesizedTrip(prev => ({
+        ...prev,
+        estimated_pricing: {
+          ...prev.estimated_pricing,
+          hotel_total: optimizedHotel.toFixed(2),
+          gst_tax: gst.toFixed(2),
+          grand_total: newGrand.toFixed(2),
+          discount_applied: (oldHotel - optimizedHotel).toFixed(2)
+        }
+      }));
+    }
   };
 
   // Trigger Gemini Custom Itinerary Synthesizer

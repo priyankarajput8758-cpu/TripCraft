@@ -16,105 +16,92 @@ import DestinationExplorer from './components/DestinationExplorer';
 import ErrorBoundary from './components/ErrorBoundary';
 import { Globe, Zap, Compass } from 'lucide-react';
 
-function getFallbackPackageDetail(packageId) {
-  const details = {
-    pkg_goa_trek_01: {
-      name: 'Goa Coastal Trek',
-      title: 'Goa Coastal Trek',
-      theme: 'adventure',
-      base_price: '32000.00',
-      duration_days: 5,
-      city_name: 'Goa, India',
-    },
-    pkg_beach_resort_02: {
-      name: 'Romantic Beach Resort',
-      title: 'Romantic Beach Resort',
-      theme: 'honeymoon',
-      base_price: '45000.00',
-      duration_days: 5,
-      city_name: 'Goa, India',
-    },
-    pkg_temples_trail_03: {
-      name: 'Ancient Temples Trail',
-      title: 'Ancient Temples Trail',
-      theme: 'pilgrimage',
-      base_price: '28000.00',
-      duration_days: 5,
-      city_name: 'Goa, India',
-    },
-    pkg_family_wildlife_04: {
-      name: 'Family Beach & Wildlife',
-      title: 'Family Beach & Wildlife',
-      theme: 'family',
-      base_price: '38000.00',
-      duration_days: 5,
-      city_name: 'Goa, India',
-    },
-  };
-
-  const selected = details[packageId] || {
-    name: 'Goa Heritage & Coastal Experience',
-    title: 'Goa Heritage & Coastal Experience',
-    theme: 'heritage',
-    base_price: '35000.00',
-    duration_days: 5,
-    city_name: 'Goa, India',
-  };
+function getFallbackPackageDetail(packageId, packagesList = []) {
+  const found = packagesList.find(p => p.package_id === packageId);
+  const pkgName = found?.name || found?.title || 'Custom Tour Package';
+  const cityName = found?.city_name || 'Destination';
+  const basePrice = found?.base_price || '32000.00';
+  const durationDays = found?.duration_days || 4;
+  const theme = found?.theme || 'heritage';
 
   return {
     package: {
       package_id: packageId || 'pkg_default',
-      name: selected.name,
-      title: selected.title,
-      theme: selected.theme,
-      city_name: selected.city_name,
-      city_lat: 15.2993,
-      city_lng: 74.1240,
-      base_price: selected.base_price,
-      duration_days: selected.duration_days,
-      languages_offered: 'en,ta,hi',
+      name: pkgName,
+      title: pkgName,
+      theme: theme,
+      city_name: cityName,
+      city_lat: found?.city_lat || 12.9716,
+      city_lng: found?.city_lng || 77.5946,
+      base_price: basePrice,
+      duration_days: durationDays,
+      languages_offered: found?.languages_offered || 'en,hi,ta',
     },
     components: [
       {
-        component_id: 'cmp_hotel_4star',
+        component_id: 'cmp_hotel_std',
         swap_group: 'hotel_tier',
         component_type: 'hotel',
-        name: '4-Star Beachfront Resort',
-        title: '4-Star Beachfront Resort',
+        name: `${cityName} Premium Hotel & Resort`,
+        title: `${cityName} Premium Hotel & Resort`,
         price_delta: '0.00',
         is_default: true,
+        is_optional: 0,
+        day_index: 1,
+        slot: 'overnight'
       },
       {
-        component_id: 'cmp_hotel_5star',
+        component_id: 'cmp_hotel_lux',
         swap_group: 'hotel_tier',
         component_type: 'hotel',
-        name: '5-Star Heritage Villa',
-        title: '5-Star Heritage Villa',
-        price_delta: '8500.00',
+        name: `${cityName} 5-Star Luxury Heritage Villa`,
+        title: `${cityName} 5-Star Luxury Heritage Villa`,
+        price_delta: '6500.00',
         is_default: false,
+        is_optional: 0,
+        day_index: 1,
+        slot: 'overnight'
       },
       {
-        component_id: 'cmp_act_scuba',
-        swap_group: 'activity_scuba',
+        component_id: 'cmp_act_main',
+        swap_group: 'activity_highlight',
         component_type: 'activity',
-        name: 'Grande Island Scuba Diving',
-        title: 'Grande Island Scuba Diving',
-        price_delta: '2500.00',
+        name: `${cityName} Guided City Landmark Experience`,
+        title: `${cityName} Guided City Landmark Experience`,
+        price_delta: '0.00',
         is_default: true,
+        is_optional: 0,
+        day_index: 1,
+        slot: 'morning'
+      },
+      {
+        component_id: 'cmp_act_evening',
+        swap_group: 'activity_evening',
+        component_type: 'activity',
+        name: `${cityName} Sunset Viewpoint & Cultural Tour`,
+        title: `${cityName} Sunset Viewpoint & Cultural Tour`,
+        price_delta: '1200.00',
+        is_default: true,
+        is_optional: 0,
+        day_index: 2,
+        slot: 'evening'
       },
       {
         component_id: 'cmp_transfer_pv',
         swap_group: 'transfers',
         component_type: 'transfer',
-        name: 'Private AC SUV Transfer',
-        title: 'Private AC SUV Transfer',
-        price_delta: '3000.00',
+        name: 'Private AC Chauffeured Airport & Sightseeing Transfers',
+        title: 'Private AC Chauffeured Airport & Sightseeing Transfers',
+        price_delta: '2500.00',
         is_default: true,
+        is_optional: 0,
+        day_index: 1,
+        slot: 'morning'
       }
     ],
     pricing: {
-      base_price: selected.base_price,
-      total_price: selected.base_price,
+      base_price: basePrice,
+      total_price: basePrice,
       currency: 'INR'
     }
   };
@@ -184,6 +171,7 @@ export default function App() {
   const [bookingData, setBookingData]             = useState(null);
   const [bookingResult, setBookingResult]         = useState(null);
   const [realWorldEnabled, setRealWorldEnabled]   = useState(false);
+  const [architectInitialState, setArchitectInitialState] = useState(null);
 
   /* User Preference Inputs */
   const [tripPrefs, setTripPrefs] = useState({});
@@ -224,14 +212,14 @@ export default function App() {
         if (res && (res.package || res.package_id)) {
           setPackageDetailData(res);
         } else {
-          setPackageDetailData(getFallbackPackageDetail(selectedPackageId));
+          setPackageDetailData(getFallbackPackageDetail(selectedPackageId, packages));
         }
       })
       .catch(() => {
-        setPackageDetailData(getFallbackPackageDetail(selectedPackageId));
+        setPackageDetailData(getFallbackPackageDetail(selectedPackageId, packages));
       })
       .finally(() => setLoadingDetail(false));
-  }, [selectedPackageId]);
+  }, [selectedPackageId, packages]);
 
   /* ── Handlers ── */
   const handleAuth = (userData) => {
@@ -259,6 +247,11 @@ export default function App() {
       setSelectedPackageId(pkg.package_id);
       navigateToStep('customize');
     }
+  };
+
+  const handleOpenCustomArchitect = (architectParams) => {
+    setArchitectInitialState(architectParams);
+    navigateToStep('architect');
   };
 
   const activePackage = packageDetailData?.package;
@@ -341,6 +334,7 @@ export default function App() {
               </div>
               <DestinationExplorer
                 externalSupplyMode={realWorldEnabled}
+                initialState={architectInitialState}
                 onBookingComplete={(trip) => {
                   setBookingData({
                     packageName: trip?.trip_title || 'Custom Architect Trip',
@@ -387,6 +381,8 @@ export default function App() {
           {activeStep === 'optimize' && (
             <OptimizeView
               activePackage={activePackage}
+              packageDetailData={packageDetailData}
+              bookingDetails={bookingData}
               pricing={packageDetailData?.pricing}
               guide={bookingData?.selectedGuide}
               onProceedToBook={() => {
@@ -410,32 +406,6 @@ export default function App() {
             />
           )}
         </ErrorBoundary>
-
-        {/* ── Live Market Data (SerpAPI Google Hotels) ── */}
-        {realWorldEnabled && activePackage && activeStep !== 'confirm' && (
-          <section className="pt-6 border-t border-slate-800">
-            <div className="flex items-center gap-2 mb-4 text-xs font-bold text-amber-400 uppercase tracking-wider">
-              <Zap className="w-4 h-4" />
-              <span>Live Market Comparison (SerpAPI & OpenTripMap)</span>
-            </div>
-            <RealWorldPanel cityName={activePackage.city_name || 'Bengaluru'} />
-          </section>
-        )}
-
-        {/* ── Interactive Trip Map ── */}
-        {activePackage && (activeStep === 'customize' || activeStep === 'optimize') && (
-          <section className="pt-6 border-t border-slate-800">
-            <div className="flex items-center gap-2 mb-4 text-xs font-bold text-blue-400 uppercase tracking-wider">
-              <Compass className="w-4 h-4" />
-              <span>Interactive Trip Map</span>
-            </div>
-            <TripMap
-              cityName={activePackage.city_name}
-              lat={parseFloat(activePackage.city_lat || 12.9716)}
-              lng={parseFloat(activePackage.city_lng || 77.5946)}
-            />
-          </section>
-        )}
       </main>
 
       {/* Grounded AI Assistant Modal */}
@@ -443,6 +413,7 @@ export default function App() {
         isOpen={isAiModalOpen}
         onClose={() => setIsAiModalOpen(false)}
         onSelectAiPackage={handleSelectAiPackage}
+        onOpenCustomArchitect={handleOpenCustomArchitect}
         currentLanguage={currentLanguage}
       />
 
