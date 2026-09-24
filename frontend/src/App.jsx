@@ -1,357 +1,435 @@
 import React, { useState, useEffect } from 'react';
 import { api } from './api';
-import Navbar from './components/Navbar';
+import LandingPage   from './components/LandingPage';
+import AuthModal     from './components/AuthModal';
+import Navbar        from './components/Navbar';
+import DiscoverView  from './components/DiscoverView';
+import BuildView     from './components/BuildView';
 import CustomizerStudio from './components/CustomizerStudio';
-import DestinationExplorer from './components/DestinationExplorer';
-import TripMap from './components/TripMap';
+import OptimizeView  from './components/OptimizeView';
+import ConfirmView   from './components/ConfirmView';
+import TripMap       from './components/TripMap';
 import RealWorldPanel from './components/RealWorldPanel';
 import AIAssistantModal from './components/AIAssistantModal';
-import BookingModal from './components/BookingModal';
-import { t } from './i18n';
-import {
-  Compass,
-  Filter,
-  Sparkles,
-  MapPin,
-  Clock,
-  Layers,
-  CheckCircle,
-  Zap,
-  Globe,
-  Star,
-  ArrowRight,
-  ShieldCheck,
-  ChevronRight,
-  AlertCircle
-} from 'lucide-react';
+import BookingModal  from './components/BookingModal';
+import { Globe, Zap, Compass } from 'lucide-react';
+
+function getFallbackPackageDetail(packageId) {
+  const details = {
+    pkg_goa_trek_01: {
+      name: 'Goa Coastal Trek',
+      title: 'Goa Coastal Trek',
+      theme: 'adventure',
+      base_price: '32000.00',
+      duration_days: 5,
+      city_name: 'Goa, India',
+    },
+    pkg_beach_resort_02: {
+      name: 'Romantic Beach Resort',
+      title: 'Romantic Beach Resort',
+      theme: 'honeymoon',
+      base_price: '45000.00',
+      duration_days: 5,
+      city_name: 'Goa, India',
+    },
+    pkg_temples_trail_03: {
+      name: 'Ancient Temples Trail',
+      title: 'Ancient Temples Trail',
+      theme: 'pilgrimage',
+      base_price: '28000.00',
+      duration_days: 5,
+      city_name: 'Goa, India',
+    },
+    pkg_family_wildlife_04: {
+      name: 'Family Beach & Wildlife',
+      title: 'Family Beach & Wildlife',
+      theme: 'family',
+      base_price: '38000.00',
+      duration_days: 5,
+      city_name: 'Goa, India',
+    },
+  };
+
+  const selected = details[packageId] || {
+    name: 'Goa Heritage & Coastal Experience',
+    title: 'Goa Heritage & Coastal Experience',
+    theme: 'heritage',
+    base_price: '35000.00',
+    duration_days: 5,
+    city_name: 'Goa, India',
+  };
+
+  return {
+    package: {
+      package_id: packageId || 'pkg_default',
+      name: selected.name,
+      title: selected.title,
+      theme: selected.theme,
+      city_name: selected.city_name,
+      city_lat: 15.2993,
+      city_lng: 74.1240,
+      base_price: selected.base_price,
+      duration_days: selected.duration_days,
+      languages_offered: 'en,ta,hi',
+    },
+    components: [
+      {
+        component_id: 'cmp_hotel_4star',
+        swap_group: 'hotel_tier',
+        component_type: 'hotel',
+        name: '4-Star Beachfront Resort',
+        title: '4-Star Beachfront Resort',
+        price_delta: '0.00',
+        is_default: true,
+      },
+      {
+        component_id: 'cmp_hotel_5star',
+        swap_group: 'hotel_tier',
+        component_type: 'hotel',
+        name: '5-Star Heritage Villa',
+        title: '5-Star Heritage Villa',
+        price_delta: '8500.00',
+        is_default: false,
+      },
+      {
+        component_id: 'cmp_act_scuba',
+        swap_group: 'activity_scuba',
+        component_type: 'activity',
+        name: 'Grande Island Scuba Diving',
+        title: 'Grande Island Scuba Diving',
+        price_delta: '2500.00',
+        is_default: true,
+      },
+      {
+        component_id: 'cmp_transfer_pv',
+        swap_group: 'transfers',
+        component_type: 'transfer',
+        name: 'Private AC SUV Transfer',
+        title: 'Private AC SUV Transfer',
+        price_delta: '3000.00',
+        is_default: true,
+      }
+    ],
+    pricing: {
+      base_price: selected.base_price,
+      total_price: selected.base_price,
+      currency: 'INR'
+    }
+  };
+}
 
 export default function App() {
-  const [activeMode, setActiveMode] = useState('curated'); // 'curated' | 'custom_destination'
-  const [packages, setPackages] = useState([]);
-  const [selectedPackageId, setSelectedPackageId] = useState(null);
-  const [packageDetailData, setPackageDetailData] = useState(null);
-  const [cities, setCities] = useState([]);
-  const [selectedCityId, setSelectedCityId] = useState('');
-  const [selectedTheme, setSelectedTheme] = useState('');
+  /* Auth state */
+  const [user, setUser]               = useState(null);
+  const [authMode, setAuthMode]       = useState(null); // null | 'signin' | 'signup'
+  const [showLanding, setShowLanding] = useState(true);
 
-  // Persist language across entire website via localStorage
-  const [currentLanguage, setCurrentLanguage] = useState(() => {
+  /* Step navigation stack: 'discover' | 'build' | 'customize' | 'optimize' | 'confirm' */
+  const [activeStep, setActiveStep] = useState('discover');
+  const [stepHistory, setStepHistory] = useState(['discover']);
+
+  const navigateToStep = (nextStep) => {
+    setStepHistory(prev => [...prev, nextStep]);
+    setActiveStep(nextStep);
     try {
-      return localStorage.getItem('tripcraft_lang') || 'en';
-    } catch {
-      return 'en';
-    }
-  });
-
-  const [loadingPackages, setLoadingPackages] = useState(false);
-  const [loadingDetail, setLoadingDetail] = useState(false);
-  const [languageNotice, setLanguageNotice] = useState(null);
-
-  // Modals & Panels
-  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-  const [bookingData, setBookingData] = useState(null);
-  const [realWorldEnabled, setRealWorldEnabled] = useState(false);
-
-  // Sync language state to localStorage
-  const handleLanguageChange = (lang) => {
-    setCurrentLanguage(lang);
-    try {
-      localStorage.setItem('tripcraft_lang', lang);
-    } catch (err) {
-      console.warn('LocalStorage error:', err);
+      window.history.pushState({ step: nextStep }, '', `#${nextStep}`);
+    } catch (e) {
+      // safe fallback
     }
   };
 
-  // Load cities on mount
-  useEffect(() => {
-    async function loadCities() {
-      try {
-        const res = await api.getCities();
-        if (Array.isArray(res)) {
-          setCities(res);
-        } else if (res && Array.isArray(res.data)) {
-          setCities(res.data);
-        }
-      } catch (err) {
-        console.error('Error fetching cities:', err);
-      }
+  const handleGoBack = () => {
+    if (stepHistory.length > 1) {
+      setStepHistory(prev => {
+        const copy = [...prev];
+        copy.pop(); // remove current step
+        const previous = copy[copy.length - 1] || 'discover';
+        setActiveStep(previous);
+        return copy;
+      });
+    } else {
+      setActiveStep('discover');
     }
-    loadCities();
+  };
+
+  useEffect(() => {
+    const handlePopState = (e) => {
+      if (e.state && e.state.step) {
+        setActiveStep(e.state.step);
+      } else {
+        handleGoBack();
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Fetch package catalog whenever filters or language change
+  /* Catalog & Data state */
+  const [packages, setPackages]               = useState([]);
+  const [selectedPackageId, setSelectedPackageId] = useState(null);
+  const [packageDetailData, setPackageDetailData] = useState(null);
+  const [cities, setCities]                   = useState([]);
+  const [selectedCityId, setSelectedCityId]   = useState('');
+  const [selectedTheme, setSelectedTheme]     = useState('');
+  const [currentLanguage, setCurrentLanguage] = useState('en');
+  const [loadingPackages, setLoadingPackages] = useState(false);
+  const [loadingDetail, setLoadingDetail]     = useState(false);
+  const [languageNotice, setLanguageNotice]   = useState(null);
+
+  /* Modals & Panels */
+  const [isAiModalOpen, setIsAiModalOpen]         = useState(false);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [bookingData, setBookingData]             = useState(null);
+  const [bookingResult, setBookingResult]         = useState(null);
+  const [realWorldEnabled, setRealWorldEnabled]   = useState(false);
+
+  /* User Preference Inputs */
+  const [tripPrefs, setTripPrefs] = useState({});
+
+  /* ── Load Cities & Packages ── */
   useEffect(() => {
-    async function loadPackages() {
-      setLoadingPackages(true);
-      try {
-        const res = await api.getPackages({
-          city_id: selectedCityId || undefined,
-          theme: selectedTheme || undefined,
-          language_bcp47: currentLanguage
-        });
+    api.getCities().then(res => {
+      const list = Array.isArray(res) ? res : (res?.data || []);
+      setCities(list);
+    }).catch(console.error);
+  }, []);
 
-        const pkgs = res?.packages || (Array.isArray(res) ? res : []);
-        setPackages(pkgs);
+  useEffect(() => {
+    setLoadingPackages(true);
+    api.getPackages({
+      city_id:        selectedCityId  || undefined,
+      theme:          selectedTheme   || undefined,
+      language_bcp47: currentLanguage,
+    }).then(res => {
+      const pkgs = res?.packages || (Array.isArray(res) ? res : []);
+      setPackages(pkgs);
+      setLanguageNotice(res?.language_notice || null);
 
-        if (res?.language_notice) {
-          setLanguageNotice(res.language_notice);
-        } else {
-          setLanguageNotice(null);
-        }
-
-        // Auto-select first package if none selected or not in active filtered list
-        if (pkgs.length > 0) {
-          if (!selectedPackageId || !pkgs.some(p => p.package_id === selectedPackageId)) {
-            setSelectedPackageId(pkgs[0].package_id);
-          }
-        } else {
-          setSelectedPackageId(null);
-          setPackageDetailData(null);
-        }
-      } catch (err) {
-        console.error('Error loading packages:', err);
-      } finally {
-        setLoadingPackages(false);
+      if (pkgs.length > 0 && (!selectedPackageId || !pkgs.some(p => p.package_id === selectedPackageId))) {
+        setSelectedPackageId(pkgs[0].package_id);
       }
-    }
-    loadPackages();
+    }).catch(console.error).finally(() => setLoadingPackages(false));
   }, [selectedCityId, selectedTheme, currentLanguage]);
 
-  // Load full package detail when selectedPackageId changes
   useEffect(() => {
-    async function loadDetail() {
-      if (!selectedPackageId) {
-        setPackageDetailData(null);
-        return;
-      }
-      setLoadingDetail(true);
-      try {
-        const res = await api.getPackageDetail(selectedPackageId);
-        if (res) {
-          setPackageDetailData(res);
-        }
-      } catch (err) {
-        console.error('Error loading package detail:', err);
-      } finally {
-        setLoadingDetail(false);
-      }
+    if (!selectedPackageId) {
+      setPackageDetailData(null);
+      return;
     }
-    loadDetail();
+    setLoadingDetail(true);
+    api.getPackageDetail(selectedPackageId)
+      .then(res => {
+        if (res && (res.package || res.package_id)) {
+          setPackageDetailData(res);
+        } else {
+          setPackageDetailData(getFallbackPackageDetail(selectedPackageId));
+        }
+      })
+      .catch(() => {
+        setPackageDetailData(getFallbackPackageDetail(selectedPackageId));
+      })
+      .finally(() => setLoadingDetail(false));
   }, [selectedPackageId]);
 
-  const handleOpenBooking = (details) => {
-    setBookingData(details);
-    setIsBookingModalOpen(true);
+  /* ── Handlers ── */
+  const handleAuth = (userData) => {
+    setUser(userData);
+    setAuthMode(null);
+    setShowLanding(false);
+  };
+
+  const handleGetStarted = () => setAuthMode('signup');
+  const handleSignIn     = () => setAuthMode('signin');
+  const handleSignOut    = () => { setUser(null); setShowLanding(true); };
+
+  const handleSelectPackage = (packageId) => {
+    setSelectedPackageId(packageId);
+    navigateToStep('customize');
+  };
+
+  const handleBuildSubmit = (prefs) => {
+    setTripPrefs(prefs);
+    navigateToStep('customize');
   };
 
   const handleSelectAiPackage = (pkg) => {
-    if (pkg && pkg.package_id) {
+    if (pkg?.package_id) {
       setSelectedPackageId(pkg.package_id);
-      setActiveMode('curated');
+      navigateToStep('customize');
     }
   };
 
   const activePackage = packageDetailData?.package;
 
+  /* ── Prelogin / Landing Page ── */
+  if (showLanding && !user) {
+    return (
+      <>
+        <LandingPage onGetStarted={handleGetStarted} onSignIn={handleSignIn} />
+        {authMode && (
+          <AuthModal
+            mode={authMode}
+            onSuccess={handleAuth}
+            onClose={() => setAuthMode(null)}
+          />
+        )}
+      </>
+    );
+  }
+
+  /* ── Main App Shell ── */
   return (
-    <div className="min-h-screen bg-[#080c16] text-slate-100 flex flex-col font-sans selection:bg-teal-500 selection:text-slate-950">
-      {/* Top Navbar */}
+    <div className="min-h-screen bg-[#FFF8D2] text-[#1a2e1a] flex flex-col font-display selection:bg-[#84D175] selection:text-[#1a2e1a]">
+
+      {/* Top Stepper Navigation */}
       <Navbar
         currentLanguage={currentLanguage}
-        onLanguageChange={handleLanguageChange}
+        onLanguageChange={setCurrentLanguage}
         onOpenAiPlanner={() => setIsAiModalOpen(true)}
         realWorldEnabled={realWorldEnabled}
         onToggleRealWorld={setRealWorldEnabled}
-        activeMode={activeMode}
-        onModeChange={setActiveMode}
+        user={user}
+        onSignOut={handleSignOut}
+        activeStep={activeStep}
+        onStepChange={navigateToStep}
       />
 
-      {/* Mode Navigation Bar for Mobile */}
-      <div className="sm:hidden bg-slate-900 border-b border-slate-800 p-2 flex items-center justify-center space-x-2">
-        <button
-          onClick={() => setActiveMode('curated')}
-          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
-            activeMode === 'curated' ? 'bg-teal-500 text-slate-950 shadow-md' : 'text-slate-400 bg-slate-800/80'
-          }`}
-        >
-          {t('curated_packages', currentLanguage)}
-        </button>
-        <button
-          onClick={() => setActiveMode('custom_destination')}
-          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
-            activeMode === 'custom_destination' ? 'bg-teal-500 text-slate-950 shadow-md' : 'text-slate-400 bg-slate-800/80'
-          }`}
-        >
-          {t('custom_architect', currentLanguage)}
-        </button>
-      </div>
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 space-y-6">
-        {/* Language Fallback Notice if applicable */}
+        {/* Language Fallback Notice */}
         {languageNotice && (
-          <div className="bg-amber-950/40 border border-amber-500/30 rounded-2xl p-3 text-xs text-amber-300 flex items-center justify-between shadow-md">
-            <div className="flex items-center space-x-2">
-              <Globe className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>{languageNotice}</span>
-            </div>
+          <div className="bg-amber-950/40 border border-amber-500/30 rounded-2xl px-4 py-3 text-xs text-amber-300 flex items-center gap-2 shadow-md">
+            <Globe className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>{languageNotice}</span>
           </div>
         )}
 
-        {/* Mode 1: Curated Packages Studio */}
-        {activeMode === 'curated' ? (
-          <div className="space-y-6 animate-fadeIn">
-            {/* Streamlined & Decluttered Catalog Selector Card */}
-            <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-6 space-y-4 shadow-xl">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
-                <div className="flex items-center space-x-2.5">
-                  <div className="p-2 rounded-xl bg-teal-500/10 text-teal-400">
-                    <Compass className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                      <span>{t('curated_packages', currentLanguage)}</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-teal-300 font-mono font-bold">
-                        {packages.length} Available
-                      </span>
-                    </h2>
-                    <p className="text-xs text-slate-400">
-                      Select any tour to customize hotels, transfers, day-by-day activities & guides
-                    </p>
-                  </div>
-                </div>
-
-                {/* Filter Dropdowns with Clean Dark Styling */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <select
-                    value={selectedCityId}
-                    onChange={(e) => setSelectedCityId(e.target.value)}
-                    className="bg-slate-800 border border-slate-700 text-xs text-slate-100 rounded-xl px-3 py-2 focus:outline-none focus:border-teal-500 cursor-pointer font-medium"
-                  >
-                    <option value="" className="bg-slate-900 text-slate-100">All Destinations</option>
-                    {cities.map((city) => (
-                      <option key={city.city_id} value={city.city_id} className="bg-slate-900 text-slate-100">
-                        {city.name} ({city.package_count || 0} tours)
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={selectedTheme}
-                    onChange={(e) => setSelectedTheme(e.target.value)}
-                    className="bg-slate-800 border border-slate-700 text-xs text-slate-100 rounded-xl px-3 py-2 focus:outline-none focus:border-teal-500 cursor-pointer font-medium"
-                  >
-                    <option value="" className="bg-slate-900 text-slate-100">All Themes</option>
-                    <option value="heritage" className="bg-slate-900 text-slate-100">Heritage & Culture</option>
-                    <option value="adventure" className="bg-slate-900 text-slate-100">Adventure & Nature</option>
-                    <option value="food_trail" className="bg-slate-900 text-slate-100">Food & Culinary</option>
-                    <option value="wildlife" className="bg-slate-900 text-slate-100">Wildlife Safari</option>
-                    <option value="pilgrimage" className="bg-slate-900 text-slate-100">Pilgrimage & Spiritual</option>
-                    <option value="honeymoon" className="bg-slate-900 text-slate-100">Honeymoon & Romantic</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Package Cards Grid */}
-              {loadingPackages ? (
-                <div className="py-12 text-center text-xs text-slate-400 flex items-center justify-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
-                  <span>Fetching packages...</span>
-                </div>
-              ) : packages.length === 0 ? (
-                <div className="py-8 text-center text-xs text-slate-400 bg-slate-950/40 rounded-2xl border border-slate-800 p-4">
-                  No tour packages found matching the selected filters. Try choosing "All Destinations" or "All Themes".
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-72 overflow-y-auto pr-1">
-                  {packages.map((pkg) => {
-                    const isSelected = selectedPackageId === pkg.package_id;
-                    const pkgTitle = pkg.name || pkg.title || 'Tour Package';
-                    return (
-                      <div
-                        key={pkg.package_id}
-                        onClick={() => setSelectedPackageId(pkg.package_id)}
-                        className={`p-3.5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between ${
-                          isSelected
-                            ? 'bg-teal-950/40 border-teal-500 ring-1 ring-teal-500/50 shadow-md shadow-teal-500/10'
-                            : 'bg-slate-800/40 border-slate-700/60 hover:bg-slate-800/80 hover:border-slate-600'
-                        }`}
-                      >
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-teal-400 font-semibold uppercase tracking-wider">
-                              {pkg.theme}
-                            </span>
-                            <span className="text-[10px] text-slate-400 flex items-center gap-1 font-mono">
-                              <Clock className="w-3 h-3 text-slate-500" />
-                              {pkg.duration_days}D
-                            </span>
-                          </div>
-
-                          <h3 className="text-xs font-bold text-white line-clamp-1">
-                            {pkgTitle}
-                          </h3>
-                          <p className="text-[11px] text-slate-400 line-clamp-2">
-                            {pkg.description}
-                          </p>
-                        </div>
-
-                        <div className="pt-2.5 mt-2 border-t border-slate-800/80 flex items-center justify-between">
-                          <div>
-                            <span className="text-[10px] text-slate-500 block">From</span>
-                            <span className="text-xs font-bold text-white font-mono">
-                              ₹{parseFloat(pkg.base_price || 0).toLocaleString('en-IN')}
-                            </span>
-                          </div>
-                          <span className={`text-[10px] font-bold flex items-center gap-0.5 ${isSelected ? 'text-teal-400' : 'text-slate-400'}`}>
-                            {isSelected ? 'Active Tour' : 'Customize'} <ChevronRight className="w-3 h-3" />
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Dynamic Customization Studio for Selected Package */}
-            {loadingDetail ? (
-              <div className="py-16 text-center space-y-3">
-                <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                <p className="text-xs text-slate-400">Loading package customizer studio & components...</p>
-              </div>
-            ) : packageDetailData ? (
-              <CustomizerStudio
-                packageDetailData={packageDetailData}
-                preferredLanguage={currentLanguage}
-                currentLanguage={currentLanguage}
-                onOpenBooking={handleOpenBooking}
-                externalSupplyMode={realWorldEnabled}
-              />
-            ) : null}
-
-            {/* Real-World External Supply Comparison (SerpAPI Google Hotels) */}
-            {realWorldEnabled && activePackage && (
-              <RealWorldPanel cityName={activePackage.city_name || 'Bengaluru'} />
-            )}
-
-            {/* Leaflet & OpenTripMap Visual Exploration Map */}
-            {activePackage && (
-              <TripMap
-                cityName={activePackage.city_name}
-                lat={parseFloat(activePackage.city_lat || 12.9716)}
-                lng={parseFloat(activePackage.city_lng || 77.5946)}
-                currentLanguage={currentLanguage}
-              />
-            )}
-          </div>
-        ) : (
-          /* Mode 2: Brand New Custom Destination Architect (Any City) */
-          <DestinationExplorer
-            externalSupplyMode={realWorldEnabled}
-            onBookingComplete={handleOpenBooking}
-            currentLanguage={currentLanguage}
+        {/* ── STEP 1: DISCOVER ── */}
+        {activeStep === 'discover' && (
+          <DiscoverView
+            packages={packages}
+            selectedPackageId={selectedPackageId}
+            onSelectPackage={handleSelectPackage}
+            onOpenAiBuild={() => setIsAiModalOpen(true)}
+            onStartBuild={() => navigateToStep('build')}
           />
+        )}
+
+        {/* ── STEP 2: BUILD (PREFERENCES) ── */}
+        {activeStep === 'build' && (
+          <BuildView
+            onBuildSubmit={handleBuildSubmit}
+            currentLanguage={currentLanguage}
+            onBack={handleGoBack}
+          />
+        )}
+
+        {/* ── STEP 2B: CUSTOM DESTINATION ARCHITECT (MODE B) ── */}
+        {activeStep === 'architect' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={handleGoBack}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/80 border border-[#84D175]/30 text-xs font-bold text-[#1a2e1a] hover:bg-[#FFF8D2] transition-all cursor-pointer shadow-xs"
+              >
+                <span>← Back</span>
+              </button>
+            </div>
+            <DestinationExplorer
+              externalSupplyMode={realWorldEnabled}
+              onBookingComplete={(trip) => {
+                setBookingData({
+                  packageName: trip?.trip_title || 'Custom Architect Trip',
+                  total: trip?.estimated_pricing?.grand_total || '32000.00',
+                  durationDays: trip?.duration_days || 3,
+                  itinerary: trip?.itinerary || []
+                });
+                setIsBookingModalOpen(true);
+              }}
+            />
+          </div>
+        )}
+
+        {/* ── STEP 3: CUSTOMIZE ── */}
+        {activeStep === 'customize' && (
+          loadingDetail ? (
+            <div className="py-20 text-center space-y-3">
+              <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
+              <p className="text-xs text-slate-400">Loading customizer studio & package components...</p>
+            </div>
+          ) : packageDetailData ? (
+            <CustomizerStudio
+              packageDetailData={packageDetailData}
+              preferredLanguage={currentLanguage}
+              onOpenBooking={(d) => {
+                setBookingData(d);
+                setIsBookingModalOpen(true);
+              }}
+              tripPrefs={tripPrefs}
+              onNextToOptimize={(customizedData) => {
+                setBookingData(customizedData);
+                navigateToStep('optimize');
+              }}
+              onBack={handleGoBack}
+            />
+          ) : (
+            <div className="py-16 text-center text-slate-400 text-sm">
+              Please select a package from the Discover page first.
+            </div>
+          )
+        )}
+
+        {/* ── STEP 4: OPTIMIZE ── */}
+        {activeStep === 'optimize' && (
+          <OptimizeView
+            activePackage={activePackage}
+            pricing={packageDetailData?.pricing}
+            guide={bookingData?.selectedGuide}
+            onProceedToBook={() => {
+              if (bookingData) {
+                setIsBookingModalOpen(true);
+              } else {
+                navigateToStep('customize');
+              }
+            }}
+            onBack={handleGoBack}
+          />
+        )}
+
+        {/* ── STEP 5: CONFIRM ── */}
+        {activeStep === 'confirm' && (
+          <ConfirmView
+            bookingResult={bookingResult}
+            bookingDetails={bookingData}
+            onReset={() => navigateToStep('discover')}
+            onBack={handleGoBack}
+          />
+        )}
+
+        {/* ── Live Market Data (SerpAPI Google Hotels) ── */}
+        {realWorldEnabled && activePackage && activeStep !== 'confirm' && (
+          <section className="pt-6 border-t border-slate-800">
+            <div className="flex items-center gap-2 mb-4 text-xs font-bold text-amber-400 uppercase tracking-wider">
+              <Zap className="w-4 h-4" />
+              <span>Live Market Comparison (SerpAPI & OpenTripMap)</span>
+            </div>
+            <RealWorldPanel cityName={activePackage.city_name || 'Bengaluru'} />
+          </section>
+        )}
+
+        {/* ── Interactive Trip Map ── */}
+        {activePackage && (activeStep === 'customize' || activeStep === 'optimize') && (
+          <section className="pt-6 border-t border-slate-800">
+            <div className="flex items-center gap-2 mb-4 text-xs font-bold text-blue-400 uppercase tracking-wider">
+              <Compass className="w-4 h-4" />
+              <span>Interactive Trip Map</span>
+            </div>
+            <TripMap
+              cityName={activePackage.city_name}
+              lat={parseFloat(activePackage.city_lat || 12.9716)}
+              lng={parseFloat(activePackage.city_lng || 77.5946)}
+            />
+          </section>
         )}
       </main>
 
@@ -363,27 +441,28 @@ export default function App() {
         currentLanguage={currentLanguage}
       />
 
-      {/* Booking Modal */}
+      {/* Booking Confirmation Modal */}
       <BookingModal
         isOpen={isBookingModalOpen}
         onClose={() => setIsBookingModalOpen(false)}
         bookingDetails={bookingData}
+        onBookingConfirmed={(res) => {
+          setBookingResult(res);
+          setIsBookingModalOpen(false);
+          setActiveStep('confirm');
+        }}
       />
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-slate-950/60 py-6 mt-12 text-xs text-slate-500 text-center">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div>
-            TripCraft (PackagePro) — KogniVera Hackathon 2026 (PS-04) • Team CodeBlooded (BMSCE)
-          </div>
-          <div className="flex items-center space-x-3 text-slate-400 text-[11px]">
-            <span>Decimal Repricing Engine</span>
-            <span>•</span>
-            <span>Mandatory Guide Availability Check (§2.2)</span>
-            <span>•</span>
+      <footer className="border-t border-slate-200/80 bg-white py-8 text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 font-medium">
+          <span>PackagePro (TripCraft) · KogniVera Hackathon 2026 (PS-04) · Team CodeBlooded · BMSCE</span>
+          <div className="flex items-center gap-4 text-slate-500">
+            <span>Decimal Pricing Engine</span>
+            <span>·</span>
+            <span>Mandatory Guide Availability Check</span>
+            <span>·</span>
             <span>Grounded Gemini AI</span>
-            <span>•</span>
-            <span>OpenTripMap & SerpAPI</span>
           </div>
         </div>
       </footer>
