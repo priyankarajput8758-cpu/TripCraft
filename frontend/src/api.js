@@ -82,7 +82,7 @@ export const api = {
   },
 
   // Pricing (reprice strictly from scratch with Decimal math)
-  reprice: async (arg1, selectedComponentIds = [], guideId = null, startDate = null, durationDays = null) => {
+  reprice: async (arg1, selectedComponentIds = [], guideId = null, startDate = null, durationDays = null, numTravelers = 1) => {
     try {
       let body;
       if (typeof arg1 === 'object' && arg1 !== null) {
@@ -91,7 +91,8 @@ export const api = {
           selected_component_ids: arg1.selected_component_ids || arg1.selectedComponentIds || [],
           guide_id: arg1.guide_id || arg1.guideId || null,
           start_date: arg1.start_date || arg1.startDate || null,
-          duration_days: arg1.duration_days || arg1.durationDays || null
+          duration_days: arg1.duration_days || arg1.durationDays || null,
+          num_travelers: arg1.num_travelers || arg1.numTravelers || arg1.travelers || 1
         };
       } else {
         body = {
@@ -99,7 +100,8 @@ export const api = {
           selected_component_ids: selectedComponentIds,
           guide_id: guideId,
           start_date: startDate,
-          duration_days: durationDays
+          duration_days: durationDays,
+          num_travelers: numTravelers || 1
         };
       }
 
