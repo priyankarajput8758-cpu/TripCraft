@@ -15,12 +15,15 @@ class PricingEngine:
         selected_component_ids: List[str],
         guide_id: Optional[str] = None,
         start_date: Optional[str] = None,
-        duration_days: Optional[int] = None
+        duration_days: Optional[int] = None,
+        num_travelers: int = 1
     ) -> Dict[str, Any]:
         """
         Recompute package total strictly from scratch in Decimal.
-        Total = base_price + sum(price_delta of selected non-optional components) + guide_cost
+        Total = (base_price + sum(price_delta)) * travelers + guide_cost
         """
+        import math
+        travelers = max(1, num_travelers)
         with get_db_connection() as conn:
             # 1. Fetch package details
             pkg = conn.execute(
@@ -119,8 +122,10 @@ class PricingEngine:
                         "total_cost": format_money(guide_cost)
                     }
 
-            # 6. Final Total = base_price + components_delta_total + guide_cost
-            total_price = (base_price + components_delta_total + guide_cost).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            # 6. Final Total = (base_price + components_delta_total) * travelers + guide_cost
+            per_person_subtotal = base_price + components_delta_total
+            total_package_portion = per_person_subtotal * Decimal(str(travelers))
+            total_price = (total_package_portion + guide_cost).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
             return {
                 "package_id": package_id,
@@ -128,6 +133,8 @@ class PricingEngine:
                 "currency": currency,
                 "currency_symbol": "₹" if currency == "INR" else f"{currency} ",
                 "base_price": format_money(base_price),
+                "num_travelers": travelers,
+                "per_person_subtotal": format_money(per_person_subtotal),
                 "components_delta_total": format_money(components_delta_total),
                 "guide_cost": format_money(guide_cost),
                 "total_price": format_money(total_price),

@@ -122,12 +122,21 @@ class CatalogService:
                     pkg["title"] = pkg_trans["translated_text"]
 
                 # Batch translate component names
-                comp_titles = [c["name"] for c in components]
+                comp_titles = [c.get("title") or c.get("name") or "" for c in components]
                 translated_comps = TranslationService.translate_batch(comp_titles, clean_lang, "en")
                 for idx, c in enumerate(components):
-                    if translated_comps[idx]:
+                    if idx < len(translated_comps) and translated_comps[idx]:
                         c["name"] = translated_comps[idx]
                         c["title"] = translated_comps[idx]
+                    else:
+                        c["name"] = c.get("title") or ""
+
+            # Ensure all components have both 'name' and 'title' populated
+            for c in components:
+                if not c.get("name"):
+                    c["name"] = c.get("title") or ""
+                if not c.get("title"):
+                    c["title"] = c.get("name") or ""
 
             # Organize components:
             # 1. Day-by-day itinerary

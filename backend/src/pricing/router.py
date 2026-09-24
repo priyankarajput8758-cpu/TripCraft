@@ -15,6 +15,7 @@ class RepriceRequest(BaseModel):
     guide_id: Optional[str] = Field(None, description="Optional guide ID")
     start_date: Optional[str] = Field(None, description="Trip start date (YYYY-MM-DD)")
     duration_days: Optional[int] = Field(None, description="Custom trip duration in days")
+    num_travelers: Optional[int] = Field(1, ge=1, description="Number of travelers")
 
 @router.post("/reprice")
 def reprice_package(req: RepriceRequest):
@@ -27,7 +28,8 @@ def reprice_package(req: RepriceRequest):
             selected_component_ids=req.selected_component_ids,
             guide_id=req.guide_id,
             start_date=req.start_date,
-            duration_days=req.duration_days
+            duration_days=req.duration_days,
+            num_travelers=req.num_travelers or 1
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

@@ -39,6 +39,8 @@ class SynthesizeCustomTripRequest(BaseModel):
     start_date: Optional[str] = Field("2026-09-24", description="Start date")
     lat: Optional[float] = Field(None, description="Latitude")
     lng: Optional[float] = Field(None, description="Longitude")
+    user_custom_requests: Optional[str] = Field(None, description="User's custom schedule & timing requests, e.g. sunset at a specific spot")
+    num_travelers: Optional[int] = Field(1, ge=1, description="Number of travelers")
 
 @router.post("/build-trip")
 def build_trip(req: BuildTripRequest):
@@ -75,7 +77,9 @@ def synthesize_custom_trip(req: SynthesizeCustomTripRequest):
             selected_guide_id=req.selected_guide_id,
             start_date=req.start_date or "2026-09-24",
             lat=req.lat,
-            lng=req.lng
+            lng=req.lng,
+            user_custom_requests=req.user_custom_requests,
+            num_travelers=req.num_travelers or 1
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

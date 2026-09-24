@@ -177,15 +177,19 @@ class AIService:
         selected_guide_id: Optional[str] = None,
         start_date: str = "2026-09-24",
         lat: Optional[float] = None,
-        lng: Optional[float] = None
+        lng: Optional[float] = None,
+        user_custom_requests: Optional[str] = None,
+        num_travelers: int = 1
     ) -> Dict[str, Any]:
         """
         Synthesizes a brand new custom itinerary for any destination (e.g. Chikmagalur)
         evaluating day-wise multi-select experiences, timing conflicts, void filling,
-        and hotel surge/cost optimization with Gemini Flash.
+        user specific custom schedule requests, and hotel surge/cost optimization with Gemini Flash.
         """
+        import math
         day_selections = day_selections or []
         num_days = max(1, duration_days)
+        travelers = max(1, num_travelers)
 
         # 1. Prepare day selections summary for Gemini prompt
         selections_text = []
@@ -205,20 +209,24 @@ class AIService:
             acts_str = ", ".join(acts) if acts else "No specific activity selected yet"
             selections_text.append(f"- Day {idx}: Activities: [{acts_str}] | Hotel: {hotel_name} (₹{hotel_rate:.2f}/night)")
 
+        custom_pref_section = f"\nUser Custom Preferences & Timing Requests:\n{user_custom_requests}\n" if user_custom_requests else ""
+
         # 2. Construct Gemini Optimization Prompt
         prompt = f"""Destination: {destination_name}
 Duration: {num_days} Days (Nights: {num_days - 1})
+Travelers / Group Size: {travelers} Persons
 Pace Preference: {pace_preference.upper()} (Relaxed = 1-2 key spots/day, Balanced = 2-4 spots/day, Packed = 4+ spots/day)
 External Supply Mode: {"ON (Real-World Google Hotels Live)" if external_supply_mode else "OFF (Catalog Supply)"}
-
+{custom_pref_section}
 User's Day-Wise Selections:
 {chr(10).join(selections_text)}
 
 Task Requirements:
 1. Activity Void Filling: If any day has too few activities for the chosen pace, intelligently insert authentic local spots/experiences in {destination_name} that do NOT duplicate any other day.
 2. Timing & Transit Conflict Resolution: Check for timing overlaps (e.g. two sunset spots on same day, or excessive transit). Explain adjustments made.
-3. Cost & Date Optimization: Provide actionable advice on booking dates, weekday vs weekend hotel rate surges (e.g. comparing next/prior 7 days), and budget tips.
-4. Generate a structured day-by-day itinerary schedule with realistic time slots (Morning, Afternoon, Evening).
+3. User Timing Requests: If user provided custom timing/spot preferences (e.g. sunset at a specific spot, sunrise viewpoint, dietary preference), strictly accommodate them in the relevant day's slots.
+4. Cost & Date Optimization: Provide actionable advice on booking dates, weekday vs weekend hotel rate surges (e.g. comparing next/prior 7 days), and budget tips.
+5. Generate a structured day-by-day itinerary schedule with realistic time slots (Morning, Afternoon, Evening).
 
 Return ONLY a valid JSON object strictly matching this schema:
 {{
@@ -331,17 +339,25 @@ Return ONLY a valid JSON object strictly matching this schema:
                 if not slot.get("image_url"):
                     slot["image_url"] = get_slot_photo(slot.get("type", ""), slot.get("title", ""))
 
-        # 5. Enforce Strict Zero-Float Decimal Pricing
-        hotel_total = to_decimal(str(hotel_total_dec if hotel_total_dec > 0 else Decimal("3500.00") * num_days))
+        # 5. Enforce Strict Zero-Float Decimal Pricing (per traveler scaling)
+        rooms_needed = math.ceil(travelers / 2)
+        base_hotel_sum = hotel_total_dec if hotel_total_dec > 0 else (Decimal("3500.00") * num_days)
+        hotel_total = to_decimal(str(base_hotel_sum * rooms_needed))
+
         act_cost_per_item = Decimal("750.00")
-        activities_total = to_decimal(str(act_cost_per_item * max(total_activities_count, num_days * 2)))
-        transfers_total = to_decimal(str(Decimal("1400.00") * num_days))
+        acts_count = max(total_activities_count, num_days * 2)
+        activities_total = to_decimal(str(act_cost_per_item * acts_count * travelers))
+
+        vehicle_multiplier = 1 if travelers <= 4 else math.ceil(travelers / 4)
+        transfers_total = to_decimal(str(Decimal("1400.00") * num_days * vehicle_multiplier))
 
         subtotal = hotel_total + activities_total + transfers_total
         gst_tax = to_decimal(str(subtotal * Decimal("0.05")))
         grand_total = subtotal + gst_tax
 
         ai_res["estimated_pricing"] = {
+            "travelers_count": travelers,
+            "rooms_count": rooms_needed,
             "hotel_total": format_money(hotel_total),
             "activities_total": format_money(activities_total),
             "transfers_total": format_money(transfers_total),
