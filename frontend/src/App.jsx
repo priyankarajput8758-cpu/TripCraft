@@ -13,6 +13,7 @@ import RealWorldPanel from './components/RealWorldPanel';
 import AIAssistantModal from './components/AIAssistantModal';
 import BookingModal  from './components/BookingModal';
 import DestinationExplorer from './components/DestinationExplorer';
+import ErrorBoundary from './components/ErrorBoundary';
 import { Globe, Zap, Compass } from 'lucide-react';
 
 function getFallbackPackageDetail(packageId) {
@@ -305,108 +306,110 @@ export default function App() {
           </div>
         )}
 
-        {/* ── STEP 1: DISCOVER ── */}
-        {activeStep === 'discover' && (
-          <DiscoverView
-            packages={packages}
-            selectedPackageId={selectedPackageId}
-            onSelectPackage={handleSelectPackage}
-            onOpenAiBuild={() => setIsAiModalOpen(true)}
-            onStartBuild={() => navigateToStep('build')}
-            language={currentLanguage}
-          />
-        )}
-
-        {/* ── STEP 2: BUILD (PREFERENCES) ── */}
-        {activeStep === 'build' && (
-          <BuildView
-            onBuildSubmit={handleBuildSubmit}
-            currentLanguage={currentLanguage}
-            onBack={handleGoBack}
-          />
-        )}
-
-        {/* ── STEP 2B: CUSTOM DESTINATION ARCHITECT (MODE B) ── */}
-        {activeStep === 'architect' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <button
-                onClick={handleGoBack}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/80 border border-[#84D175]/30 text-xs font-bold text-[#1a2e1a] hover:bg-[#FFF8D2] transition-all cursor-pointer shadow-xs"
-              >
-                <span>← Back</span>
-              </button>
-            </div>
-            <DestinationExplorer
-              externalSupplyMode={realWorldEnabled}
-              onBookingComplete={(trip) => {
-                setBookingData({
-                  packageName: trip?.trip_title || 'Custom Architect Trip',
-                  total: trip?.estimated_pricing?.grand_total || '32000.00',
-                  durationDays: trip?.duration_days || 3,
-                  itinerary: trip?.itinerary || []
-                });
-                setIsBookingModalOpen(true);
-              }}
+        <ErrorBoundary onReset={() => navigateToStep('discover')} onGoHome={() => navigateToStep('discover')}>
+          {/* ── STEP 1: DISCOVER ── */}
+          {activeStep === 'discover' && (
+            <DiscoverView
+              packages={packages}
+              selectedPackageId={selectedPackageId}
+              onSelectPackage={handleSelectPackage}
+              onOpenAiBuild={() => setIsAiModalOpen(true)}
+              onStartBuild={() => navigateToStep('build')}
+              language={currentLanguage}
             />
-          </div>
-        )}
+          )}
 
-        {/* ── STEP 3: CUSTOMIZE ── */}
-        {activeStep === 'customize' && (
-          loadingDetail ? (
-            <div className="py-20 text-center space-y-3">
-              <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
-              <p className="text-xs text-slate-400">Loading customizer studio & package components...</p>
+          {/* ── STEP 2: BUILD (PREFERENCES) ── */}
+          {activeStep === 'build' && (
+            <BuildView
+              onBuildSubmit={handleBuildSubmit}
+              currentLanguage={currentLanguage}
+              onBack={handleGoBack}
+            />
+          )}
+
+          {/* ── STEP 2B: CUSTOM DESTINATION ARCHITECT (MODE B) ── */}
+          {activeStep === 'architect' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={handleGoBack}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/80 border border-[#84D175]/30 text-xs font-bold text-[#1a2e1a] hover:bg-[#FFF8D2] transition-all cursor-pointer shadow-xs"
+                >
+                  <span>← Back</span>
+                </button>
+              </div>
+              <DestinationExplorer
+                externalSupplyMode={realWorldEnabled}
+                onBookingComplete={(trip) => {
+                  setBookingData({
+                    packageName: trip?.trip_title || 'Custom Architect Trip',
+                    total: trip?.estimated_pricing?.grand_total || '32000.00',
+                    durationDays: trip?.duration_days || 3,
+                    itinerary: trip?.itinerary || []
+                  });
+                  setIsBookingModalOpen(true);
+                }}
+              />
             </div>
-          ) : packageDetailData ? (
-            <CustomizerStudio
-              packageDetailData={packageDetailData}
-              preferredLanguage={currentLanguage}
-              onOpenBooking={(d) => {
-                setBookingData(d);
-                setIsBookingModalOpen(true);
-              }}
-              tripPrefs={tripPrefs}
-              onNextToOptimize={(customizedData) => {
-                setBookingData(customizedData);
-                navigateToStep('optimize');
+          )}
+
+          {/* ── STEP 3: CUSTOMIZE ── */}
+          {activeStep === 'customize' && (
+            loadingDetail ? (
+              <div className="py-20 text-center space-y-3">
+                <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                <p className="text-xs text-slate-500 font-bold">Loading customized package studio & components...</p>
+              </div>
+            ) : packageDetailData ? (
+              <CustomizerStudio
+                packageDetailData={packageDetailData}
+                preferredLanguage={currentLanguage}
+                onOpenBooking={(d) => {
+                  setBookingData(d);
+                  setIsBookingModalOpen(true);
+                }}
+                tripPrefs={tripPrefs}
+                onNextToOptimize={(customizedData) => {
+                  setBookingData(customizedData);
+                  navigateToStep('optimize');
+                }}
+                onBack={handleGoBack}
+              />
+            ) : (
+              <div className="py-16 text-center text-slate-500 text-sm">
+                Please select a package from the Discover page first.
+              </div>
+            )
+          )}
+
+          {/* ── STEP 4: OPTIMIZE ── */}
+          {activeStep === 'optimize' && (
+            <OptimizeView
+              activePackage={activePackage}
+              pricing={packageDetailData?.pricing}
+              guide={bookingData?.selectedGuide}
+              onProceedToBook={() => {
+                if (bookingData) {
+                  setIsBookingModalOpen(true);
+                } else {
+                  navigateToStep('customize');
+                }
               }}
               onBack={handleGoBack}
             />
-          ) : (
-            <div className="py-16 text-center text-slate-400 text-sm">
-              Please select a package from the Discover page first.
-            </div>
-          )
-        )}
+          )}
 
-        {/* ── STEP 4: OPTIMIZE ── */}
-        {activeStep === 'optimize' && (
-          <OptimizeView
-            activePackage={activePackage}
-            pricing={packageDetailData?.pricing}
-            guide={bookingData?.selectedGuide}
-            onProceedToBook={() => {
-              if (bookingData) {
-                setIsBookingModalOpen(true);
-              } else {
-                navigateToStep('customize');
-              }
-            }}
-            onBack={handleGoBack}
-          />
-        )}
-
-        {/* ── STEP 5: CONFIRM ── */}
-        {activeStep === 'confirm' && (
-          <ConfirmView
-            bookingResult={bookingResult}
-            bookingDetails={bookingData}
-            onReset={() => navigateToStep('discover')}
-            onBack={handleGoBack}
-          />
-        )}
+          {/* ── STEP 5: CONFIRM ── */}
+          {activeStep === 'confirm' && (
+            <ConfirmView
+              bookingResult={bookingResult}
+              bookingDetails={bookingData}
+              onReset={() => navigateToStep('discover')}
+              onBack={handleGoBack}
+            />
+          )}
+        </ErrorBoundary>
 
         {/* ── Live Market Data (SerpAPI Google Hotels) ── */}
         {realWorldEnabled && activePackage && activeStep !== 'confirm' && (

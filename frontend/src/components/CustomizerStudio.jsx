@@ -2,21 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../api';
 import GuideSelector from './GuideSelector';
 import AddOnsPanel from './AddOnsPanel';
-import OptimizationPanel from './OptimizationPanel';
-import SaveShareActions from './SaveShareActions';
 import {
   Hotel, Activity, Car, Check, Layers, ArrowRight, ShieldCheck,
-  Calendar, Clock, MapPin, Receipt, CalendarRange, Sparkles, UserCheck, Plus, Trash2, X
+  Calendar, Clock, MapPin, Receipt, Sparkles, UserCheck, Plus,
+  Trash2, X, Utensils, Ticket, Compass, Users
 } from 'lucide-react';
-
-const AVAILABLE_ACTIVITIES = [
-  { id: 'act_1', title: 'Heritage Walk (Old Goa)', day: 'Day 2 • 3 Hours', price: 3000 },
-  { id: 'act_2', title: 'Goan Food Tour', day: 'Day 2 • 2.5 Hours', price: 3500 },
-  { id: 'act_3', title: 'Water Sports Package', day: 'Day 3 • Half Day', price: 3500 },
-  { id: 'act_4', title: 'Scuba Diving & Coral Reef', day: 'Day 3 • Full Day', price: 4500 },
-  { id: 'act_5', title: 'Spice Plantation Tour & Lunch', day: 'Day 4 • 4 Hours', price: 2000 },
-  { id: 'act_6', title: 'Mandovi River Sunset Cruise', day: 'Day 4 • 2 Hours', price: 1500 },
-];
 
 export default function CustomizerStudio({
   packageDetailData,
@@ -27,29 +17,20 @@ export default function CustomizerStudio({
   onBack,
 }) {
   const pkg = packageDetailData?.package;
-  const components = packageDetailData?.components || [];
-  const initialSwapGroups = packageDetailData?.swap_groups || [];
+  const rawComponents = packageDetailData?.components || [];
+  const rawSwapGroups = packageDetailData?.swap_groups || [];
 
   const [selectedComponents, setSelectedComponents] = useState({});
   const [selectedGuide, setSelectedGuide] = useState(null);
   const [startDate, setStartDate] = useState(tripPrefs.startDate || '2026-09-24');
   const [endDate, setEndDate] = useState(tripPrefs.endDate || '2026-09-28');
+  const [numTravelers, setNumTravelers] = useState(tripPrefs.numTravelers || 2);
   const [pricingResult, setPricingResult] = useState(null);
   const [isRepricing, setIsRepricing] = useState(false);
   const [addOnTotal, setAddOnTotal] = useState(0);
   const [priceFlash, setPriceFlash] = useState(false);
-  const [transferType, setTransferType] = useState('private');
 
-  /* Interactive Activities State */
-  const [activitiesList, setActivitiesList] = useState([
-    AVAILABLE_ACTIVITIES[0],
-    AVAILABLE_ACTIVITIES[1],
-    AVAILABLE_ACTIVITIES[2],
-  ]);
-  const [swapModalIdx, setSwapModalIdx] = useState(null);
-  const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
-
-  // Compute duration from dates
+  // Compute duration from dates or package
   const durationDays = useMemo(() => {
     if (startDate && endDate) {
       const diff = Math.round((new Date(endDate) - new Date(startDate)) / 86400000) + 1;
@@ -58,93 +39,102 @@ export default function CustomizerStudio({
     return pkg?.duration_days || 5;
   }, [startDate, endDate, pkg?.duration_days]);
 
-  // Group components by swap_group
-  const swapGroups = useMemo(() => {
-    if (initialSwapGroups && initialSwapGroups.length > 0) {
-      const map = {};
-      for (const sg of initialSwapGroups) {
-        map[sg.swap_group] = sg.options || [];
+  // Group components by swap_group and categorize them
+  const swapGroupsMap = useMemo(() => {
+    const map = {};
+    if (rawSwapGroups && rawSwapGroups.length > 0) {
+      for (const sg of rawSwapGroups) {
+        if (sg && sg.swap_group) {
+          map[sg.swap_group] = sg.options || [];
+        }
       }
-      return map;
     }
-    const groups = {};
-    for (const comp of components) {
-      const groupName = comp.swap_group || 'general_options';
-      if (!groups[groupName]) groups[groupName] = [];
-      groups[groupName].push(comp);
+    // Also add any components with swap_groups not yet in the map
+    for (const comp of rawComponents) {
+      const groupName = comp.swap_group;
+      if (groupName) {
+        if (!map[groupName]) {
+          map[groupName] = [];
+        }
+        if (!map[groupName].some(c => c.component_id === comp.component_id)) {
+          map[groupName].push(comp);
+        }
+      }
     }
-    return groups;
-  }, [initialSwapGroups, components]);
+    return map;
+  }, [rawSwapGroups, rawComponents]);
 
-  // Initial selection: first item of each swap group
+  // Standalone non-swappable components (e.g. transfers, meals, entry tickets without a swap group)
+  const standaloneComponents = useMemo(() => {
+    return rawComponents.filter(c => !c.swap_group);
+  }, [rawComponents]);
+
+  // Initialize selected components on package load
   useEffect(() => {
     if (!pkg) return;
     const initial = {};
-    for (const [group, items] of Object.entries(swapGroups)) {
-      if (items.length > 0) initial[group] = items[0].component_id;
+    for (const [groupName, items] of Object.entries(swapGroupsMap)) {
+      if (items.length > 0) {
+        initial[groupName] = items[0].component_id;
+      }
+    }
+    // Also include standalone mandatory components
+    for (const comp of standaloneComponents) {
+      if (comp.is_optional === 0) {
+        initial[`standalone_${comp.component_id}`] = comp.component_id;
+      }
     }
     setSelectedComponents(initial);
     setSelectedGuide(null);
   }, [pkg?.package_id]);
 
-  // Total activity cost calculation
-  const totalActivitiesCost = useMemo(() => {
-    return activitiesList.reduce((sum, act) => sum + act.price, 0);
-  }, [activitiesList]);
-
-  // Live repricing from scratch on every change
+  // Live repricing strictly from scratch in Decimal
   useEffect(() => {
     async function triggerReprice() {
       if (!pkg?.package_id) return;
       const componentIds = Object.values(selectedComponents).filter(Boolean);
       setIsRepricing(true);
       try {
-        const res = await api.reprice(
-          pkg.package_id,
-          componentIds,
-          selectedGuide?.guide_id || null,
-          startDate,
-          durationDays
-        );
+        const res = await api.reprice({
+          package_id: pkg.package_id,
+          selected_component_ids: componentIds,
+          guide_id: selectedGuide?.guide_id || null,
+          start_date: startDate,
+          duration_days: durationDays,
+          num_travelers: numTravelers
+        });
         if (res && res.total_price) {
           setPricingResult(res);
           setPriceFlash(true);
-          setTimeout(() => setPriceFlash(false), 900);
+          setTimeout(() => setPriceFlash(false), 800);
         }
       } catch (err) {
-        console.error('Reprice error:', err);
+        console.warn('Reprice error:', err);
       } finally {
         setIsRepricing(false);
       }
     }
     triggerReprice();
-  }, [pkg?.package_id, selectedComponents, selectedGuide, startDate, durationDays, transferType, activitiesList]);
+  }, [pkg?.package_id, selectedComponents, selectedGuide, startDate, durationDays, numTravelers]);
 
-  const handleSwap = (group, componentId) => {
-    setSelectedComponents(prev => ({ ...prev, [group]: componentId }));
+  const handleSwap = (groupName, componentId) => {
+    setSelectedComponents(prev => ({
+      ...prev,
+      [groupName]: componentId
+    }));
   };
 
-  const handleRemoveActivity = (idx) => {
-    setActivitiesList(prev => prev.filter((_, i) => i !== idx));
-    setPriceFlash(true);
-  };
-
-  const handleSwapActivity = (idx, newAct) => {
-    setActivitiesList(prev => {
-      const copy = [...prev];
-      copy[idx] = newAct;
+  const handleToggleStandalone = (componentId) => {
+    const key = `standalone_${componentId}`;
+    setSelectedComponents(prev => {
+      const copy = { ...prev };
+      if (copy[key]) {
+        delete copy[key];
+      } else {
+        copy[key] = componentId;
+      }
       return copy;
     });
-    setSwapModalIdx(null);
-    setPriceFlash(true);
-  };
-
-  const handleAddActivity = (newAct) => {
-    if (!activitiesList.some(a => a.id === newAct.id)) {
-      setActivitiesList(prev => [...prev, newAct]);
-      setPriceFlash(true);
-    }
-    setIsAddActivityOpen(false);
   };
 
   const handleAddOnsChange = (ids, total) => {
@@ -160,27 +150,37 @@ export default function CustomizerStudio({
       startDate,
       endDate,
       durationDays,
+      numTravelers,
+      partySize: numTravelers,
       addOnTotal,
-      transferType,
-      activitiesList,
       totalPrice: displayTotal,
+      currency: pricingResult?.currency || pkg.currency || 'INR'
     });
   };
 
-  if (!pkg) return null;
+  if (!pkg) {
+    return (
+      <div className="py-20 text-center space-y-3">
+        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-xs text-slate-500 font-bold">Loading customized package studio...</p>
+      </div>
+    );
+  }
 
   const pkgTitle = pkg.name || pkg.title || 'Tour Customizer';
-  const cityName = pkg.city_name || 'Goa';
+  const cityName = pkg.city_name || 'Destination';
   const durationNights = Math.max(1, durationDays - 1);
+  const currencySymbol = pricingResult?.currency_symbol || (pkg.currency === 'USD' ? '$' : '₹');
 
-  const basePriceNum = parseFloat(pricingResult?.total_price || pkg.base_price || 35000);
-  const transferAdjust = transferType === 'shared' ? -2500 : 0;
-  const activityAdjust = totalActivitiesCost - 10000;
-  const computedTotal = Math.max(0, basePriceNum + addOnTotal + transferAdjust + activityAdjust);
-  const displayTotal = computedTotal.toLocaleString('en-IN', { minimumFractionDigits: 0 });
+  const baseCalculatedTotal = pricingResult?.total_price
+    ? parseFloat(pricingResult.total_price)
+    : (parseFloat(pkg.base_price || 32000) * numTravelers);
+
+  const grandCalculatedTotal = Math.max(0, baseCalculatedTotal + (addOnTotal * numTravelers));
+  const displayTotal = grandCalculatedTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 });
 
   return (
-    <div className="space-y-6 animate-in">
+    <div className="space-y-6 animate-fadeIn text-slate-900 pb-12">
 
       {/* ── Subheader Bar ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
@@ -190,93 +190,186 @@ export default function CustomizerStudio({
               onClick={onBack}
               className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 px-3 py-1 rounded-xl transition-all cursor-pointer mb-1 shadow-sm"
             >
-              ← Back
+              ← Back to Discover
             </button>
           )}
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-            Customize Your Package
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            Customize {pkgTitle}
           </h1>
           <div className="flex flex-wrap items-center gap-2 mt-2">
-            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-200/80 text-slate-800">
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-slate-200/80 text-slate-800 flex items-center gap-1">
+              <MapPin className="w-3 h-3 text-teal-600" />
               {cityName}
             </span>
-            <span className="text-slate-400">•</span>
-            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-200/80 text-slate-800">
+            <span className="text-slate-300">•</span>
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-slate-200/80 text-slate-800 flex items-center gap-1">
+              <Clock className="w-3 h-3 text-teal-600" />
               {durationDays} Days / {durationNights} Nights
             </span>
-            <span className="text-slate-400">•</span>
-            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-200/80 text-slate-800">
-              2 Travelers
+            <span className="text-slate-300">•</span>
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-teal-50 text-teal-800 border border-teal-200 flex items-center gap-1">
+              <Users className="w-3 h-3 text-teal-600" />
+              {numTravelers} Traveler{numTravelers > 1 ? 's' : ''}
             </span>
-            <span className="text-slate-400">•</span>
-            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
-              Balanced Pace
+            <span className="text-slate-300">•</span>
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 capitalize">
+              {pkg.theme || 'Curated'} Theme
             </span>
           </div>
         </div>
 
         <button
           onClick={handleProceedToOptimize}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-bold text-xs shadow-lg shadow-blue-600/30 transition-all active:scale-95 cursor-pointer"
+          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition-all active:scale-95 cursor-pointer shrink-0"
         >
-          <span>Next: View Itinerary →</span>
+          <span>Next: View Verified Itinerary</span>
+          <ArrowRight className="w-4 h-4" />
         </button>
       </div>
 
       {/* Main Studio Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        {/* ── Left Column (Hotel Tier, Activities, Guide, Transfer, Add-ons) ── */}
+        {/* ── Left Column (Interactive Swappable Components & Inclusions) ── */}
         <div className="lg:col-span-8 space-y-6">
 
-          {/* 1. Hotel Tier Selector (Pure White Card matching Screenshot 3) */}
-          {Object.entries(swapGroups).filter(([name]) => name.toLowerCase().includes('hotel') || name.toLowerCase().includes('tier') || name.toLowerCase().includes('stay')).map(([groupName, items]) => {
+          {/* 1. Party Size & Calendar Date Settings Bar */}
+          <div className="bg-white border border-slate-200 rounded-3xl p-5 space-y-4 shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2">
+                <Calendar className="w-4 h-4 text-teal-600" />
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                  Trip Dates & Party Size
+                </h3>
+              </div>
+              <span className="text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                Live Repricing Active
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  Party Size (Travelers)
+                </label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[1, 2, 4, 6].map((count) => (
+                    <button
+                      key={count}
+                      type="button"
+                      onClick={() => setNumTravelers(count)}
+                      className={`py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                        numTravelers === count
+                          ? 'bg-teal-500 text-slate-950 shadow-md shadow-teal-500/20'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {count}p
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Swappable Package Components (Hotel Tiers, POIs, Activities) */}
+          {Object.entries(swapGroupsMap).map(([groupName, items]) => {
             const currentSelectedId = selectedComponents[groupName];
+            const firstItem = items[0] || {};
+            const compType = firstItem.component_type || 'component';
+
+            let typeIcon = <Activity className="w-4 h-4 text-teal-600" />;
+            let typeLabel = `Swappable Option (${groupName})`;
+
+            if (compType === 'hotel' || groupName.toLowerCase().includes('hotel') || groupName.toLowerCase().includes('stay')) {
+              typeIcon = <Hotel className="w-4 h-4 text-amber-500" />;
+              typeLabel = 'Accommodation & Hotel Tier';
+            } else if (compType === 'poi' || groupName.toLowerCase().includes('poi') || groupName.toLowerCase().includes('activity')) {
+              typeIcon = <Compass className="w-4 h-4 text-teal-600" />;
+              typeLabel = 'Attraction & Experience Options';
+            } else if (compType === 'guide' || groupName.toLowerCase().includes('guide')) {
+              typeIcon = <UserCheck className="w-4 h-4 text-blue-600" />;
+              typeLabel = 'Local Guide Delivery Option';
+            }
+
             return (
-              <div key={groupName} className="bg-white border border-slate-200/90 rounded-3xl p-6 space-y-4 shadow-sm">
+              <div key={groupName} className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-sm">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center space-x-2">
-                    <Hotel className="w-5 h-5 text-amber-500" />
-                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                      Hotel Tier
+                    {typeIcon}
+                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                      {typeLabel}
                     </h3>
                   </div>
-                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    Current: Premium
+                  <span className="text-[11px] font-bold text-slate-500">
+                    {items.length} Choice{items.length > 1 ? 's' : ''} Available
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {items.map((item) => {
                     const isSelected = currentSelectedId === item.component_id;
                     const delta = parseFloat(item.price_delta || '0');
-                    const itemTitle = item.title || item.name || 'Tier';
+                    const itemTitle = item.title || item.name || 'Component Option';
 
                     return (
                       <div
                         key={item.component_id}
                         onClick={() => handleSwap(groupName, item.component_id)}
-                        className={`relative p-4 rounded-2xl border cursor-pointer transition-all ${
+                        className={`relative p-4 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between ${
                           isSelected
-                            ? 'bg-blue-50/50 border-2 border-blue-600 shadow-md ring-2 ring-blue-500/20'
-                            : 'bg-white border-slate-200 hover:border-slate-300'
+                            ? 'bg-teal-50/60 border-2 border-teal-500 shadow-md ring-2 ring-teal-500/20'
+                            : 'bg-slate-50 border-slate-200 hover:border-slate-300 hover:bg-slate-100/60'
                         }`}
                       >
-                        <div className="text-xs font-bold text-slate-900">{itemTitle}</div>
-                        <div className="text-sm font-extrabold text-blue-600 font-mono mt-1">
-                          ₹{(18000 + delta).toLocaleString('en-IN')}
-                        </div>
-                        <div className={`text-[10px] font-bold mt-1 ${
-                          delta === 0 ? 'text-slate-400' : delta > 0 ? 'text-amber-600' : 'text-emerald-600'
-                        }`}>
-                          {delta === 0 ? 'Standard Rate' : `${delta > 0 ? '+' : ''}₹${delta.toLocaleString('en-IN')}`}
+                        <div className="space-y-1">
+                          <div className="text-xs font-bold text-slate-900 line-clamp-2">
+                            {itemTitle}
+                          </div>
+                          {item.slot && (
+                            <div className="text-[10px] text-slate-500 uppercase font-mono">
+                              Day {item.day_index || 1} • {item.slot}
+                            </div>
+                          )}
                         </div>
 
-                        {isSelected && (
-                          <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center">
-                            <Check className="w-3 h-3 stroke-[3]" />
-                          </div>
-                        )}
+                        <div className="mt-3 pt-2 border-t border-slate-200/60 flex items-center justify-between">
+                          <span className={`text-xs font-mono font-bold ${
+                            delta === 0 ? 'text-slate-500' : delta > 0 ? 'text-teal-700' : 'text-emerald-700'
+                          }`}>
+                            {delta === 0 ? 'Included (Base)' : `${delta > 0 ? '+' : ''}${currencySymbol}${Math.abs(delta).toLocaleString('en-IN')}`}
+                          </span>
+
+                          {isSelected && (
+                            <div className="w-5 h-5 rounded-full bg-teal-500 text-slate-950 flex items-center justify-center shrink-0">
+                              <Check className="w-3 h-3 stroke-[3]" />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -285,60 +378,57 @@ export default function CustomizerStudio({
             );
           })}
 
-          {/* 2. Selected Activities List (Interactive Swap, Remove & Add) */}
-          <div className="bg-white border border-slate-200/90 rounded-3xl p-6 space-y-4 shadow-sm">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center space-x-2">
-                <Activity className="w-5 h-5 text-blue-600" />
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                  Selected Activities ({activitiesList.length})
-                </h3>
-              </div>
-              <button
-                onClick={() => setIsAddActivityOpen(true)}
-                className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" /> + Add Activity
-              </button>
-            </div>
-
-            <div className="space-y-2.5">
-              {activitiesList.length === 0 ? (
-                <div className="text-center py-6 text-xs text-slate-400">
-                  No activities selected. Click "+ Add Activity" to browse available tours.
+          {/* 3. Included Non-Swappable Inclusions (Transfers, Meals, Tickets) */}
+          {standaloneComponents.length > 0 && (
+            <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-sm">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center space-x-2">
+                  <Ticket className="w-4 h-4 text-emerald-600" />
+                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                    Included Tour Inclusions & Passes
+                  </h3>
                 </div>
-              ) : (
-                activitiesList.map((act, idx) => (
-                  <div key={idx} className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 flex items-center justify-between">
-                    <div>
-                      <div className="text-xs font-bold text-slate-900">{act.title}</div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">{act.day}</div>
-                    </div>
+                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  Pre-Included in Package
+                </span>
+              </div>
 
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs font-bold text-slate-900 font-mono">
-                        ₹{act.price.toLocaleString('en-IN')}
-                      </span>
-                      <button
-                        onClick={() => setSwapModalIdx(idx)}
-                        className="px-2.5 py-1 rounded-lg bg-white text-slate-700 hover:bg-slate-100 text-[11px] font-bold border border-slate-300 shadow-sm cursor-pointer"
-                      >
-                        Swap
-                      </button>
-                      <button
-                        onClick={() => handleRemoveActivity(idx)}
-                        className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 text-[11px] font-bold border border-rose-200 cursor-pointer"
-                      >
-                        Remove
-                      </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {standaloneComponents.map((comp) => {
+                  const key = `standalone_${comp.component_id}`;
+                  const isChecked = selectedComponents[key] !== undefined || comp.is_optional === 0;
+                  const delta = parseFloat(comp.price_delta || '0');
+
+                  return (
+                    <div
+                      key={comp.component_id}
+                      onClick={() => comp.is_optional === 1 && handleToggleStandalone(comp.component_id)}
+                      className={`p-3.5 rounded-2xl border flex items-center justify-between transition-all ${
+                        isChecked
+                          ? 'bg-emerald-50/50 border-emerald-200 text-slate-900'
+                          : 'bg-slate-50 border-slate-200 text-slate-400 opacity-60'
+                      } ${comp.is_optional === 1 ? 'cursor-pointer hover:border-emerald-300' : ''}`}
+                    >
+                      <div className="space-y-0.5">
+                        <div className="text-xs font-bold">{comp.title || comp.name}</div>
+                        <div className="text-[10px] text-slate-500 uppercase">
+                          {comp.component_type} • {comp.is_optional === 0 ? 'Mandatory Inclusion' : 'Optional Inclusion'}
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <span className="text-xs font-mono font-bold text-emerald-700">
+                          +{currencySymbol}{delta.toLocaleString('en-IN')}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))
-              )}
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* 3. Optional Local Tour Guide Component (High Impact Amber Box matching Screenshot 3) */}
+          {/* 4. Optional Local Tour Guide Selector (§2.2 Mandatory Enhancement) */}
           <GuideSelector
             packageId={pkg.package_id}
             cityId={pkg.city_id}
@@ -350,62 +440,6 @@ export default function CustomizerStudio({
             availableGuides={packageDetailData?.available_guides || []}
           />
 
-          {/* 4. Transfer Type & Trip Duration Controls */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-            {/* Transfer Type Toggle */}
-            <div className="bg-white border border-slate-200/90 rounded-3xl p-5 space-y-3 shadow-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Transfer Type
-                </span>
-                <span className="text-xs font-bold text-blue-600 capitalize">{transferType}</span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => setTransferType('private')}
-                  className={`py-2 text-xs font-bold rounded-lg transition-all ${
-                    transferType === 'private'
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Private (₹5k)
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTransferType('shared')}
-                  className={`py-2 text-xs font-bold rounded-lg transition-all ${
-                    transferType === 'shared'
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Shared (₹2.5k)
-                </button>
-              </div>
-            </div>
-
-            {/* Trip Duration Indicator */}
-            <div className="bg-white border border-slate-200/90 rounded-3xl p-5 space-y-3 shadow-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Trip Duration
-                </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
-                  Live
-                </span>
-              </div>
-
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-center text-xs font-bold text-slate-900">
-                {durationDays} Days / {durationNights} Nights
-              </div>
-            </div>
-          </div>
-
           {/* 5. Recommended Add-ons Panel */}
           <AddOnsPanel
             selectedTheme={pkg.theme}
@@ -413,86 +447,97 @@ export default function CustomizerStudio({
           />
         </div>
 
-        {/* ── Right Column: Sticky Live Price Summary (Pure White Card matching Screenshot 3) ── */}
+        {/* ── Right Column: Sticky Live Price Summary & Breakdown ── */}
         <div className="lg:col-span-4 space-y-5">
-          <div className="sticky top-20 bg-white border-2 border-blue-500/80 rounded-3xl p-6 shadow-xl space-y-5">
+          <div className="sticky top-20 bg-white border-2 border-teal-500/80 rounded-3xl p-6 shadow-xl space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                Live Price Summary
-              </h3>
+              <div className="space-y-0.5">
+                <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                  Live Repricing Quote
+                </h3>
+                <span className="text-[11px] text-slate-500 font-mono">
+                  {numTravelers} Traveler{numTravelers > 1 ? 's' : ''} • Zero Float
+                </span>
+              </div>
               <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold ${
                 isRepricing ? 'bg-amber-100 text-amber-800 animate-pulse' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
               }`}>
-                {isRepricing ? '⟳ Recalculating...' : 'Real-Time'}
+                {isRepricing ? '⟳ Recalculating...' : '✓ Decimal Verified'}
               </span>
             </div>
 
             {/* Price Line Items */}
             <div className="space-y-3 text-xs">
               <div className="flex justify-between text-slate-700 font-medium">
-                <span>Hotel (Premium 4N)</span>
-                <span className="font-mono font-bold text-slate-900">₹18,000</span>
-              </div>
-
-              <div className="flex justify-between text-slate-700 font-medium">
-                <span>Activities ({activitiesList.length} Selected)</span>
-                <span className="font-mono font-bold text-slate-900">₹{totalActivitiesCost.toLocaleString('en-IN')}</span>
-              </div>
-
-              <div className="flex justify-between text-slate-700 font-medium">
-                <span>{transferType === 'shared' ? 'Shared Transfers' : 'Private Transfers'}</span>
+                <span>Base Package Rate ({pkgTitle})</span>
                 <span className="font-mono font-bold text-slate-900">
-                  ₹{transferType === 'shared' ? '2,500' : '5,000'}
+                  {currencySymbol}{parseFloat(pkg.base_price || 32000).toLocaleString('en-IN')}
                 </span>
               </div>
 
+              {pricingResult?.components_delta_total && (
+                <div className="flex justify-between text-slate-700 font-medium">
+                  <span>Custom Component Adjustments</span>
+                  <span className={`font-mono font-bold ${
+                    parseFloat(pricingResult.components_delta_total) >= 0 ? 'text-teal-700' : 'text-emerald-700'
+                  }`}>
+                    {parseFloat(pricingResult.components_delta_total) >= 0 ? '+' : ''}{currencySymbol}{parseFloat(pricingResult.components_delta_total).toLocaleString('en-IN')}
+                  </span>
+                </div>
+              )}
+
               {selectedGuide ? (
-                <div className="flex justify-between text-amber-800 font-bold">
-                  <span>{selectedGuide.display_name || selectedGuide.name || 'Tamil Tour Guide'}</span>
+                <div className="flex justify-between text-amber-900 font-bold bg-amber-50 p-2 rounded-xl border border-amber-200">
+                  <span>Guide: {selectedGuide.display_name || selectedGuide.name}</span>
                   <span className="font-mono">
-                    +₹{parseFloat(pricingResult?.guide_detail?.total_guide_cost || selectedGuide.day_rate || 3500).toLocaleString('en-IN')}
+                    +{currencySymbol}{parseFloat(pricingResult?.guide_cost || selectedGuide.day_rate || 3500).toLocaleString('en-IN')}
                   </span>
                 </div>
               ) : (
                 <div className="flex justify-between text-slate-400">
                   <span>Local Tour Guide</span>
-                  <span>Not Added</span>
+                  <span>Self-Guided (₹0)</span>
                 </div>
               )}
 
               {addOnTotal > 0 && (
                 <div className="flex justify-between text-indigo-700 font-medium">
-                  <span>Taxes & Add-ons</span>
-                  <span className="font-mono font-bold">+₹{addOnTotal.toLocaleString('en-IN')}</span>
+                  <span>Theme Add-ons ({numTravelers}p)</span>
+                  <span className="font-mono font-bold">+{currencySymbol}{(addOnTotal * numTravelers).toLocaleString('en-IN')}</span>
                 </div>
               )}
             </div>
 
             {/* Total Package Price Block */}
-            <div className="pt-4 border-t border-slate-100 space-y-2">
+            <div className="pt-4 border-t border-slate-200 space-y-2">
               <div className="flex justify-between items-baseline">
-                <span className="text-xs font-black uppercase tracking-wider text-slate-500">
-                  TOTAL PACKAGE
-                </span>
+                <div>
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-500 block">
+                    TOTAL VERIFIED PRICE
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    Tax inclusive (5% GST included)
+                  </span>
+                </div>
                 <div className="text-right">
                   <div className={`text-3xl font-black text-slate-900 font-mono tracking-tight ${
-                    priceFlash ? 'text-blue-600 animate-pulse' : ''
+                    priceFlash ? 'text-teal-600 animate-pulse' : ''
                   }`}>
-                    ₹{displayTotal}
+                    {currencySymbol}{displayTotal}
                   </div>
-                  {selectedGuide && (
-                    <span className="inline-block text-[10px] font-extrabold text-amber-800 bg-amber-100 px-2 py-0.5 rounded border border-amber-200 mt-1">
-                      +₹{parseFloat(selectedGuide.day_rate || 3500).toLocaleString('en-IN')} Guide Included
+                  {numTravelers > 1 && (
+                    <span className="text-[11px] text-slate-500 font-mono block">
+                      ≈ {currencySymbol}{(grandCalculatedTotal / numTravelers).toLocaleString('en-IN', { minimumFractionDigits: 0 })} / person
                     </span>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* View Optimized Itinerary CTA */}
+            {/* Action Button */}
             <button
               onClick={handleProceedToOptimize}
-              className="w-full py-3.5 bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-sm rounded-xl shadow-lg shadow-[#84D175]/30 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3.5 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-emerald-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>View Optimized Itinerary →</span>
             </button>
@@ -501,77 +546,19 @@ export default function CustomizerStudio({
       </div>
 
       {/* ── Mobile Sticky Price Summary Bar (Screen < lg) ── */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 border-t border-[#84D175]/40 p-4 shadow-2xl backdrop-blur-md flex items-center justify-between gap-3">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 border-t border-slate-200 p-4 shadow-2xl backdrop-blur-md flex items-center justify-between gap-3">
         <div>
-          <div className="text-[10px] font-black uppercase tracking-wider text-[#4a5e4a]">Total Package</div>
-          <div className="text-xl font-black text-[#1a2e1a] font-mono">₹{displayTotal}</div>
+          <div className="text-[10px] font-black uppercase tracking-wider text-slate-500">Total Price ({numTravelers}p)</div>
+          <div className="text-xl font-black text-slate-900 font-mono">{currencySymbol}{displayTotal}</div>
         </div>
         <button
           onClick={handleProceedToOptimize}
-          className="flex-1 max-w-xs py-3 px-4 bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+          className="flex-1 max-w-xs py-3 px-4 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all"
         >
           <span>Next: Itinerary</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>
-
-      {/* ── Swap Activity Modal ── */}
-      {swapModalIdx !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in">
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl text-slate-900">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-sm text-slate-900">Swap Activity</h3>
-              <button onClick={() => setSwapModalIdx(null)} className="text-slate-400 hover:text-slate-700">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="space-y-2">
-              {AVAILABLE_ACTIVITIES.map((act) => (
-                <div
-                  key={act.id}
-                  onClick={() => handleSwapActivity(swapModalIdx, act)}
-                  className="p-3 rounded-xl border border-slate-200 hover:border-blue-600 hover:bg-blue-50/50 cursor-pointer flex items-center justify-between transition-all"
-                >
-                  <div>
-                    <div className="text-xs font-bold text-slate-900">{act.title}</div>
-                    <div className="text-[11px] text-slate-500">{act.day}</div>
-                  </div>
-                  <span className="text-xs font-bold text-blue-600 font-mono">₹{act.price.toLocaleString('en-IN')}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Add Activity Modal ── */}
-      {isAddActivityOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in">
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl text-slate-900">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-sm text-slate-900">Add New Activity to Package</h3>
-              <button onClick={() => setIsAddActivityOpen(false)} className="text-slate-400 hover:text-slate-700">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="space-y-2">
-              {AVAILABLE_ACTIVITIES.filter(a => !activitiesList.some(act => act.id === a.id)).map((act) => (
-                <div
-                  key={act.id}
-                  onClick={() => handleAddActivity(act)}
-                  className="p-3 rounded-xl border border-slate-200 hover:border-blue-600 hover:bg-blue-50/50 cursor-pointer flex items-center justify-between transition-all"
-                >
-                  <div>
-                    <div className="text-xs font-bold text-slate-900">{act.title}</div>
-                    <div className="text-[11px] text-slate-500">{act.day}</div>
-                  </div>
-                  <span className="text-xs font-bold text-blue-600 font-mono">+₹{act.price.toLocaleString('en-IN')}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
