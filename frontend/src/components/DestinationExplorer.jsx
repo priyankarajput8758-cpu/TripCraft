@@ -40,7 +40,13 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-export default function DestinationExplorer({ externalSupplyMode = false, onBookingComplete, initialState = null }) {
+export default function DestinationExplorer({
+  externalSupplyMode = false,
+  onBookingComplete,
+  initialState = null,
+  preferredLanguage = 'en',
+  onLanguageChange
+}) {
   const [destinationQuery, setDestinationQuery] = useState(initialState?.destination || 'Chikmagalur');
   const [radiusMeters, setRadiusMeters] = useState(15000);
   const [loadingExplore, setLoadingExplore] = useState(false);
@@ -79,7 +85,7 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
   const [appliedSuggestions, setAppliedSuggestions] = useState({});
 
   // Translation state
-  const [selectedLang, setSelectedLang] = useState(initialState?.language || 'en');
+  const [selectedLang, setSelectedLang] = useState(initialState?.language || preferredLanguage || 'en');
   const [translatedTripTitle, setTranslatedTripTitle] = useState(null);
   const [originalEnglishTrip, setOriginalEnglishTrip] = useState(initialState?.customPackage || null);
   const [translating, setTranslating] = useState(false);
@@ -88,6 +94,31 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
+
+  // Sync language with external parent prop
+  useEffect(() => {
+    if (preferredLanguage && preferredLanguage !== selectedLang) {
+      setSelectedLang(preferredLanguage);
+      if (synthesizedTrip) {
+        handleTranslate(preferredLanguage);
+      }
+    }
+  }, [preferredLanguage]);
+
+  // Fetch authentic real-world place image for active modal spot (e.g. Bamleshwari Temple)
+  useEffect(() => {
+    if (activeSpotModal && !activeSpotModal.hasLoadedRealImage) {
+      api.getSpotImage(activeSpotModal.name, activeSpotModal.category).then(res => {
+        if (res && res.image_url) {
+          setActiveSpotModal(prev => prev && prev.name === activeSpotModal.name ? {
+            ...prev,
+            image_url: res.image_url,
+            hasLoadedRealImage: true
+          } : prev);
+        }
+      }).catch(console.error);
+    }
+  }, [activeSpotModal?.name]);
 
   // Sync when initialState changes
   useEffect(() => {
@@ -456,8 +487,11 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
 
   // Translate complete synthesized itinerary (trip title, day titles, slot descriptions, notes, and tips)
   const handleTranslate = async (langCode) => {
-    if (!synthesizedTrip) return;
     setSelectedLang(langCode);
+    if (onLanguageChange) {
+      onLanguageChange(langCode);
+    }
+    if (!synthesizedTrip) return;
     if (langCode === 'en') {
       if (originalEnglishTrip) {
         setSynthesizedTrip(originalEnglishTrip);
@@ -597,7 +631,7 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
             <div className="flex items-center space-x-2">
               <Compass className="w-5 h-5 text-teal-400" />
               <h3 className="text-sm font-bold text-white">
-                Live Interactive Tourist Landmarks Map
+                {t('interactive_map_title', selectedLang)}
               </h3>
             </div>
             {/* Category Filter Chips */}
@@ -643,11 +677,11 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
             <div className="flex items-center space-x-2">
               <Sparkles className="w-4 h-4 text-amber-400" />
               <h3 className="text-sm font-bold text-white">
-                Discovered Attractions & POIs
+                {t('discovered_attractions_heading', selectedLang)}
               </h3>
             </div>
             <span className="text-[11px] text-slate-400">
-              Click spot to inspect & add
+              {t('click_spot_inspect_add', selectedLang)}
             </span>
           </div>
 
@@ -782,10 +816,10 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
           <div className="space-y-1">
             <h3 className="text-xl font-bold text-white flex items-center gap-2.5">
               <Calendar className="w-5 h-5 text-teal-400" />
-              Day-Wise Multi-Select Experience Matrix
+              {t('day_wise_matrix_title', selectedLang)}
             </h3>
             <p className="text-xs text-slate-400">
-              Select multiple experiences per day (checkboxes) and customize your accommodations & schedule timing.
+              {t('day_wise_matrix_sub', selectedLang)}
             </p>
           </div>
 
@@ -891,7 +925,7 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
             <div className="space-y-2 pt-2 border-t border-slate-800">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-teal-300 uppercase tracking-wider">
-                  Select Master Stay (Locked & Applied to All {durationDays} Days):
+                  {t('select_master_stay', selectedLang).replace('{days}', durationDays)}
                 </span>
                 <span className="text-[11px] text-slate-400 bg-teal-500/10 text-teal-300 px-2 py-0.5 rounded border border-teal-500/20 font-medium">
                   🔒 Individual day stays locked
@@ -976,7 +1010,7 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
         <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-2">
           <label className="flex items-center space-x-2 text-xs font-bold text-slate-300 uppercase tracking-wider">
             <Clock className="w-4 h-4 text-teal-400" />
-            <span>Custom Scheduling & Timing Requests (Incorporated directly into Gemini itinerary)</span>
+            <span>{t('custom_scheduling_label', selectedLang)}</span>
           </label>
           <div className="relative">
             <textarea
@@ -1153,10 +1187,10 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
           <div className="space-y-1">
             <h4 className="text-sm font-bold text-white flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-teal-400" />
-              <span>Ready to Synthesize Grounded Itinerary</span>
+              <span>{t('ready_synthesize_heading', selectedLang)}</span>
             </h4>
             <p className="text-xs text-slate-400">
-              Gemini will resolve timing clashes, fill schedule voids, optimize hotel rates, and calculate zero-float Decimal pricing for {numTravelers} traveler(s).
+              {t('gemini_resolve_clashes', selectedLang).replace('{travelers}', numTravelers)}
             </p>
           </div>
 

@@ -388,6 +388,8 @@ export default function App() {
               <DestinationExplorer
                 externalSupplyMode={realWorldEnabled}
                 initialState={architectInitialState}
+                preferredLanguage={currentLanguage}
+                onLanguageChange={setCurrentLanguage}
                 onBookingComplete={(trip) => {
                   setBookingData({
                     packageName: trip?.trip_title || 'Custom Architect Trip',
