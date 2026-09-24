@@ -868,120 +868,172 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
       {synthesizedTrip && (
         <div
           id="custom-itinerary-output"
-          className="bg-slate-900 border border-teal-500/40 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl animate-fadeIn"
+          className="bg-slate-900 border border-teal-500/40 rounded-3xl overflow-hidden shadow-2xl animate-fadeIn space-y-6"
         >
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  Gemini Optimized & Verified
-                </span>
-                <span className="px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 text-xs font-mono">
-                  {synthesizedTrip.duration_days} Days / {synthesizedTrip.duration_days - 1} Nights
-                </span>
-                <span className="px-2.5 py-1 rounded-full bg-slate-800 text-teal-300 text-xs font-bold uppercase">
-                  {synthesizedTrip.pace} Pace
-                </span>
-              </div>
-              <h3 className="text-2xl font-black text-white tracking-tight">
-                {synthesizedTrip.trip_title}
-              </h3>
-            </div>
-          </div>
-
-          {/* AI Optimization Intelligence Cards */}
-          {synthesizedTrip.ai_optimizations && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-slate-950/60 border border-amber-500/30 rounded-2xl p-4 space-y-2">
-                <div className="flex items-center space-x-2 text-amber-400 font-bold text-xs">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span>{t('conflicts_resolved', currentLanguage)}</span>
+          {/* Cover Photography Hero Banner */}
+          {synthesizedTrip.cover_image && (
+            <div className="relative h-48 sm:h-64 w-full bg-slate-950 overflow-hidden">
+              <img
+                src={synthesizedTrip.cover_image}
+                alt={synthesizedTrip.destination}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.src = 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1000&q=80';
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
+              <div className="absolute bottom-4 left-6 right-6 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className="px-3 py-1 rounded-full bg-emerald-500/90 backdrop-blur text-slate-950 text-xs font-extrabold flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Gemini Optimized & Verified
+                    </span>
+                    <span className="px-2.5 py-1 rounded-full bg-slate-950/80 backdrop-blur border border-slate-700 text-slate-200 text-xs font-mono">
+                      {synthesizedTrip.duration_days} Days / {synthesizedTrip.duration_days - 1} Nights
+                    </span>
+                    <span className="px-2.5 py-1 rounded-full bg-teal-500/90 text-slate-950 text-xs font-bold uppercase">
+                      {synthesizedTrip.pace} Pace
+                    </span>
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-md">
+                    {synthesizedTrip.trip_title}
+                  </h3>
                 </div>
-                <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
-                  {synthesizedTrip.ai_optimizations.conflicts_resolved?.map((item, i) => (
-                    <li key={i}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-slate-950/60 border border-teal-500/30 rounded-2xl p-4 space-y-2">
-                <div className="flex items-center space-x-2 text-teal-400 font-bold text-xs">
-                  <Sparkles className="w-4 h-4" />
-                  <span>{t('voids_filled', currentLanguage)}</span>
-                </div>
-                <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
-                  {synthesizedTrip.ai_optimizations.voids_filled?.map((item, i) => (
-                    <li key={i}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-slate-950/60 border border-emerald-500/30 rounded-2xl p-4 space-y-2">
-                <div className="flex items-center space-x-2 text-emerald-400 font-bold text-xs">
-                  <TrendingDown className="w-4 h-4" />
-                  <span>{t('cost_optimization', currentLanguage)}</span>
-                </div>
-                <p className="text-xs text-slate-300">
-                  {synthesizedTrip.ai_optimizations.cost_optimization_tip}
-                </p>
               </div>
             </div>
           )}
 
-          {/* Day-by-Day Timeline Schedule */}
-          <div className="space-y-4 pt-2">
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-              <Clock className="w-4 h-4 text-teal-400" />
-              {t('day_schedule', currentLanguage)}
-            </h4>
-
-            <div className="space-y-4">
-              {synthesizedTrip.itinerary?.map((dayObj, dIdx) => (
-                <div
-                  key={dIdx}
-                  className="bg-slate-800/50 border border-slate-700/70 rounded-2xl p-5 space-y-3"
-                >
-                  <div className="flex items-center justify-between border-b border-slate-700/50 pb-2.5">
-                    <div className="flex items-center space-x-2.5">
-                      <span className="px-2.5 py-1 rounded-lg bg-teal-500 text-slate-950 font-black text-xs font-mono">
-                        DAY {dayObj.day}
-                      </span>
-                      <span className="text-sm font-bold text-white">
-                        {dayObj.title}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {dayObj.slots?.map((slot, sIdx) => (
-                      <div
-                        key={sIdx}
-                        className="bg-slate-900/80 border border-slate-800 rounded-xl p-3 space-y-1"
-                      >
-                        <div className="text-[10px] font-mono text-teal-400 font-semibold">
-                          {slot.time}
-                        </div>
-                        <div className="text-xs font-bold text-white line-clamp-1">
-                          {slot.title}
-                        </div>
-                        <div className="text-[11px] text-slate-400 line-clamp-2">
-                          {slot.description}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {dayObj.notes && (
-                    <div className="text-[11px] text-slate-400 italic pt-1">
-                      💡 Note: {dayObj.notes}
-                    </div>
-                  )}
+          {/* Header if no cover image */}
+          {!synthesizedTrip.cover_image && (
+            <div className="p-6 sm:p-8 pb-0 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    Gemini Optimized & Verified
+                  </span>
+                  <span className="px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 text-xs font-mono">
+                    {synthesizedTrip.duration_days} Days / {synthesizedTrip.duration_days - 1} Nights
+                  </span>
+                  <span className="px-2.5 py-1 rounded-full bg-slate-800 text-teal-300 text-xs font-bold uppercase">
+                    {synthesizedTrip.pace} Pace
+                  </span>
                 </div>
-              ))}
+                <h3 className="text-2xl font-black text-white tracking-tight">
+                  {synthesizedTrip.trip_title}
+                </h3>
+              </div>
             </div>
-          </div>
+          )}
+
+          <div className="p-6 sm:p-8 pt-0 space-y-6">
+            {/* AI Optimization Intelligence Cards */}
+            {synthesizedTrip.ai_optimizations && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-slate-950/60 border border-amber-500/30 rounded-2xl p-4 space-y-2">
+                  <div className="flex items-center space-x-2 text-amber-400 font-bold text-xs">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>{t('conflicts_resolved', currentLanguage)}</span>
+                  </div>
+                  <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
+                    {synthesizedTrip.ai_optimizations.conflicts_resolved?.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="bg-slate-950/60 border border-teal-500/30 rounded-2xl p-4 space-y-2">
+                  <div className="flex items-center space-x-2 text-teal-400 font-bold text-xs">
+                    <Sparkles className="w-4 h-4" />
+                    <span>{t('voids_filled', currentLanguage)}</span>
+                  </div>
+                  <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
+                    {synthesizedTrip.ai_optimizations.voids_filled?.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="bg-slate-950/60 border border-emerald-500/30 rounded-2xl p-4 space-y-2">
+                  <div className="flex items-center space-x-2 text-emerald-400 font-bold text-xs">
+                    <TrendingDown className="w-4 h-4" />
+                    <span>{t('cost_optimization', currentLanguage)}</span>
+                  </div>
+                  <p className="text-xs text-slate-300">
+                    {synthesizedTrip.ai_optimizations.cost_optimization_tip}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Day-by-Day Timeline Schedule */}
+            <div className="space-y-4 pt-2">
+              <h4 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <Clock className="w-4 h-4 text-teal-400" />
+                {t('day_schedule', currentLanguage)}
+              </h4>
+
+              <div className="space-y-4">
+                {synthesizedTrip.itinerary?.map((dayObj, dIdx) => (
+                  <div
+                    key={dIdx}
+                    className="bg-slate-800/50 border border-slate-700/70 rounded-2xl p-5 space-y-3"
+                  >
+                    <div className="flex items-center justify-between border-b border-slate-700/50 pb-2.5">
+                      <div className="flex items-center space-x-2.5">
+                        <span className="px-2.5 py-1 rounded-lg bg-teal-500 text-slate-950 font-black text-xs font-mono">
+                          DAY {dayObj.day}
+                        </span>
+                        <span className="text-sm font-bold text-white">
+                          {dayObj.title}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {dayObj.slots?.map((slot, sIdx) => (
+                        <div
+                          key={sIdx}
+                          className="bg-slate-900/80 border border-slate-800 rounded-xl p-3 space-y-2 overflow-hidden flex flex-col justify-between"
+                        >
+                          {slot.image_url && (
+                            <div className="h-24 w-full rounded-lg overflow-hidden bg-slate-950 shrink-0">
+                              <img
+                                src={slot.image_url}
+                                alt={slot.title}
+                                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                            </div>
+                          )}
+                          <div className="space-y-1">
+                            <div className="text-[10px] font-mono text-teal-400 font-semibold flex items-center justify-between">
+                              <span>{slot.time}</span>
+                              {slot.type && (
+                                <span className="capitalize px-1.5 py-0.2 rounded bg-slate-800 text-[9px] text-slate-300 font-normal">{slot.type}</span>
+                              )}
+                            </div>
+                            <div className="text-xs font-bold text-white line-clamp-1">
+                              {slot.title}
+                            </div>
+                            <div className="text-[11px] text-slate-400 line-clamp-2">
+                              {slot.description}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {dayObj.notes && (
+                      <div className="text-[11px] text-slate-400 italic pt-1">
+                        💡 Note: {dayObj.notes}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
 
           {/* Decimal Financial Breakdown & Booking Action */}
           <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-5">
@@ -1027,6 +1079,7 @@ export default function DestinationExplorer({ externalSupplyMode = false, onBook
             </button>
           </div>
         </div>
+      </div>
       )}
     </div>
   );

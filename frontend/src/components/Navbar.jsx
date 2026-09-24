@@ -48,9 +48,14 @@ export default function Navbar({
         {/* Brand & Mode Switcher */}
         <div className="flex items-center space-x-3 sm:space-x-5">
           <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-teal-500/20 shrink-0">
-              <Compass className="w-5 h-5 sm:w-6 sm:h-6 text-slate-950 font-bold" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="TripCraft Logo"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-contain shadow-lg shadow-teal-500/20 shrink-0 border border-slate-700 bg-slate-950 p-0.5"
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
             <div>
               <div className="flex items-center space-x-2">
                 <span className="text-lg sm:text-xl font-black tracking-tight text-white">TripCraft</span>

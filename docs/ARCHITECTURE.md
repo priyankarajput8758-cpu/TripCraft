@@ -26,8 +26,8 @@ TripCraft (PackagePro) is an intelligent dynamic tour package assembly and custo
 |  guides/        | Availability Checker & Same-Language/Spec Substitute Engine     |
 |  preferences/   | BCP-47 Server-side Filter & Graceful Multilingual Fallback      |
 |  bookings/      | Idempotent Booking Engine & package_selections Persistence       |
-|  ai/            | Gemini AI Grounding Pipeline (Prompt -> DB Entities Ranking)    |
-|  external/      | SerpAPI Google Hotels, OpenTripMap POIs, LibreTranslate         |
+|  ai/            | Gemini AI Grounding Pipeline & Custom Itinerary Synthesizer      |
+|  external/      | SerpAPI Google Hotels, OpenTripMap POIs (90km), Azure Translator |
 +------------------------------------------+----------------------------------------+
                                            |
                     +----------------------+----------------------+
@@ -37,9 +37,9 @@ TripCraft (PackagePro) is an intelligent dynamic tour package assembly and custo
 |          INTERNAL DATA STORE          |   |          EXTERNAL REAL-WORLD          |
 |    SQLite (data/PS-04.db)             |   |            LIVE SERVICES              |
 |  - 21 Canonical Tables (v1.1.0-rc1)   |   |  - Google Hotels (SerpAPI Cached)     |
-|  - Additive: package_selections       |   |  - OpenTripMap Attractions Radius     |
+|  - Additive: package_selections       |   |  - OpenTripMap Attractions (90km)     |
 |  - 28,103 Synthetic Travel Rows       |   |  - Google GenAI (Gemini Flash Series) |
-|  - Rules R1-R8 Enforced in Code       |   |  - LibreTranslate Translation Engine  |
+|  - Rules R1-R8 Enforced in Code       |   |  - Microsoft Azure Translator v3.0    |
 +---------------------------------------+   +---------------------------------------+
 ```
 
@@ -65,6 +65,6 @@ TripCraft (PackagePro) is an intelligent dynamic tour package assembly and custo
 - **Strict Guardrail (§7):** AI is restricted to parsing requirements, scoring candidate packages, selecting valid component IDs from DB, and generating natural language justifications. It never generates arbitrary package IDs, prices, or availability records.
 
 ### 2.4 Real-World External Integrations (`backend/src/external/`)
-- **SerpAPI Google Hotels:** Live rates and properties when real-world toggle is active. Cached in-memory and on disk to conserve the 200/month quota limit.
-- **OpenTripMap:** Geographic radius search (1–5km) discovering heritage sites, monuments, and attractions.
-- **Multilingual Support:** Server-side BCP-47 tag matching + LibreTranslate / local dictionary fallback for Indian languages.
+- **SerpAPI Google Hotels:** Live rates and properties when real-world toggle is active. Cached in-memory and on disk to conserve quota.
+- **OpenTripMap:** Geographic radius search (up to 90–100km) discovering heritage sites, monuments, and attractions with distance formatting and images.
+- **Multilingual Support:** Server-side BCP-47 tag matching + Microsoft Azure Cognitive Services Translator Text API v3.0 (with batch translation and Gemini AI fallback) across Indian regional languages.

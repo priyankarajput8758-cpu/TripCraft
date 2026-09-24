@@ -1,10 +1,10 @@
 """
-External integrations API router (SerpAPI, OpenTripMap, LibreTranslate).
+External integrations API router (SerpAPI, OpenTripMap, Microsoft Azure Translator).
 """
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from src.external.serpapi_service import SerpAPIService
 from src.external.opentripmap_service import OpenTripMapService
 from src.external.translate_service import TranslationService
@@ -13,7 +13,12 @@ router = APIRouter(prefix="/external", tags=["External Integrations"])
 
 class TranslateRequest(BaseModel):
     text: str = Field(..., description="Text to translate")
-    target_lang: str = Field(..., description="Target BCP-47 / ISO language code (e.g. 'hi', 'ta')")
+    target_lang: str = Field(..., description="Target BCP-47 / ISO language code (e.g. 'hi', 'ta', 'te', 'kn')")
+    source_lang: Optional[str] = Field("en", description="Source language code")
+
+class TranslateBatchRequest(BaseModel):
+    texts: List[str] = Field(..., description="List of strings to translate")
+    target_lang: str = Field(..., description="Target BCP-47 / ISO language code")
     source_lang: Optional[str] = Field("en", description="Source language code")
 
 @router.get("/explore-destination")
@@ -71,10 +76,26 @@ def get_nearby_attractions(
 @router.post("/translate")
 def translate_text(req: TranslateRequest):
     """
-    Translate UI terms or descriptions.
+    Translate text using Microsoft Azure Translator v3.0 with Gemini AI fallback.
     """
     return TranslationService.translate(
         text=req.text,
         target_lang=req.target_lang,
         source_lang=req.source_lang or "en"
     )
+
+@router.post("/translate-batch")
+def translate_batch(req: TranslateBatchRequest):
+    """
+    Translate multiple texts in a single batch using Microsoft Azure Translator v3.0.
+    """
+    translated_list = TranslationService.translate_batch(
+        texts=req.texts,
+        target_lang=req.target_lang,
+        source_lang=req.source_lang or "en"
+    )
+    return {
+        "translations": translated_list,
+        "target_lang": req.target_lang,
+        "count": len(translated_list)
+    }

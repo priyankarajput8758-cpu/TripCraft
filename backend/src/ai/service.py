@@ -25,6 +25,61 @@ REGION_MAP = {
     "international": ["dubai", "abu dhabi", "doha", "singapore", "kuala lumpur", "bangkok", "bali", "kathmandu", "pokhara", "colombo", "kandy", "male", "thimphu", "zurich", "kyoto"]
 }
 
+# Rich Photography Curations for Grounded Custom Destinations
+DESTINATION_PHOTOS = {
+    "chikmagalur": "https://images.unsplash.com/photo-1596895111956-bf1cf0599ce5?auto=format&fit=crop&w=1000&q=80",
+    "coorg": "https://images.unsplash.com/photo-1598894101832-61a7a02c3809?auto=format&fit=crop&w=1000&q=80",
+    "hampi": "https://images.unsplash.com/photo-1600100397608-f46338b77626?auto=format&fit=crop&w=1000&q=80",
+    "ooty": "https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=1000&q=80",
+    "varanasi": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1000&q=80",
+    "jaipur": "https://images.unsplash.com/photo-1603262110263-fb010d6e75dc?auto=format&fit=crop&w=1000&q=80",
+    "kerala": "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=1000&q=80",
+    "munnar": "https://images.unsplash.com/photo-1596895111956-bf1cf0599ce5?auto=format&fit=crop&w=1000&q=80",
+    "manali": "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1000&q=80",
+    "ladakh": "https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?auto=format&fit=crop&w=1000&q=80",
+    "goa": "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=1000&q=80",
+    "mysuru": "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1000&q=80",
+    "bengaluru": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=1000&q=80",
+    "delhi": "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=1000&q=80",
+    "mumbai": "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=1000&q=80",
+    "rishikesh": "https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=1000&q=80",
+    "darjeeling": "https://images.unsplash.com/photo-1622308644420-a922440fa352?auto=format&fit=crop&w=1000&q=80",
+    "default": "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1000&q=80"
+}
+
+SLOT_TYPE_PHOTOS = {
+    "trek": "https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=800&q=80",
+    "sightseeing": "https://images.unsplash.com/photo-1533900298318-6b8da08a523e?auto=format&fit=crop&w=800&q=80",
+    "heritage": "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=800&q=80",
+    "dining": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
+    "scenic": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80",
+    "spiritual": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=800&q=80",
+    "adventure": "https://images.unsplash.com/photo-1533587851505-d119e13fa0d7?auto=format&fit=crop&w=800&q=80",
+    "cultural": "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=800&q=80",
+    "leisure": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"
+}
+
+def get_destination_photo(dest_name: str) -> str:
+    dest_lower = (dest_name or "").lower().strip()
+    for key, url in DESTINATION_PHOTOS.items():
+        if key in dest_lower:
+            return url
+    return DESTINATION_PHOTOS["default"]
+
+def get_slot_photo(slot_type: str, title: str = "") -> str:
+    t_lower = (slot_type or "").lower().strip()
+    title_lower = (title or "").lower().strip()
+    if any(w in title_lower for w in ["food", "lunch", "dinner", "breakfast", "cafe", "coffee", "restaurant", "meal"]):
+        return SLOT_TYPE_PHOTOS["dining"]
+    if any(w in title_lower for w in ["trek", "peak", "hike", "hill", "climb", "giri"]):
+        return SLOT_TYPE_PHOTOS["trek"]
+    if any(w in title_lower for w in ["temple", "ghat", "shrine", "aarti", "puja", "ashram", "church", "mosque"]):
+        return SLOT_TYPE_PHOTOS["spiritual"]
+    for key, url in SLOT_TYPE_PHOTOS.items():
+        if key in t_lower:
+            return url
+    return SLOT_TYPE_PHOTOS["sightseeing"]
+
 class AIService:
     @classmethod
     def synthesize_custom_trip(
@@ -184,7 +239,14 @@ Return ONLY a valid JSON object strictly matching this schema:
                 }
             }
 
-        # 4. Enforce Strict Zero-Float Decimal Pricing
+        # 4. Attach Destination Cover Photo & Slot Imagery
+        ai_res["cover_image"] = get_destination_photo(destination_name)
+        for day in ai_res.get("itinerary", []):
+            for slot in day.get("slots", []):
+                if not slot.get("image_url"):
+                    slot["image_url"] = get_slot_photo(slot.get("type", ""), slot.get("title", ""))
+
+        # 5. Enforce Strict Zero-Float Decimal Pricing
         hotel_total = to_decimal(str(hotel_total_dec if hotel_total_dec > 0 else Decimal("3500.00") * num_days))
         act_cost_per_item = Decimal("750.00")
         activities_total = to_decimal(str(act_cost_per_item * max(total_activities_count, num_days * 2)))

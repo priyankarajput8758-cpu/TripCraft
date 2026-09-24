@@ -44,7 +44,12 @@ class Settings:
     OPENTRIPMAP_API_KEY: str = os.getenv("OPENTRIPMAP_API_KEY", "")
     OPENTRIPMAP_BASE_URL: str = "https://api.opentripmap.com/0.1"
 
-    # Multilingual Translation - LibreTranslate
+    # Microsoft Azure Translator API
+    AZURE_TRANSLATOR_KEY: str = os.getenv("AZURE_TRANSLATOR_KEY", "")
+    AZURE_TRANSLATOR_REGION: str = os.getenv("AZURE_TRANSLATOR_REGION", "eastasia")
+    AZURE_TRANSLATOR_ENDPOINT: str = os.getenv("AZURE_TRANSLATOR_ENDPOINT", "https://api.cognitive.microsofttranslator.com")
+
+    # Multilingual Translation - LibreTranslate Fallback
     LIBRETRANSLATE_URL: str = os.getenv("LIBRETRANSLATE_URL", "http://localhost:5000")
 
 settings = Settings()

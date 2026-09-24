@@ -1,17 +1,42 @@
 """
 Multilingual Translation Service.
-Connects to LibreTranslate with intelligent AI and dictionary fallbacks for Indian languages.
+Primary Engine: Microsoft Azure Cognitive Services Translator Text API v3.0
+Supports Tamil (ta), Hindi (hi), Telugu (te), Kannada (kn), Marathi (mr), Bengali (bn), Gujarati (gu), Malayalam (ml), etc.
+Fallback: Google Gemini AI and Essential Travel Vocabulary Dictionary.
 """
 
 import requests
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List, Union, Optional
 from src.config import settings
 from src.ai.gemini_client import GeminiClient
 
 logger = logging.getLogger("translate_service")
 
-# Built-in essential translation dictionary for Indian Languages & Travel UI terms
+# Language code normalization for Azure Translator
+AZURE_LANG_MAP = {
+    "en": "en",
+    "en-in": "en",
+    "en-us": "en",
+    "hi": "hi",
+    "hi-in": "hi",
+    "ta": "ta",
+    "ta-in": "ta",
+    "te": "te",
+    "te-in": "te",
+    "kn": "kn",
+    "kn-in": "kn",
+    "mr": "mr",
+    "mr-in": "mr",
+    "bn": "bn",
+    "bn-in": "bn",
+    "gu": "gu",
+    "ml": "ml",
+    "pa": "pa",
+    "ur": "ur"
+}
+
+# Essential Travel UI Vocabulary Dictionary (Instant Zero-Latency Fallback)
 COMMON_TRANSLATIONS = {
     "hi": {
         "Customise Tour Package": "टूर पैकेज कस्टमाइज़ करें",
@@ -79,6 +104,17 @@ COMMON_TRANSLATIONS = {
         "Heritage": "వారసత్వం",
         "Food": "ఆహారం",
         "Religious": "ధార్మికం"
+    },
+    "kn": {
+        "Customise Tour Package": "ಪ್ರವಾಸ ಪ್ಯಾಕೇಜ್ ಅನ್ನು ಕಸ್ಟಮೈಸ್ ಮಾಡಿ",
+        "Select Tour Guide": "ಪ್ರವಾಸ ಮಾರ್ಗದರ್ಶಕರನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+        "Live Repricing": "ಲೈವ್ ಬೆಲೆ ಮರುಲೆಕ್ಕಾಚಾರ",
+        "Book Now": "ಈಗಲೇ ಕಾಯ್ದಿರಿಸಿ",
+        "Total Price": "ಒಟ್ಟು ಬೆಲೆ",
+        "Base Price": "ಮೂಲ ಬೆಲೆ",
+        "Heritage": "ಪರಂಪರೆ",
+        "Food": "ಆಹಾರ",
+        "Religious": "ಧಾರ್ಮಿಕ"
     }
 }
 
@@ -90,54 +126,62 @@ class TranslationService:
         source_lang: str = "en"
     ) -> Dict[str, Any]:
         """
-        Translate text using LibreTranslate, with Gemini AI and dictionary fallback.
+        Translate a single text string using Microsoft Azure Translator v3.0,
+        falling back to Gemini AI and local vocabulary.
         """
         if not text or not text.strip():
             return {"translated_text": "", "source": "empty", "target_lang": target_lang}
 
-        short_target = target_lang.split("-")[0].lower()
-        short_source = source_lang.split("-")[0].lower()
+        clean_target = AZURE_LANG_MAP.get(target_lang.lower().strip(), target_lang.split("-")[0].lower())
+        clean_source = AZURE_LANG_MAP.get(source_lang.lower().strip(), source_lang.split("-")[0].lower())
 
-        if short_target == short_source:
+        if clean_target == clean_source:
             return {"translated_text": text, "source": "identical_lang", "target_lang": target_lang}
 
-        # 1. Try LibreTranslate API if configured & reachable
-        if settings.LIBRETRANSLATE_URL:
+        # 1. Primary Engine: Microsoft Azure Cognitive Services Translator
+        if settings.AZURE_TRANSLATOR_KEY:
             try:
-                resp = requests.post(
-                    f"{settings.LIBRETRANSLATE_URL.rstrip('/')}/translate",
-                    data={
-                        "q": text,
-                        "source": short_source,
-                        "target": short_target,
-                        "format": "text"
-                    },
-                    timeout=2
-                )
+                endpoint = f"{settings.AZURE_TRANSLATOR_ENDPOINT.rstrip('/')}/translate?api-version=3.0&to={clean_target}"
+                if clean_source:
+                    endpoint += f"&from={clean_source}"
+
+                headers = {
+                    "Ocp-Apim-Subscription-Key": settings.AZURE_TRANSLATOR_KEY,
+                    "Ocp-Apim-Subscription-Region": settings.AZURE_TRANSLATOR_REGION,
+                    "Content-Type": "application/json"
+                }
+                body = [{"Text": text}]
+
+                resp = requests.post(endpoint, headers=headers, json=body, timeout=5)
                 if resp.status_code == 200:
                     data = resp.json()
-                    translated = data.get("translatedText")
-                    if translated:
-                        return {
-                            "translated_text": translated,
-                            "source": "libretranslate_live",
-                            "target_lang": target_lang
-                        }
-            except Exception:
-                pass  # Fall through to Gemini AI & Dictionary
+                    if isinstance(data, list) and len(data) > 0:
+                        translations = data[0].get("translations", [])
+                        if translations and len(translations) > 0:
+                            translated_val = translations[0].get("text")
+                            if translated_val:
+                                return {
+                                    "translated_text": translated_val,
+                                    "source": "azure_translator_v3",
+                                    "target_lang": target_lang
+                                }
+                else:
+                    logger.warning(f"Azure Translator HTTP {resp.status_code}: {resp.text}")
+            except Exception as e:
+                logger.warning(f"Azure Translator request exception: {e}")
 
-        # 2. Try Dictionary for standard phrases
-        if short_target in COMMON_TRANSLATIONS and text.strip() in COMMON_TRANSLATIONS[short_target]:
+        # 2. Local Travel Dictionary Fallback
+        if clean_target in COMMON_TRANSLATIONS and text.strip() in COMMON_TRANSLATIONS[clean_target]:
             return {
-                "translated_text": COMMON_TRANSLATIONS[short_target][text.strip()],
+                "translated_text": COMMON_TRANSLATIONS[clean_target][text.strip()],
                 "source": "local_dictionary",
                 "target_lang": target_lang
             }
 
-        # 3. Use Gemini AI for dynamic travel content translation
+        # 3. Google Gemini AI Translation Fallback
         try:
-            ai_prompt = f"Translate this travel text from {short_source} to {target_lang} (Language: {short_target}) naturally and accurately:\n\"{text}\""
-            system_inst = "You are a professional travel translator. Output ONLY the translated sentence, without commentary, quotes, or markdown fences."
+            ai_prompt = f"Translate this travel text from {clean_source} to {clean_target} ({target_lang}) naturally and accurately:\n\"{text}\""
+            system_inst = "You are an expert multilingual travel translator. Output ONLY the translated sentence, without commentary, quotes, or markdown fences."
             ai_translated = GeminiClient.generate_content(ai_prompt, system_inst)
             if ai_translated and ai_translated.strip():
                 return {
@@ -148,9 +192,59 @@ class TranslationService:
         except Exception as e:
             logger.warning(f"Translation via Gemini failed: {e}")
 
-        # 4. Default back to original string
+        # 4. Fallback Original
         return {
             "translated_text": text,
             "source": "fallback_original",
             "target_lang": target_lang
         }
+
+    @staticmethod
+    def translate_batch(
+        texts: List[str],
+        target_lang: str,
+        source_lang: str = "en"
+    ) -> List[str]:
+        """
+        Translate a batch of texts efficiently in a single Azure Translator API call.
+        """
+        if not texts:
+            return []
+
+        clean_target = AZURE_LANG_MAP.get(target_lang.lower().strip(), target_lang.split("-")[0].lower())
+        clean_source = AZURE_LANG_MAP.get(source_lang.lower().strip(), source_lang.split("-")[0].lower())
+
+        if clean_target == clean_source:
+            return texts
+
+        # Try Azure Batch Translation
+        if settings.AZURE_TRANSLATOR_KEY:
+            try:
+                endpoint = f"{settings.AZURE_TRANSLATOR_ENDPOINT.rstrip('/')}/translate?api-version=3.0&to={clean_target}"
+                if clean_source:
+                    endpoint += f"&from={clean_source}"
+
+                headers = {
+                    "Ocp-Apim-Subscription-Key": settings.AZURE_TRANSLATOR_KEY,
+                    "Ocp-Apim-Subscription-Region": settings.AZURE_TRANSLATOR_REGION,
+                    "Content-Type": "application/json"
+                }
+                body = [{"Text": t} for t in texts]
+
+                resp = requests.post(endpoint, headers=headers, json=body, timeout=8)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    results = []
+                    for item in data:
+                        t_list = item.get("translations", [])
+                        if t_list:
+                            results.append(t_list[0].get("text", ""))
+                        else:
+                            results.append("")
+                    if len(results) == len(texts):
+                        return results
+            except Exception as e:
+                logger.warning(f"Azure Batch Translator exception: {e}")
+
+        # Fallback to single translate
+        return [TranslationService.translate(t, target_lang, source_lang)["translated_text"] for t in texts]

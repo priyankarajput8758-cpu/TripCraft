@@ -25,11 +25,11 @@
 * **Tour-Guide as a First-Class Component:** Local tour guides selectable with BCP-47 language spoken, specialisation (heritage, food, trekking, wildlife, etc.), daily rates, and peak multipliers directly driving the total.
 * **✦ Mandatory Guide Availability Check & Refusal Flow (§2.2):** Adding a guide whose dates clash refuses the selection with the **exact clashing date named**, automatically proposes a **same-language, same-specialisation substitute guide**, and **reprices the package live** with the rate delta.
 * **Server-Side Multilingual Filtering (§8):** Preferences filter packages (`languages_offered`) and tour guides (`languages`) using standard BCP-47 tags (e.g. `ta`, `hi`, `en-IN`), with graceful fallback and clear notices.
-* **Autonomous Custom Destination Architect (Any City):** Free-form geocoding via OpenStreetMap Nominatim + OpenTripMap tourist landmark discovery for any destination (e.g. Chikmagalur, Wayanad, Coorg, Hampi) on an interactive Leaflet map canvas.
+* **Autonomous Custom Destination Architect (Any City / 90km Radius):** Free-form geocoding via OpenStreetMap Nominatim + OpenTripMap tourist landmark discovery up to a **90km radius** for any destination (e.g. Chikmagalur, Ooty, Wayanad, Coorg, Hampi, Varanasi) on an interactive Leaflet map canvas with detailed spot cards and distance calculation.
 * **Day-Wise Multi-Select Experience Matrix:** Allows travellers to choose multiple activities/experiences per day (checkboxes) and select hotels/stays per night (radio buttons) across a flexible 1–7 day duration with pace preferences (Relaxed, Balanced, Packed).
-* **Gemini Schedule Optimization & Void Filling:** Automatically fills activity voids with authentic local spots, resolves timing and sunset conflicts, and provides cost optimization insights (weekday vs weekend hotel tariffs).
+* **Gemini Schedule Optimization, Void Filling & Imagery:** Automatically fills activity voids with authentic local spots, resolves timing and sunset conflicts, attaches rich cover and attraction photography, and provides cost optimization insights (weekday vs weekend hotel tariffs).
 * **Real-World Pricing & Live Google Hotels Selection:** Toggle external supply mode to select real-world live hotels via SerpAPI Google Hotels with live INR pricing and booking links.
-* **1-Click Multilingual Translation:** Translate titles and itineraries into Indian regional languages (Tamil, Hindi, Kannada, Telugu) via LibreTranslate.
+* **Multilingual Translation Engine (Azure Translator v3.0):** Neural machine translation across Indian regional languages (Tamil, Hindi, Telugu, Kannada, Marathi, Bengali, Gujarati, Malayalam) via Microsoft Azure Cognitive Services Translator Text API v3.0 with batch processing and Gemini AI fallback.
 
 ---
 
@@ -50,7 +50,7 @@
 |  preferences/   - BCP-47 Server-Side Filtering & Graceful Fallback                |
 |  bookings/      - Idempotent Booking Engine & package_selections Persistence       |
 |  ai/            - Grounded Gemini AI Pipeline (Prompt -> DB Entities Ranking)     |
-|  external/      - SerpAPI Google Hotels, OpenTripMap POIs, LibreTranslate         |
+|  external/      - SerpAPI Google Hotels, OpenTripMap POIs, Azure Translator v3.0   |
 +------------------------------------------+----------------------------------------+
                                            |
                     +----------------------+----------------------+
@@ -59,8 +59,9 @@
 +---------------------------------------+   +---------------------------------------+
 |          INTERNAL DATABASE            |   |          EXTERNAL LIVE APIS           |
 |  SQLite (data/PS-04.db - 21 tables)   |   |  - SerpAPI Google Hotels Engine       |
-|  + Additive package_selections table  |   |  - OpenTripMap Geo Radius POIs        |
-|  Conforms to Rules R1-R8 (v1.1.0-rc1) |   |  - Google Gemini AI Flash Series      |
+|  + Additive package_selections table  |   |  - OpenTripMap Geo Radius POIs (90km) |
+|  Conforms to Rules R1-R8 (v1.1.0-rc1) |   |  - Microsoft Azure Translator v3.0    |
+|                                       |   |  - Google Gemini AI Flash Series      |
 +---------------------------------------+   +---------------------------------------+
 ```
 
