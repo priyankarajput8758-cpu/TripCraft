@@ -39,3 +39,28 @@ def check_availability(req: GuideAvailabilityCheckRequest):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{guide_id}/availability")
+def get_guide_availability(
+    guide_id: str,
+    start_date: str = Query(..., description="Start date YYYY-MM-DD"),
+    duration_days: int = Query(1, ge=1, le=30),
+    package_id: Optional[str] = Query(None),
+    city_id: Optional[str] = Query(None),
+    preferred_language: Optional[str] = Query(None)
+):
+    """GET endpoint for Guide Availability Check (§2.2)."""
+    try:
+        return GuideAvailabilityEngine.check_availability_and_substitute(
+            guide_id=guide_id,
+            start_date=start_date,
+            duration_days=duration_days,
+            package_id=package_id,
+            city_id=city_id,
+            preferred_language=preferred_language
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+

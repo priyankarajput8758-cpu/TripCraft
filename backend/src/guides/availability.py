@@ -230,16 +230,20 @@ class GuideAvailabilityEngine:
 
             return {
                 "available": False,
+                "is_available": False,
                 "guide_id": guide_id,
                 "guide_name": original_guide["display_name"],
                 "start_date": start_date,
                 "duration_days": duration_days,
                 "dates_checked": dates,
                 "clashing_date": clashing_date,
+                "first_clashing_date": clashing_date,
+                "first_clash_date": clashing_date,
                 "message": rejection_message,
                 "rejection_reason": f"Guide unavailable on {clashing_date}",
                 "original_day_rate": format_money(orig_day_rate),
                 "substitute": substitute_result,
+                "substitute_guide": substitute_result,
                 "substitute_price_delta": format_money(price_delta),
                 "currency": original_guide["currency"]
             }

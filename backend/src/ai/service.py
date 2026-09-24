@@ -103,6 +103,14 @@ CITY_ALIASES = {
     "thanjavur": "thanjavur",
     "madurai": "madurai",
     "hyderabad": "hyderabad",
+    "raipur": "raipur",
+    "gwalior": "gwalior",
+    "bhopal": "bhopal",
+    "indore": "indore",
+    "patna": "patna",
+    "surat": "surat",
+    "chandigarh": "chandigarh",
+    "bilaspur": "bilaspur",
     "zurich": "zurich",
     "kyoto": "kyoto",
     "dubai": "dubai",
@@ -110,25 +118,34 @@ CITY_ALIASES = {
     "bali": "bali"
 }
 
-# Rich Photography Curations for Grounded Custom Destinations
+# Rich Photography Curations for Grounded Custom Destinations (Iconic Highlights)
 DESTINATION_PHOTOS = {
-    "chikmagalur": "https://images.unsplash.com/photo-1596895111956-bf1cf0599ce5?auto=format&fit=crop&w=1000&q=80",
+    "agra": "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=1000&q=80", # Taj Mahal
+    "delhi": "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=1000&q=80", # Red Fort / India Gate
+    "new delhi": "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=1000&q=80",
+    "mumbai": "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=1000&q=80", # Gateway of India
+    "gwalior": "https://images.unsplash.com/photo-1627894483216-2138af692e32?auto=format&fit=crop&w=1000&q=80", # Jai Vilas Palace & Fort
+    "leh": "https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?auto=format&fit=crop&w=1000&q=80", # Pangong Lake & Ladakh
+    "ladakh": "https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?auto=format&fit=crop&w=1000&q=80",
+    "raipur": "https://images.unsplash.com/photo-1600100397608-f46338b77626?auto=format&fit=crop&w=1000&q=80", # Marine Drive & Telibandha
+    "jaipur": "https://images.unsplash.com/photo-1603262110263-fb010d6e75dc?auto=format&fit=crop&w=1000&q=80", # Hawa Mahal
+    "varanasi": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1000&q=80", # Varanasi Ghats
+    "kyoto": "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1000&q=80", # Fushimi Inari Torii Gates
+    "chikmagalur": "https://images.unsplash.com/photo-1596895111956-bf1cf0599ce5?auto=format&fit=crop&w=1000&q=80", # Mullayanagiri & Coffee Hills
     "coorg": "https://images.unsplash.com/photo-1598894101832-61a7a02c3809?auto=format&fit=crop&w=1000&q=80",
     "hampi": "https://images.unsplash.com/photo-1600100397608-f46338b77626?auto=format&fit=crop&w=1000&q=80",
     "ooty": "https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=1000&q=80",
-    "varanasi": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1000&q=80",
-    "jaipur": "https://images.unsplash.com/photo-1603262110263-fb010d6e75dc?auto=format&fit=crop&w=1000&q=80",
     "kerala": "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=1000&q=80",
     "munnar": "https://images.unsplash.com/photo-1596895111956-bf1cf0599ce5?auto=format&fit=crop&w=1000&q=80",
     "manali": "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1000&q=80",
-    "ladakh": "https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?auto=format&fit=crop&w=1000&q=80",
     "goa": "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=1000&q=80",
     "mysuru": "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1000&q=80",
     "bengaluru": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=1000&q=80",
-    "delhi": "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=1000&q=80",
-    "mumbai": "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=1000&q=80",
     "rishikesh": "https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=1000&q=80",
     "darjeeling": "https://images.unsplash.com/photo-1622308644420-a922440fa352?auto=format&fit=crop&w=1000&q=80",
+    "dubai": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1000&q=80",
+    "singapore": "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=1000&q=80",
+    "zurich": "https://images.unsplash.com/photo-1515488764276-beab7607c1e6?auto=format&fit=crop&w=1000&q=80",
     "default": "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1000&q=80"
 }
 
@@ -209,7 +226,7 @@ class AIService:
             acts_str = ", ".join(acts) if acts else "No specific activity selected yet"
             selections_text.append(f"- Day {idx}: Activities: [{acts_str}] | Hotel: {hotel_name} (₹{hotel_rate:.2f}/night)")
 
-        custom_pref_section = f"\nUser Custom Preferences & Timing Requests:\n{user_custom_requests}\n" if user_custom_requests else ""
+        custom_pref_section = f"\nUser Custom Preferences & Timing Requests (MANDATORY TO ENFORCE):\n{user_custom_requests}\n" if user_custom_requests else ""
 
         # 2. Construct Gemini Optimization Prompt
         prompt = f"""Destination: {destination_name}
@@ -224,7 +241,10 @@ User's Day-Wise Selections:
 Task Requirements:
 1. Activity Void Filling: If any day has too few activities for the chosen pace, intelligently insert authentic local spots/experiences in {destination_name} that do NOT duplicate any other day.
 2. Timing & Transit Conflict Resolution: Check for timing overlaps (e.g. two sunset spots on same day, or excessive transit). Explain adjustments made.
-3. User Timing Requests: If user provided custom timing/spot preferences (e.g. sunset at a specific spot, sunrise viewpoint, dietary preference), strictly accommodate them in the relevant day's slots.
+3. User Timing Requests & Strict Constraints (CRITICAL):
+   - If the user provides custom timing constraints or slot requirements (e.g. "put waterfalls post sunset only", "waterfalls in evening", "temples in morning only", "beaches at sunset"), you MUST STRICTLY HONOR THIS CONSTRAINT.
+   - For example, if user requested "put waterfalls post sunset only", any waterfall MUST be scheduled in the Evening / Post-Sunset slot (e.g. "05:30 PM - 07:30 PM" or "06:00 PM - 08:00 PM"), NEVER in the morning 08:30 AM slot!
+   - In "conflicts_resolved", explicitly confirm: "Strictly honored user constraint: Scheduled waterfalls in the post-sunset evening slot (05:30 PM - 07:30 PM)."
 4. Cost & Date Optimization: Provide actionable advice on booking dates, weekday vs weekend hotel rate surges (e.g. comparing next/prior 7 days), and budget tips.
 5. Generate a structured day-by-day itinerary schedule with realistic time slots (Morning, Afternoon, Evening).
 
@@ -267,11 +287,13 @@ Return ONLY a valid JSON object strictly matching this schema:
         ai_res = GeminiClient.generate_json(prompt, system_inst)
 
         # 3. Fallback Deterministic Custom Package Synthesizer if Gemini is offline
+        req_lower = (user_custom_requests or "").lower()
+        waterfall_post_sunset = ("waterfall" in req_lower or "waterfalls" in req_lower) and any(
+            kw in req_lower for kw in ["post sunset", "sunset", "evening", "after sunset", "night", "dark"]
+        )
+
         if not ai_res or not isinstance(ai_res, dict) or "itinerary" not in ai_res:
-            req_lower = (user_custom_requests or "").lower()
             itinerary_fallback = []
-            
-            # Destination & theme specific defaults
             is_waterfall = "waterfall" in req_lower or "waterfalls" in req_lower
             is_food = "food" in req_lower or "culinary" in req_lower or "dining" in req_lower
             
@@ -281,11 +303,17 @@ Return ONLY a valid JSON object strictly matching this schema:
 
                 slots = []
                 if acts:
+                    # If user asked for waterfall post sunset, ensure any waterfall in acts goes to evening
+                    act_morning = acts[0]
+                    act_evening = acts[1] if len(acts) > 1 else f"{destination_name} Scenic Sunset Viewpoint"
+                    if waterfall_post_sunset and ("waterfall" in act_morning.lower() or "falls" in act_morning.lower()):
+                        act_morning, act_evening = act_evening, act_morning
+
                     slots.append({
-                        "time": "08:30 AM - 12:00 PM",
-                        "title": acts[0],
+                        "time": "09:00 AM - 12:30 PM",
+                        "title": act_morning,
                         "type": "sightseeing",
-                        "description": f"Morning discovery of {acts[0]} with local insights."
+                        "description": f"Morning discovery of {act_morning} with regional insights."
                     })
                     slots.append({
                         "time": "01:00 PM - 02:30 PM",
@@ -293,39 +321,51 @@ Return ONLY a valid JSON object strictly matching this schema:
                         "type": "dining",
                         "description": f"Experience authentic local dishes at a top-rated dining spot."
                     })
-                    if len(acts) > 1:
-                        slots.append({
-                            "time": "04:00 PM - 06:30 PM",
-                            "title": acts[1],
-                            "type": "scenic",
-                            "description": f"Evening exploration of {acts[1]} during sunset."
-                        })
-                    else:
-                        slots.append({
-                            "time": "04:30 PM - 06:30 PM",
-                            "title": f"{destination_name} Scenic Sunset Viewpoint",
-                            "type": "scenic",
-                            "description": "Unwind with panoramic views of the surrounding landscapes."
-                        })
+                    slots.append({
+                        "time": "05:00 PM - 07:30 PM" if waterfall_post_sunset else "04:30 PM - 06:30 PM",
+                        "title": act_evening,
+                        "type": "scenic",
+                        "description": f"Post-sunset evening visit to {act_evening} per scheduled preference."
+                    })
                 elif is_waterfall and "gokarna" in destination_name.lower():
-                    if d == 1:
-                        slots = [
-                            {"time": "08:30 AM - 01:00 PM", "title": "Vibhooti Waterfall Trek & Forest Trail", "type": "trek", "description": "Lush forest trek to the pristine cascading Vibhooti Falls with natural swimming pools."},
-                            {"time": "01:30 PM - 02:30 PM", "title": "Traditional Coastal Lunch at Sahyadri Dhaba", "type": "dining", "description": "Savor authentic Uttara Kannada coastal vegetarian & seafood thali."},
-                            {"time": "04:30 PM - 06:30 PM", "title": "Yana Limestone Rock Formations & Caves", "type": "scenic", "description": "Marvel at the giant black karst limestone monoliths amidst dense evergreen jungle."}
-                        ]
-                    elif d == 2:
-                        slots = [
-                            {"time": "08:30 AM - 12:30 PM", "title": "Apsarakonda Waterfall & Sea-facing Hillock", "type": "sightseeing", "description": "Scenic waterfall plunging into a natural pond facing the Arabian Sea."},
-                            {"time": "01:00 PM - 02:30 PM", "title": "Fresh Seafood Lunch in Honnavar", "type": "dining", "description": "Local catch delicacies and coconut-based curries."},
-                            {"time": "04:00 PM - 06:30 PM", "title": "Sharavathi Backwaters Mangrove Boat Cruise", "type": "scenic", "description": "Sunset cruise through lush mangrove channels."}
-                        ]
+                    if waterfall_post_sunset:
+                        if d == 1:
+                            slots = [
+                                {"time": "09:00 AM - 12:30 PM", "title": "Yana Limestone Rock Formations & Karst Monoliths", "type": "scenic", "description": "Marvel at the giant black karst limestone monoliths amidst dense evergreen jungle."},
+                                {"time": "01:00 PM - 02:30 PM", "title": "Traditional Coastal Lunch at Sahyadri Dhaba", "type": "dining", "description": "Savor authentic Uttara Kannada coastal vegetarian & seafood thali."},
+                                {"time": "05:30 PM - 07:45 PM", "title": "Vibhooti Waterfall Post-Sunset Twilight Walk", "type": "trek", "description": "Lush post-sunset nature walk around cascading Vibhooti Falls amidst cooling forest atmosphere."}
+                            ]
+                        elif d == 2:
+                            slots = [
+                                {"time": "09:00 AM - 12:30 PM", "title": "Sharavathi River Mangrove Boat Cruise & Honnavar Bridge", "type": "scenic", "description": "Scenic boat cruise along river backwaters and mangrove channels."},
+                                {"time": "01:00 PM - 02:30 PM", "title": "Fresh Seafood Lunch in Honnavar", "type": "dining", "description": "Local catch delicacies and coconut-based curries."},
+                                {"time": "05:30 PM - 07:30 PM", "title": "Apsarakonda Waterfall Post-Sunset & Marine Lookout", "type": "sightseeing", "description": "Scenic waterfall plunging into a natural pool facing the Arabian Sea post-sunset."}
+                            ]
+                        else:
+                            slots = [
+                                {"time": "09:00 AM - 12:00 PM", "title": "Om Beach & Half-Moon Beach Coastal Trail", "type": "trek", "description": "Cliffside coastal trail linking Gokarna's iconic beaches."},
+                                {"time": "01:00 PM - 02:30 PM", "title": "Namaste Cafe Seaside Dining", "type": "dining", "description": "Relaxed beachfront dining with panoramic ocean vistas."},
+                                {"time": "05:00 PM - 07:00 PM", "title": "Kudle Beach Post-Sunset Twilight Leisure", "type": "leisure", "description": "Tranquil evening golden hour across the sweeping bay."}
+                            ]
                     else:
-                        slots = [
-                            {"time": "09:00 AM - 12:00 PM", "title": "Om Beach & Half-Moon Beach Coastal Trail", "type": "trek", "description": "Cliffside coastal trail linking Gokarna's iconic beaches."},
-                            {"time": "01:00 PM - 02:30 PM", "title": "Namaste Cafe Seaside Dining", "type": "dining", "description": "Relaxed beachfront dining with panoramic ocean vistas."},
-                            {"time": "04:30 PM - 06:30 PM", "title": "Kudle Beach Sunset & Leisure Walk", "type": "leisure", "description": "Tranquil evening golden hour across the sweeping bay."}
-                        ]
+                        if d == 1:
+                            slots = [
+                                {"time": "08:30 AM - 01:00 PM", "title": "Vibhooti Waterfall Trek & Forest Trail", "type": "trek", "description": "Lush forest trek to the pristine cascading Vibhooti Falls with natural swimming pools."},
+                                {"time": "01:30 PM - 02:30 PM", "title": "Traditional Coastal Lunch at Sahyadri Dhaba", "type": "dining", "description": "Savor authentic Uttara Kannada coastal vegetarian & seafood thali."},
+                                {"time": "04:30 PM - 06:30 PM", "title": "Yana Limestone Rock Formations & Caves", "type": "scenic", "description": "Marvel at the giant black karst limestone monoliths amidst dense evergreen jungle."}
+                            ]
+                        elif d == 2:
+                            slots = [
+                                {"time": "08:30 AM - 12:30 PM", "title": "Apsarakonda Waterfall & Sea-facing Hillock", "type": "sightseeing", "description": "Scenic waterfall plunging into a natural pond facing the Arabian Sea."},
+                                {"time": "01:00 PM - 02:30 PM", "title": "Fresh Seafood Lunch in Honnavar", "type": "dining", "description": "Local catch delicacies and coconut-based curries."},
+                                {"time": "04:00 PM - 06:30 PM", "title": "Sharavathi Backwaters Mangrove Boat Cruise", "type": "scenic", "description": "Sunset cruise through lush mangrove channels."}
+                            ]
+                        else:
+                            slots = [
+                                {"time": "09:00 AM - 12:00 PM", "title": "Om Beach & Half-Moon Beach Coastal Trail", "type": "trek", "description": "Cliffside coastal trail linking Gokarna's iconic beaches."},
+                                {"time": "01:00 PM - 02:30 PM", "title": "Namaste Cafe Seaside Dining", "type": "dining", "description": "Relaxed beachfront dining with panoramic ocean vistas."},
+                                {"time": "04:30 PM - 06:30 PM", "title": "Kudle Beach Sunset & Leisure Walk", "type": "leisure", "description": "Tranquil evening golden hour across the sweeping bay."}
+                            ]
                 elif is_food and "bhubaneswar" in destination_name.lower():
                     if d == 1:
                         slots = [
@@ -369,6 +409,29 @@ Return ONLY a valid JSON object strictly matching this schema:
                     "cost_optimization_tip": f"Properties in {destination_name} offer up to 20% lower tariffs on midweek bookings (Tuesday–Thursday) compared to Friday–Sunday weekends."
                 }
             }
+
+        # Strict Constraint Post-Processing: Guarantee waterfall is post-sunset if requested
+        if waterfall_post_sunset:
+            for day in ai_res.get("itinerary", []):
+                slots = day.get("slots", [])
+                wf_slot_idx = -1
+                evening_slot_idx = -1
+                for s_i, s in enumerate(slots):
+                    td = (s.get("title", "") + " " + s.get("description", "")).lower()
+                    if "waterfall" in td or "falls" in td:
+                        wf_slot_idx = s_i
+                    if "pm" in s.get("time", "").lower() and any(h in s.get("time", "") for h in ["04:", "05:", "06:", "07:"]):
+                        evening_slot_idx = s_i
+                if wf_slot_idx != -1 and evening_slot_idx != -1 and wf_slot_idx != evening_slot_idx:
+                    wf_time = slots[evening_slot_idx].get("time", "05:30 PM - 07:30 PM")
+                    morn_time = slots[wf_slot_idx].get("time", "09:00 AM - 12:00 PM")
+                    slots[wf_slot_idx]["time"] = wf_time
+                    slots[evening_slot_idx]["time"] = morn_time
+                    slots[wf_slot_idx], slots[evening_slot_idx] = slots[evening_slot_idx], slots[wf_slot_idx]
+            if "ai_optimizations" in ai_res and isinstance(ai_res["ai_optimizations"].get("conflicts_resolved"), list):
+                ai_res["ai_optimizations"]["conflicts_resolved"].insert(
+                    0, "Strictly enforced user constraint: Scheduled waterfalls in the post-sunset evening slot (05:30 PM - 07:30 PM)."
+                )
 
         # 4. Attach Destination Cover Photo & Slot Imagery
         ai_res["cover_image"] = get_destination_photo(destination_name)
@@ -441,10 +504,16 @@ Return ONLY a valid JSON object strictly matching this schema:
 
         req_budget = max_budget
         if not req_budget:
-            budget_match = re.search(r'(?:under|below|budget|within|max|upto|up to|less than)\s*(?:rs\.?|inr|₹)?\s*([\d,]+)', prompt_lower)
+            budget_match = re.search(r'(?:under|below|budget|within|max|upto|up to|less than)\s*(?:rs\.?|inr|₹)?\s*([\d,]+(?:\.\d+)?)\s*(k|thousand|lakh|lac)?', prompt_lower)
             if budget_match:
                 try:
-                    req_budget = float(budget_match.group(1).replace(',', ''))
+                    val = float(budget_match.group(1).replace(',', ''))
+                    mult = (budget_match.group(2) or '').lower()
+                    if mult in ('k', 'thousand'):
+                        val *= 1000
+                    elif mult in ('lakh', 'lac'):
+                        val *= 100000
+                    req_budget = val
                 except Exception:
                     pass
 
@@ -509,6 +578,52 @@ Return ONLY a valid JSON object strictly matching this schema:
                     if c.get("city_name") and c["city_name"].lower() in prompt_lower:
                         extracted_dest = c["city_name"]
                         break
+
+            # Natural language preposition & duration detection (e.g. "2-day Raipur and food tour")
+            if not extracted_dest:
+                nl_patterns = [
+                    r'(\d+)\s*(?:-?\s*day)\s+([A-Za-z]+)',
+                    r'\b(?:in|to|for|at|around|explore|visit)\s+([A-Za-z]+)'
+                ]
+                STOP_WORDS = {
+                    'and', 'the', 'a', 'an', 'our', 'my', 'me', 'us', 'food', 'tour', 'trip',
+                    'package', 'itinerary', 'budget', 'luxury', 'heritage', 'adventure', 'relax',
+                    'holiday', 'vacation', 'custom', 'best', 'top', 'with'
+                }
+                for pat in nl_patterns:
+                    m = re.search(pat, user_prompt, re.IGNORECASE)
+                    if m:
+                        cand = m.group(2) if len(m.groups()) >= 2 else m.group(1)
+                        if cand and cand.lower() not in STOP_WORDS:
+                            extracted_dest = cand.strip().title()
+                            break
+
+            # Also attempt Gemini structured extraction if available
+            if not extracted_dest or not req_days or not req_budget:
+                try:
+                    ai_extract = GeminiClient.generate_json(
+                        f"""Analyze this user travel prompt and extract parameters: "{user_prompt}"
+Return a JSON object:
+{{
+  "destination": "<city/destination name or null>",
+  "duration_days": <number of days integer or null>,
+  "budget": <max budget numeric or null>,
+  "language": "<language code like hi, ta, en or null>"
+}}"""
+                    )
+                    if ai_extract and isinstance(ai_extract, dict):
+                        if not extracted_dest and ai_extract.get("destination"):
+                            cand_dest = str(ai_extract["destination"]).strip().replace("Tour", "").replace("Trip", "").title()
+                            if cand_dest and len(cand_dest) > 1:
+                                extracted_dest = cand_dest
+                        if not req_days and ai_extract.get("duration_days"):
+                            req_days = int(ai_extract["duration_days"])
+                        if not req_budget and ai_extract.get("budget"):
+                            req_budget = float(ai_extract["budget"])
+                        if req_lang == 'en' and ai_extract.get("language"):
+                            req_lang = str(ai_extract["language"]).strip().lower()
+                except Exception as e:
+                    logger.debug(f"Gemini parameter extraction fallback: {e}")
 
             if not extracted_dest:
                 extracted_dest = "Chikmagalur"

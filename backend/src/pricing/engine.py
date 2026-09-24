@@ -70,9 +70,18 @@ class PricingEngine:
             components_delta_total = Decimal("0.00")
             line_items = []
 
+            has_market_hotel = market_hotel_rate is not None and market_hotel_rate > 0
+
             for comp_id in active_component_ids:
                 comp = component_map.get(comp_id)
                 if comp:
+                    comp_type = comp.get("component_type", "component")
+                    swap_grp = comp.get("swap_group") or ""
+                    is_hotel = comp_type == "hotel" or "hotel" in swap_grp.lower() or "stay" in swap_grp.lower()
+                    if has_market_hotel and is_hotel:
+                        # Replaced by real-world market hotel
+                        continue
+
                     delta = to_decimal(comp.get("price_delta", "0.00"))
                     components_delta_total += delta
                     line_items.append({
@@ -87,6 +96,8 @@ class PricingEngine:
                         "is_swappable": bool(comp.get("is_swappable", 0))
                     })
                 elif "lux" in comp_id:
+                    if has_market_hotel:
+                        continue
                     delta = Decimal("6500.00")
                     components_delta_total += delta
                     line_items.append({
@@ -101,6 +112,8 @@ class PricingEngine:
                         "is_swappable": True
                     })
                 elif "std" in comp_id:
+                    if has_market_hotel:
+                        continue
                     delta = Decimal("0.00")
                     line_items.append({
                         "component_id": comp_id,

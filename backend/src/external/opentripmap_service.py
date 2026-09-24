@@ -281,7 +281,7 @@ class OpenTripMapService:
                 "radius": radius_meters,
                 "lon": lng,
                 "lat": lat,
-                "kinds": "interesting_places,historic,architecture,cultural,natural,monuments,view_points,waterfall",
+                "kinds": "interesting_places,historic,cultural,natural",
                 "format": "json",
                 "limit": limit,
                 "apikey": settings.OPENTRIPMAP_API_KEY
@@ -340,29 +340,28 @@ class OpenTripMapService:
             except Exception as e:
                 logger.warning(f"Live OpenTripMap query failed: {e}")
 
-        # Combine with authentic destination landmarks for comprehensive results
-        fallback_places = cls._generate_destination_attractions(lat=lat, lng=lng, radius_meters=radius_meters)
-        
-        # Merge and deduplicate
-        combined = []
-        seen = set()
-        for p in live_places + fallback_places:
-            n_key = p["name"].lower().strip()
-            if n_key not in seen:
-                seen.add(n_key)
-                combined.append(p)
-
-        if combined:
-            cls._cache[cache_key] = combined
+        # If live OpenTripMap results exist, use them directly as authoritative real data
+        if live_places:
+            cls._cache[cache_key] = live_places
             cls._save_cache()
             return {
-                "source": "opentripmap_live" if live_places else "grounded_landmarks_catalog",
-                "attractions": combined
+                "source": "opentripmap_live",
+                "attractions": live_places
+            }
+
+        # Only if live API returned 0 results, check grounded landmarks
+        fallback_places = cls._generate_destination_attractions(lat=lat, lng=lng, radius_meters=radius_meters)
+        if fallback_places:
+            cls._cache[cache_key] = fallback_places
+            cls._save_cache()
+            return {
+                "source": "grounded_landmarks_catalog",
+                "attractions": fallback_places
             }
 
         return {
-            "source": "grounded_landmarks_catalog",
-            "attractions": fallback_places
+            "source": "empty",
+            "attractions": []
         }
 
     @classmethod
