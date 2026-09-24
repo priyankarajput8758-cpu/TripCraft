@@ -1,11 +1,21 @@
 import React, { useEffect, useState, useRef } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { api } from '../api';
 import { MapPin, Compass } from 'lucide-react';
+
+// Fix Leaflet marker icons in React/Vite bundlers
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
 
 export default function TripMap({ city, lat, lng, cityName }) {
   const [attractions, setAttractions] = useState([]);
   const [loadingAttractions, setLoadingAttractions] = useState(false);
-  const [radiusMeters, setRadiusMeters] = useState(3000);
+  const [radiusMeters, setRadiusMeters] = useState(5000);
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
@@ -15,19 +25,20 @@ export default function TripMap({ city, lat, lng, cityName }) {
 
   // Initialize Leaflet Map
   useEffect(() => {
-    if (!window.L || !mapContainerRef.current) return;
+    if (!mapContainerRef.current) return;
 
     if (!mapInstanceRef.current) {
-      const map = window.L.map(mapContainerRef.current).setView([defaultLat, defaultLng], 12);
+      const map = L.map(mapContainerRef.current).setView([defaultLat, defaultLng], 13);
 
-      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 18,
       }).addTo(map);
 
       mapInstanceRef.current = map;
     } else {
-      mapInstanceRef.current.setView([defaultLat, defaultLng], 12);
+      mapInstanceRef.current.setView([defaultLat, defaultLng], 13);
+      setTimeout(() => mapInstanceRef.current?.invalidateSize(), 200);
     }
 
     // Clear old markers
@@ -35,7 +46,7 @@ export default function TripMap({ city, lat, lng, cityName }) {
     markersRef.current = [];
 
     // Add Main Destination Marker
-    const mainMarker = window.L.marker([defaultLat, defaultLng])
+    const mainMarker = L.marker([defaultLat, defaultLng])
       .addTo(mapInstanceRef.current)
       .bindPopup(`<b>${cityName || 'Trip Destination'}</b><br/>Primary Tour Center`)
       .openPopup();
@@ -48,27 +59,26 @@ export default function TripMap({ city, lat, lng, cityName }) {
       setLoadingAttractions(true);
       try {
         const res = await api.getNearbyAttractions(defaultLat, defaultLng, radiusMeters);
-        if (res.status === 'success' && res.data) {
-          setAttractions(res.data);
+        const list = res?.attractions || res?.data || [];
+        setAttractions(list);
 
-          // Add markers to map
-          if (mapInstanceRef.current && window.L) {
-            res.data.forEach((item) => {
-              if (item.lat && item.lng) {
-                const marker = window.L.circleMarker([item.lat, item.lng], {
-                  radius: 7,
-                  fillColor: '#2563eb',
-                  color: '#1d4ed8',
-                  weight: 2,
-                  opacity: 1,
-                  fillOpacity: 0.85
-                })
-                  .addTo(mapInstanceRef.current)
-                  .bindPopup(`<b>${item.name}</b><br/>${item.kinds || 'Attraction'}<br/>Dist: ${item.distance_meters}m`);
-                markersRef.current.push(marker);
-              }
-            });
-          }
+        // Add markers to map
+        if (mapInstanceRef.current) {
+          list.forEach((item) => {
+            if (item.lat && item.lng) {
+              const marker = L.circleMarker([item.lat, item.lng], {
+                radius: 7,
+                fillColor: '#2563eb',
+                color: '#1d4ed8',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.85
+              })
+                .addTo(mapInstanceRef.current)
+                .bindPopup(`<b>${item.name}</b><br/>${item.category || item.kinds?.split(',')[0] || 'Attraction'}<br/>Dist: ${item.dist_formatted || item.dist_meters + 'm'}`);
+              markersRef.current.push(marker);
+            }
+          });
         }
       } catch (err) {
         console.error('Failed to load attractions from OpenTripMap:', err);

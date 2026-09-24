@@ -32,8 +32,8 @@ export default function CustomizerStudio({
 
   const [selectedComponents, setSelectedComponents] = useState({});
   const [selectedGuide, setSelectedGuide] = useState(null);
-  const [startDate, setStartDate] = useState(tripPrefs.startDate || '2026-10-10');
-  const [endDate, setEndDate] = useState(tripPrefs.endDate || '2026-10-14');
+  const [startDate, setStartDate] = useState(tripPrefs.startDate || '2026-09-24');
+  const [endDate, setEndDate] = useState(tripPrefs.endDate || '2026-09-28');
   const [pricingResult, setPricingResult] = useState(null);
   const [isRepricing, setIsRepricing] = useState(false);
   const [addOnTotal, setAddOnTotal] = useState(0);

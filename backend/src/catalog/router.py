@@ -32,9 +32,12 @@ def get_packages(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/packages/{package_id}")
-def get_package_detail(package_id: str):
+def get_package_detail(
+    package_id: str,
+    language: Optional[str] = Query(None, description="BCP-47 language tag to prioritize guides")
+):
     try:
-        return CatalogService.get_package_detail(package_id)
+        return CatalogService.get_package_detail(package_id, language=language)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:

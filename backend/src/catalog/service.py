@@ -81,8 +81,8 @@ class CatalogService:
             }
 
     @staticmethod
-    def get_package_detail(package_id: str) -> Dict[str, Any]:
-        """Fetch package details with grouped swappable components and guide options."""
+    def get_package_detail(package_id: str, language: Optional[str] = None) -> Dict[str, Any]:
+        """Fetch package details with grouped swappable components and language-prioritized guide options."""
         with get_db_connection() as conn:
             pkg = conn.execute("""
                 SELECT tp.*, c.name AS city_name, c.state AS city_state, c.lat AS city_lat, c.lng AS city_lng,
@@ -130,13 +130,36 @@ class CatalogService:
                         }
                     swap_groups[sg]["options"].append(comp)
 
-            # Available local guides for this package's city
-            guides = conn.execute("""
-                SELECT g.*, c.name AS city_name FROM tour_guides g
-                JOIN cities c ON c.city_id = g.city_id
-                WHERE g.city_id = ? AND g.status = 'active'
-                ORDER BY g.rating DESC LIMIT 20
-            """, (pkg["city_id"],)).fetchall()
+            # Available tour guides: prioritize requested BCP-47 language and local proximity
+            clean_lang = language.split("-")[0].lower() if language else None
+            if clean_lang and clean_lang != "en":
+                guides = conn.execute("""
+                    SELECT g.*, c.name AS city_name, c.state AS city_state,
+                           CASE
+                               WHEN g.city_id = ? AND g.languages LIKE ? THEN 1
+                               WHEN c.state = ? AND g.languages LIKE ? THEN 2
+                               WHEN g.languages LIKE ? THEN 3
+                               WHEN g.city_id = ? THEN 4
+                               ELSE 5
+                           END AS rank_score
+                    FROM tour_guides g
+                    JOIN cities c ON c.city_id = g.city_id
+                    WHERE g.status = 'active'
+                    ORDER BY rank_score ASC, g.rating DESC LIMIT 20
+                """, (pkg["city_id"], f"%{clean_lang}%", pkg["city_state"], f"%{clean_lang}%", f"%{clean_lang}%", pkg["city_id"])).fetchall()
+            else:
+                guides = conn.execute("""
+                    SELECT g.*, c.name AS city_name, c.state AS city_state,
+                           CASE
+                               WHEN g.city_id = ? THEN 1
+                               WHEN c.state = ? THEN 2
+                               ELSE 3
+                           END AS rank_score
+                    FROM tour_guides g
+                    JOIN cities c ON c.city_id = g.city_id
+                    WHERE g.status = 'active'
+                    ORDER BY rank_score ASC, g.rating DESC LIMIT 20
+                """, (pkg["city_id"], pkg["city_state"])).fetchall()
 
             for g in guides:
                 g["day_rate_formatted"] = format_money(to_decimal(g["day_rate"]))
@@ -166,41 +189,87 @@ class CatalogService:
         specialisation: Optional[str] = None,
         limit: int = 50
     ) -> Dict[str, Any]:
-        """List tour guides with BCP-47 language & specialisation filtering."""
-        query = """
-            SELECT g.*, c.name AS city_name FROM tour_guides g
-            JOIN cities c ON c.city_id = g.city_id
-            WHERE g.status = 'active'
-        """
-        params = []
-
-        if city_id:
-            query += " AND g.city_id = ?"
-            params.append(city_id)
-
-        if specialisation:
-            query += " AND (g.specialisation = ? OR g.secondary_specialisation = ?)"
-            params.extend([specialisation, specialisation])
-
+        """List tour guides with BCP-47 language & specialisation filtering and regional fallback."""
+        clean_lang = language.split("-")[0].lower() if language else None
         lang_notice = None
-        if language:
-            with get_db_connection() as conn:
-                count = conn.execute(
-                    "SELECT COUNT(*) AS c FROM tour_guides WHERE languages LIKE ? AND status = 'active'",
-                    (f"%{language}%",)
-                ).fetchone()["c"]
-
-                if count > 0:
-                    query += " AND g.languages LIKE ?"
-                    params.append(f"%{language}%")
-                else:
-                    lang_notice = f"No guides speaking '{language}' in this area. Showing all available guides."
-
-        query += " ORDER BY g.rating DESC, g.years_experience DESC LIMIT ?"
-        params.append(limit)
 
         with get_db_connection() as conn:
-            guides = conn.execute(query, params).fetchall()
+            # Check direct local city matches first
+            if city_id and clean_lang:
+                local_count = conn.execute(
+                    "SELECT COUNT(*) AS c FROM tour_guides WHERE city_id = ? AND languages LIKE ? AND status = 'active'",
+                    (city_id, f"%{clean_lang}%")
+                ).fetchone()["c"]
+
+                if local_count > 0:
+                    query = """
+                        SELECT g.*, c.name AS city_name, c.state AS city_state FROM tour_guides g
+                        JOIN cities c ON c.city_id = g.city_id
+                        WHERE g.status = 'active' AND g.city_id = ? AND g.languages LIKE ?
+                    """
+                    params = [city_id, f"%{clean_lang}%"]
+                    if specialisation:
+                        query += " AND (g.specialisation = ? OR g.secondary_specialisation = ?)"
+                        params.extend([specialisation, specialisation])
+                    query += " ORDER BY g.rating DESC, g.years_experience DESC LIMIT ?"
+                    params.append(limit)
+                    guides = conn.execute(query, params).fetchall()
+                else:
+                    # Broaden to state and regional guides who speak the requested language
+                    city_info = conn.execute("SELECT state FROM cities WHERE city_id = ?", (city_id,)).fetchone()
+                    city_state = city_info["state"] if city_info else None
+
+                    query = """
+                        SELECT g.*, c.name AS city_name, c.state AS city_state,
+                               CASE WHEN c.state = ? THEN 1 ELSE 2 END as locality_rank
+                        FROM tour_guides g
+                        JOIN cities c ON c.city_id = g.city_id
+                        WHERE g.status = 'active' AND g.languages LIKE ?
+                    """
+                    params = [city_state or "", f"%{clean_lang}%"]
+                    if specialisation:
+                        query += " AND (g.specialisation = ? OR g.secondary_specialisation = ?)"
+                        params.extend([specialisation, specialisation])
+                    query += " ORDER BY locality_rank ASC, g.rating DESC LIMIT ?"
+                    params.append(limit)
+                    guides = conn.execute(query, params).fetchall()
+                    if guides:
+                        lang_notice = f"Showing verified {language.upper()}-speaking regional guides serving this destination."
+                    else:
+                        # Fallback to city guides
+                        query = """
+                            SELECT g.*, c.name AS city_name, c.state AS city_state FROM tour_guides g
+                            JOIN cities c ON c.city_id = g.city_id
+                            WHERE g.status = 'active' AND g.city_id = ?
+                        """
+                        params = [city_id]
+                        if specialisation:
+                            query += " AND (g.specialisation = ? OR g.secondary_specialisation = ?)"
+                            params.extend([specialisation, specialisation])
+                        query += " ORDER BY g.rating DESC LIMIT ?"
+                        params.append(limit)
+                        guides = conn.execute(query, params).fetchall()
+                        lang_notice = f"No guides speaking '{language}' found. Showing all available guides for this destination."
+            else:
+                query = """
+                    SELECT g.*, c.name AS city_name, c.state AS city_state FROM tour_guides g
+                    JOIN cities c ON c.city_id = g.city_id
+                    WHERE g.status = 'active'
+                """
+                params = []
+                if city_id:
+                    query += " AND g.city_id = ?"
+                    params.append(city_id)
+                if clean_lang:
+                    query += " AND g.languages LIKE ?"
+                    params.append(f"%{clean_lang}%")
+                if specialisation:
+                    query += " AND (g.specialisation = ? OR g.secondary_specialisation = ?)"
+                    params.extend([specialisation, specialisation])
+                query += " ORDER BY g.rating DESC, g.years_experience DESC LIMIT ?"
+                params.append(limit)
+                guides = conn.execute(query, params).fetchall()
+
             for g in guides:
                 g["day_rate_formatted"] = format_money(to_decimal(g["day_rate"]))
                 g["half_day_rate_formatted"] = format_money(to_decimal(g["half_day_rate"]))
