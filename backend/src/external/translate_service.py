@@ -1,11 +1,15 @@
 """
 Multilingual Translation Service.
-Connects to LibreTranslate with fallback support for essential Indian languages.
+Connects to LibreTranslate with intelligent AI and dictionary fallbacks for Indian languages.
 """
 
 import requests
+import logging
 from typing import Dict, Any, Optional
 from src.config import settings
+from src.ai.gemini_client import GeminiClient
+
+logger = logging.getLogger("translate_service")
 
 # Built-in essential translation dictionary for Indian Languages & Travel UI terms
 COMMON_TRANSLATIONS = {
@@ -86,16 +90,18 @@ class TranslationService:
         source_lang: str = "en"
     ) -> Dict[str, Any]:
         """
-        Translate text using LibreTranslate or local dictionary fallback.
+        Translate text using LibreTranslate, with Gemini AI and dictionary fallback.
         """
-        # Clean target lang tag (e.g. 'ta-IN' -> 'ta')
+        if not text or not text.strip():
+            return {"translated_text": "", "source": "empty", "target_lang": target_lang}
+
         short_target = target_lang.split("-")[0].lower()
         short_source = source_lang.split("-")[0].lower()
 
         if short_target == short_source:
             return {"translated_text": text, "source": "identical_lang", "target_lang": target_lang}
 
-        # 1. Try LibreTranslate API if configured & running
+        # 1. Try LibreTranslate API if configured & reachable
         if settings.LIBRETRANSLATE_URL:
             try:
                 resp = requests.post(
@@ -118,19 +124,31 @@ class TranslationService:
                             "target_lang": target_lang
                         }
             except Exception:
-                pass  # Fall through to dictionary fallback
+                pass  # Fall through to Gemini AI & Dictionary
 
-        # 2. Dictionary Fallback
-        if short_target in COMMON_TRANSLATIONS:
-            dict_match = COMMON_TRANSLATIONS[short_target].get(text.strip())
-            if dict_match:
+        # 2. Try Dictionary for standard phrases
+        if short_target in COMMON_TRANSLATIONS and text.strip() in COMMON_TRANSLATIONS[short_target]:
+            return {
+                "translated_text": COMMON_TRANSLATIONS[short_target][text.strip()],
+                "source": "local_dictionary",
+                "target_lang": target_lang
+            }
+
+        # 3. Use Gemini AI for dynamic travel content translation
+        try:
+            ai_prompt = f"Translate this travel text from {short_source} to {target_lang} (Language: {short_target}) naturally and accurately:\n\"{text}\""
+            system_inst = "You are a professional travel translator. Output ONLY the translated sentence, without commentary, quotes, or markdown fences."
+            ai_translated = GeminiClient.generate_content(ai_prompt, system_inst)
+            if ai_translated and ai_translated.strip():
                 return {
-                    "translated_text": dict_match,
-                    "source": "local_dictionary",
+                    "translated_text": ai_translated.strip().strip('"'),
+                    "source": "gemini_ai",
                     "target_lang": target_lang
                 }
+        except Exception as e:
+            logger.warning(f"Translation via Gemini failed: {e}")
 
-        # 3. Default back to original string
+        # 4. Default back to original string
         return {
             "translated_text": text,
             "source": "fallback_original",
