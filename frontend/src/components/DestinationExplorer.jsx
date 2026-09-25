@@ -6,7 +6,7 @@ import { t } from '../i18n';
 import {
   Compass,
   MapPin,
-  Sparkles,
+  Bot,
   Calendar,
   Clock,
   CheckSquare,
@@ -39,6 +39,33 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
+
+const HERO_TOURISM_IMAGES = [
+  {
+    url: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=1920&q=85',
+    tag: 'Coastal & Tropical Islands',
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=1920&q=85',
+    tag: 'Royal Heritage & Palaces',
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=85',
+    tag: 'Himalayan Mountain Treks',
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=1920&q=85',
+    tag: 'Munnar & Tea Valleys',
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1920&q=85',
+    tag: 'Spiritual Heritage & Ghats',
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=1920&q=85',
+    tag: 'Luxury Island Escapes',
+  },
+];
 
 export default function DestinationExplorer({
   externalSupplyMode = true,
@@ -76,6 +103,15 @@ export default function DestinationExplorer({
     type: 'standard'
   });
   const userSelectedHotelRef = useRef(false);
+  const [heroImageIdx, setHeroImageIdx] = useState(0);
+
+  // Rotate hero image every 10 seconds automatically
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setHeroImageIdx((prev) => (prev + 1) % HERO_TOURISM_IMAGES.length);
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
   const [spotSearchTerms, setSpotSearchTerms] = useState({});
 
   // Day-wise matrix state: array of { day_number, selected_activities: [], selected_hotel: {} }
@@ -531,99 +567,118 @@ export default function DestinationExplorer({
 
   return (
     <div className="space-y-8 animate-fadeIn">
-      {/* Hero Search & Geocoding Bar */}
-      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 shadow-xl border border-[#84D175]/35 bg-[#0C2D45] text-[#FFF8D2] space-y-5">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-[#84D175]/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <span className="px-3 py-1 rounded-full bg-[#84D175]/20 text-[#84D175] border border-[#84D175]/40 text-xs font-bold flex items-center gap-1.5 backdrop-blur-sm">
-                <Sparkles className="w-3.5 h-3.5 text-[#84D175]" />
-                Autonomous Custom Package Engine
-              </span>
-              {externalSupplyMode && (
-                <span className="px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-bold flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 text-amber-300" />
-                  Live Google Hotels Active
+      {/* Hero Search & Geocoding Bar with 10s Rotating Background Images */}
+      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-10 shadow-xl border border-[#84D175]/40 text-[#1a2e1a] min-h-[320px] flex items-center">
+        
+        {/* 100% visible cross-fading hero images */}
+        {HERO_TOURISM_IMAGES.map((img, idx) => (
+          <div
+            key={img.url}
+            className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out ${
+              idx === heroImageIdx
+                ? 'opacity-100 scale-100 z-0'
+                : 'opacity-0 scale-105 pointer-events-none -z-10'
+            }`}
+            style={{ backgroundImage: `url('${img.url}')` }}
+          />
+        ))}
+
+        {/* Translucent Frosted Glass Card */}
+        <div className="relative z-10 w-full bg-white/80 backdrop-blur-md border border-[#84D175]/45 rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <span className="px-3.5 py-1 rounded-full bg-[#84D175]/30 text-[#2D6A24] border border-[#84D175]/45 text-xs sm:text-sm font-bold flex items-center gap-1.5 backdrop-blur-sm">
+                  <Bot className="w-4 h-4 text-[#2D6A24]" />
+                  Autonomous Custom Package Engine
                 </span>
-              )}
+                <span className="text-xs font-bold text-[#2D6A24] bg-white/80 px-3 py-1 rounded-full border border-[#84D175]/35 hidden sm:inline-block">
+                  {HERO_TOURISM_IMAGES[heroImageIdx].tag}
+                </span>
+                {externalSupplyMode && (
+                  <span className="px-3 py-1 rounded-full bg-amber-400/30 text-amber-900 border border-amber-400/50 text-xs sm:text-sm font-bold flex items-center gap-1.5">
+                    <Zap className="w-4 h-4 text-amber-800" />
+                    Live Google Hotels Active
+                  </span>
+                )}
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-serif font-bold text-[#1a2e1a] tracking-tight">
+                {t('custom_architect_title', selectedLang)}
+              </h2>
+              <p className="text-sm sm:text-base text-[#1a2e1a] max-w-2xl leading-relaxed font-medium">
+                {t('custom_architect_desc', selectedLang)}
+              </p>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-[#FFF8D2] tracking-tight">
-              {t('custom_architect_title', selectedLang)}
-            </h2>
-            <p className="text-sm text-[#D3E8D0] max-w-2xl leading-relaxed">
-              {t('custom_architect_desc', selectedLang)}
-            </p>
           </div>
+
+          {/* Input & Radius Controls */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleExploreDestination();
+            }}
+            className="flex flex-col sm:flex-row gap-3 pt-1"
+          >
+            <div className="relative flex-1">
+              <MapPin className="w-5 h-5 text-[#2D6A24] absolute left-4 top-3.5" />
+              <input
+                type="text"
+                value={destinationQuery}
+                onChange={(e) => setDestinationQuery(e.target.value)}
+                placeholder="Enter destination (e.g. Chikmagalur, Ooty, Coorg, Wayanad)..."
+                className="w-full bg-white border border-[#84D175]/45 text-[#1a2e1a] rounded-2xl pl-12 pr-4 py-3.5 text-sm sm:text-base focus:outline-none focus:border-[#84D175] focus:ring-2 focus:ring-[#84D175]/20 placeholder:text-[#1a2e1a]/40 font-bold shadow-xs"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <select
+                value={radiusMeters}
+                onChange={(e) => setRadiusMeters(Number(e.target.value))}
+                className="bg-white border border-[#84D175]/45 text-[#1a2e1a] text-xs sm:text-sm font-bold rounded-2xl px-4 py-3.5 focus:outline-none focus:border-[#84D175] cursor-pointer shadow-xs"
+              >
+                <option value={15000} className="text-[#1a2e1a] font-bold">15 km (City & Core Hub)</option>
+                <option value={30000} className="text-[#1a2e1a] font-bold">30 km (Suburbs & Hilltops)</option>
+                <option value={50000} className="text-[#1a2e1a] font-bold">50 km (Regional Excursion)</option>
+                <option value={90000} className="text-[#1a2e1a] font-bold">90 km (Full 90km Exploration)</option>
+              </select>
+
+              <button
+                type="submit"
+                disabled={loadingExplore}
+                className="px-6 py-3.5 bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-bold text-sm sm:text-base rounded-2xl transition-all shadow-md shadow-[#84D175]/25 flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95 shrink-0"
+              >
+                {loadingExplore ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin text-[#1a2e1a]" />
+                    <span>Scanning...</span>
+                  </>
+                ) : (
+                  <>
+                    <Compass className="w-5 h-5 text-[#1a2e1a]" />
+                    <span>Discover Spots</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+
+          {/* Destination Discovery Status Pill */}
+          {geoData && (
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#84D175]/30 text-sm font-bold text-[#1a2e1a]">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#2D6A24] animate-ping" />
+                <span className="font-bold text-[#1a2e1a]">Geocoded Location:</span>
+                <span className="text-[#2D6A24] font-bold">{geoData.display_name || geoData.name}</span>
+                <span className="text-[#1a2e1a]/70 font-mono">({geoData.lat?.toFixed(4)}, {geoData.lng?.toFixed(4)})</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-xl bg-[#84D175]/30 text-[#2D6A24] border border-[#84D175]/40 font-mono font-bold">
+                  {attractions.length} Tourist Landmarks Discovered (within {radiusMeters / 1000}km)
+                </span>
+              </div>
+            </div>
+          )}
         </div>
-
-        {/* Input & Radius Controls */}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleExploreDestination();
-          }}
-          className="relative z-10 flex flex-col sm:flex-row gap-3 pt-1"
-        >
-          <div className="relative flex-1">
-            <MapPin className="w-5 h-5 text-[#2D6A24] absolute left-3.5 top-3.5" />
-            <input
-              type="text"
-              value={destinationQuery}
-              onChange={(e) => setDestinationQuery(e.target.value)}
-              placeholder="Enter destination (e.g. Chikmagalur, Ooty, Coorg, Wayanad)..."
-              className="w-full bg-white/95 border border-[#84D175]/40 text-[#1a2e1a] rounded-2xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-[#84D175] focus:ring-2 focus:ring-[#84D175]/20 placeholder:text-slate-400 font-medium shadow-xs"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <select
-              value={radiusMeters}
-              onChange={(e) => setRadiusMeters(Number(e.target.value))}
-              className="bg-white border border-[#84D175]/40 text-[#1a2e1a] text-xs font-bold rounded-2xl px-3 py-3 focus:outline-none focus:border-[#84D175] cursor-pointer shadow-xs"
-            >
-              <option value={15000} className="text-[#1a2e1a] font-bold">15 km (City & Core Hub)</option>
-              <option value={30000} className="text-[#1a2e1a] font-bold">30 km (Suburbs & Hilltops)</option>
-              <option value={50000} className="text-[#1a2e1a] font-bold">50 km (Regional Excursion)</option>
-              <option value={90000} className="text-[#1a2e1a] font-bold">90 km (Full 90km Exploration)</option>
-            </select>
-
-            <button
-              type="submit"
-              disabled={loadingExplore}
-              className="px-6 py-3 bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-sm rounded-2xl transition-all shadow-md shadow-[#84D175]/30 flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95"
-            >
-              {loadingExplore ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin text-[#1a2e1a]" />
-                  <span>Scanning...</span>
-                </>
-              ) : (
-                <>
-                  <Compass className="w-4 h-4 text-[#1a2e1a]" />
-                  <span>Discover Spots</span>
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-
-        {/* Destination Discovery Status Pill */}
-        {geoData && (
-          <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#84D175]/30 text-xs text-[#D3E8D0]">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#84D175] animate-ping" />
-              <span className="font-semibold text-white">Geocoded Location:</span>
-              <span className="text-[#FFF8D2] font-bold">{geoData.display_name || geoData.name}</span>
-              <span className="text-[#D3E8D0]/70 font-mono">({geoData.lat?.toFixed(4)}, {geoData.lng?.toFixed(4)})</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-md bg-[#84D175]/20 text-[#FFF8D2] border border-[#84D175]/40 font-mono font-bold">
-                {attractions.length} Tourist Landmarks Discovered (within {radiusMeters / 1000}km)
-              </span>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Interactive Map & Tourist Spots Discovery Row */}
@@ -678,7 +733,7 @@ export default function DestinationExplorer({
         <div className="lg:col-span-5 bg-white/95 border border-[#84D175]/35 rounded-3xl p-5 space-y-4 shadow-sm flex flex-col text-[#1a2e1a]">
           <div className="flex items-center justify-between border-b border-[#84D175]/30 pb-3">
             <div className="flex items-center space-x-2">
-              <Sparkles className="w-4 h-4 text-[#2D6A24]" />
+              <Bot className="w-4 h-4 text-[#2D6A24]" />
               <h3 className="text-sm font-black text-[#1a2e1a]">
                 {t('discovered_attractions_heading', selectedLang)}
               </h3>
@@ -821,7 +876,7 @@ export default function DestinationExplorer({
               <Calendar className="w-5 h-5 text-[#2D6A24]" />
               {t('day_wise_matrix_title', selectedLang)}
             </h3>
-            <p className="text-xs text-[#4a5e4a] font-medium">
+            <p className="text-sm text-[#4a5e4a] font-medium">
               {t('day_wise_matrix_sub', selectedLang)}
             </p>
           </div>
@@ -1208,7 +1263,7 @@ export default function DestinationExplorer({
         <div className="bg-[#0C2D45] border border-[#84D175]/40 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl text-[#FFF8D2]">
           <div className="space-y-1">
             <h4 className="text-sm font-black text-white flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#84D175]" />
+              <Bot className="w-4 h-4 text-[#84D175]" />
               <span>{t('ready_synthesize_heading', selectedLang)}</span>
             </h4>
             <p className="text-xs text-[#D3E8D0]">
@@ -1301,7 +1356,7 @@ export default function DestinationExplorer({
           {synthesizedTrip.ai_optimizations && (
             <div className="space-y-3">
               <div className="text-xs font-bold text-[#1a2e1a] uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-[#2D6A24]" />
+                <Bot className="w-3.5 h-3.5 text-[#2D6A24]" />
                 <span>Actionable AI Recommendations & Optimizations (Click to Apply):</span>
               </div>
 
@@ -1355,7 +1410,7 @@ export default function DestinationExplorer({
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-emerald-900 font-black text-xs">
                       <div className="flex items-center space-x-1.5">
-                        <Sparkles className="w-4 h-4 text-emerald-700" />
+                        <Bot className="w-4 h-4 text-emerald-700" />
                         <span>Activity Voids Filled</span>
                       </div>
                       <span className="text-[10px] bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded font-mono font-bold">

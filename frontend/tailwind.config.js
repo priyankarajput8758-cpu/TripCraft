@@ -45,7 +45,10 @@ export default {
         },
       },
       fontFamily: {
-        display: ['"Plus Jakarta Sans"', 'Outfit', 'system-ui', 'sans-serif'],
+        serif: ['"Cormorant Garamond"', '"DM Serif Display"', 'Georgia', 'serif'],
+        display: ['"Cormorant Garamond"', '"DM Serif Display"', 'Georgia', 'serif'],
+        sans: ['"Outfit"', '"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        body: ['"Outfit"', '"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
       },
     },
   },

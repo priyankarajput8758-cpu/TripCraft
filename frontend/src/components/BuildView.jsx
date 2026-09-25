@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { Sparkles, MapPin, Plus, Minus, Check, ArrowRight, Hotel, Utensils } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 
 const DESTINATIONS = [
   'Goa, India',
@@ -11,12 +10,39 @@ const DESTINATIONS = [
 ];
 
 const INTERESTS = [
-  { id: 'heritage', label: 'Heritage', icon: '🏛️' },
-  { id: 'food',      label: 'Food',     icon: '🍛' },
-  { id: 'adventure', label: 'Adventure',icon: '⛰️' },
-  { id: 'nature',    label: 'Nature',   icon: '🍃' },
-  { id: 'wildlife',  label: 'Wildlife', icon: '🐯' },
-  { id: 'culture',   label: 'Culture',  icon: '🪔' },
+  { id: 'heritage', label: 'Heritage' },
+  { id: 'food',      label: 'Food & Cuisine' },
+  { id: 'adventure', label: 'Adventure' },
+  { id: 'nature',    label: 'Nature' },
+  { id: 'wildlife',  label: 'Wildlife' },
+  { id: 'culture',   label: 'Culture & Art' },
+];
+
+const HERO_TOURISM_IMAGES = [
+  {
+    url: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=1920&q=85',
+    tag: 'Coastal & Tropical Islands',
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=1920&q=85',
+    tag: 'Royal Heritage & Palaces',
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=85',
+    tag: 'Himalayan Mountain Treks',
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=1920&q=85',
+    tag: 'Munnar & Tea Valleys',
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1920&q=85',
+    tag: 'Spiritual Heritage & Ghats',
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=1920&q=85',
+    tag: 'Luxury Island Escapes',
+  },
 ];
 
 export default function BuildView({
@@ -32,6 +58,15 @@ export default function BuildView({
   const [useHotelBooking, setUseHotelBooking] = useState(true);
   const [useFoodBooking, setUseFoodBooking] = useState(true);
   const [building, setBuilding] = useState(false);
+  const [heroImageIdx, setHeroImageIdx] = useState(0);
+
+  // Rotate hero image every 10 seconds automatically
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setHeroImageIdx((prev) => (prev + 1) % HERO_TOURISM_IMAGES.length);
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
 
   const toggleInterest = (id) => {
     setSelectedInterests(prev =>
@@ -60,35 +95,54 @@ export default function BuildView({
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 animate-in">
+    <div className="max-w-4xl mx-auto space-y-6 animate-in">
       {/* Top Back Button */}
       {onBack && (
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 text-xs font-bold transition-all shadow-sm cursor-pointer"
+          className="inline-flex items-center text-sm font-bold text-[#1a2e1a] bg-white/70 backdrop-blur-sm border border-[#84D175]/35 hover:bg-white px-4 py-2 rounded-xl transition-all shadow-xs cursor-pointer"
         >
           ← Back to Discover
         </button>
       )}
 
-      {/* Main Preference Card (Pure White Card matching Screenshot 2) */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 text-slate-900">
+      {/* Main Preference Card with 10s Cross-fading Hero Images */}
+      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-10 shadow-xl border border-[#84D175]/40 text-[#1a2e1a]">
+        
+        {/* 100% visible cross-fading hero images */}
+        {HERO_TOURISM_IMAGES.map((img, idx) => (
+          <div
+            key={img.url}
+            className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out ${
+              idx === heroImageIdx
+                ? 'opacity-100 scale-100 z-0'
+                : 'opacity-0 scale-105 pointer-events-none -z-10'
+            }`}
+            style={{ backgroundImage: `url('${img.url}')` }}
+          />
+        ))}
 
-        {/* Header */}
-        <div className="flex items-start gap-4 border-b border-slate-100 pb-6">
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
-            <Sparkles className="w-6 h-6 text-blue-600" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+        {/* Translucent Frosted Glass Card for Form Content */}
+        <div className="relative z-10 bg-white/80 backdrop-blur-md border border-[#84D175]/45 rounded-3xl p-6 sm:p-8 space-y-8 shadow-2xl">
+
+          {/* Header */}
+          <div className="border-b border-[#84D175]/30 pb-6 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#2D6A24] bg-[#84D175]/25 px-3 py-1 rounded-full border border-[#84D175]/40">
+                Custom Destination Architect
+              </span>
+              <span className="text-xs font-bold text-[#2D6A24] bg-white/80 px-3 py-1 rounded-full border border-[#84D175]/35 hidden sm:inline-block">
+                {HERO_TOURISM_IMAGES[heroImageIdx].tag}
+              </span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-serif font-bold text-[#1a2e1a] tracking-tight">
               Tell us what your perfect trip looks like.
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              TripCraft AI will tailor every activity, stay, and guide according to your inputs.
+            <p className="text-sm sm:text-base text-[#1a2e1a] font-medium leading-relaxed">
+              TripCraft AI will tailor every activity, stay, and guide according to your inputs and catalog availability.
             </p>
           </div>
-        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
 
@@ -97,30 +151,27 @@ export default function BuildView({
 
             {/* Destination */}
             <div>
-              <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+              <label className="block text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1a2e1a] mb-2">
                 DESTINATION
               </label>
-              <div className="relative">
-                <select
-                  value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-blue-600 transition-colors appearance-none cursor-pointer"
-                >
-                  {DESTINATIONS.map(d => (
-                    <option key={d} value={d} className="bg-white text-slate-900">{d}</option>
-                  ))}
-                </select>
-                <MapPin className="w-4 h-4 text-rose-500 absolute right-4 top-3.5 pointer-events-none" />
-              </div>
+              <select
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+                className="w-full bg-white/80 backdrop-blur-sm border border-[#84D175]/40 rounded-xl px-4 py-3 text-xs sm:text-sm font-bold text-[#1a2e1a] focus:outline-none focus:border-[#84D175] transition-colors cursor-pointer shadow-xs"
+              >
+                {DESTINATIONS.map(d => (
+                  <option key={d} value={d} className="bg-white text-[#1a2e1a]">{d}</option>
+                ))}
+              </select>
             </div>
 
             {/* Budget Limit Slider */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-black uppercase tracking-wider text-slate-500">
+                <label className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1a2e1a]">
                   BUDGET LIMIT
                 </label>
-                <span className="text-sm font-black text-blue-600 font-mono">
+                <span className="text-base sm:text-lg font-serif font-bold text-[#2D6A24]">
                   ₹{budget.toLocaleString('en-IN')}
                 </span>
               </div>
@@ -131,9 +182,9 @@ export default function BuildView({
                 step={5000}
                 value={budget}
                 onChange={(e) => setBudget(Number(e.target.value))}
-                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                className="w-full h-2.5 bg-[#84D175]/35 rounded-lg appearance-none cursor-pointer accent-[#2D6A24]"
               />
-              <div className="flex justify-between text-[10px] text-slate-400 font-bold font-mono mt-1">
+              <div className="flex justify-between text-xs text-[#1a2e1a] font-bold mt-1.5">
                 <span>₹20k</span>
                 <span>₹50k</span>
                 <span>₹100k+</span>
@@ -146,47 +197,47 @@ export default function BuildView({
 
             {/* Duration Stepper */}
             <div>
-              <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+              <label className="block text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1a2e1a] mb-2">
                 DURATION
               </label>
-              <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+              <div className="flex items-center justify-between bg-white/60 border border-[#84D175]/35 rounded-xl p-1.5 shadow-xs">
                 <button
                   type="button"
                   onClick={() => setDurationDays(Math.max(2, durationDays - 1))}
-                  className="w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 flex items-center justify-center font-bold shadow-sm"
+                  className="w-10 h-10 rounded-lg bg-white border border-[#84D175]/40 text-[#1a2e1a] hover:bg-[#84D175]/20 flex items-center justify-center font-bold text-base shadow-xs cursor-pointer"
                 >
-                  <Minus className="w-4 h-4" />
+                  -
                 </button>
 
-                <div className="text-sm font-extrabold text-slate-900 text-center">
+                <div className="text-xs sm:text-sm font-bold text-[#1a2e1a] text-center">
                   {durationDays} Days / {Math.max(1, durationDays - 1)} Nights
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setDurationDays(Math.min(14, durationDays + 1))}
-                  className="w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 flex items-center justify-center font-bold shadow-sm"
+                  className="w-10 h-10 rounded-lg bg-white border border-[#84D175]/40 text-[#1a2e1a] hover:bg-[#84D175]/20 flex items-center justify-center font-bold text-base shadow-xs cursor-pointer"
                 >
-                  <Plus className="w-4 h-4" />
+                  +
                 </button>
               </div>
             </div>
 
             {/* Travel Pace */}
             <div>
-              <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+              <label className="block text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1a2e1a] mb-2">
                 TRAVEL PACE
               </label>
-              <div className="grid grid-cols-3 gap-2 bg-slate-100 p-1.5 rounded-xl text-xs font-bold">
+              <div className="grid grid-cols-3 gap-2 bg-white/60 border border-[#84D175]/35 p-1.5 rounded-xl text-xs sm:text-sm font-bold shadow-xs">
                 {['relaxed', 'balanced', 'packed'].map((p) => (
                   <button
                     key={p}
                     type="button"
                     onClick={() => setPace(p)}
-                    className={`py-2 rounded-lg capitalize transition-all ${
+                    className={`py-2 rounded-lg capitalize transition-all cursor-pointer ${
                       pace === p
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
-                        : 'text-slate-600 hover:text-slate-900'
+                        ? 'bg-[#84D175] text-[#1a2e1a] font-bold shadow-xs'
+                        : 'text-[#1a2e1a] hover:bg-white'
                     }`}
                   >
                     {p}
@@ -198,7 +249,7 @@ export default function BuildView({
 
           {/* Row 3: Interests & Preferences */}
           <div>
-            <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+            <label className="block text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1a2e1a] mb-2">
               INTERESTS & PREFERENCES
             </label>
             <div className="flex flex-wrap gap-2">
@@ -209,14 +260,12 @@ export default function BuildView({
                     key={item.id}
                     type="button"
                     onClick={() => toggleInterest(item.id)}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                    className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                       isChecked
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                        : 'bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200'
+                        ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs border border-[#67C456]'
+                        : 'bg-white/60 border border-[#84D175]/35 text-[#1a2e1a] hover:bg-white'
                     }`}
                   >
-                    {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                    <span>{item.icon}</span>
                     <span>{item.label}</span>
                   </button>
                 );
@@ -224,16 +273,13 @@ export default function BuildView({
             </div>
           </div>
 
-          {/* Row 4: Use Your Previous Bookings (Light Tinted Card) */}
-          <div className="bg-[#fff8f6] border border-rose-100 rounded-2xl p-4 space-y-3">
+          {/* Row 4: Use Your Previous Bookings */}
+          <div className="bg-[#FFF8D2]/80 border border-[#84D175]/40 rounded-2xl p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <span className="text-base">🏨</span>
-                <span className="text-xs font-black uppercase tracking-wider text-slate-900">
-                  USE YOUR PREVIOUS BOOKINGS
-                </span>
-              </div>
-              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-extrabold border border-blue-200">
+              <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1a2e1a]">
+                USE YOUR PREVIOUS BOOKINGS
+              </span>
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#84D175]/30 text-[#2D6A24] font-bold border border-[#84D175]/40">
                 Detected 2 Items
               </span>
             </div>
@@ -242,54 +288,37 @@ export default function BuildView({
               {/* Hotel booking item */}
               <div
                 onClick={() => setUseHotelBooking(!useHotelBooking)}
-                className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start gap-3 bg-white ${
+                className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start justify-between bg-white/70 ${
                   useHotelBooking
-                    ? 'border-blue-600 ring-2 ring-blue-500/20 shadow-sm'
-                    : 'border-slate-200 opacity-60'
+                    ? 'border-[#84D175] ring-2 ring-[#84D175]/40 shadow-xs'
+                    : 'border-[#84D175]/25 opacity-60'
                 }`}
               >
-                <div className={`w-4 h-4 rounded mt-0.5 flex items-center justify-center ${
-                  useHotelBooking ? 'bg-blue-600 text-white' : 'border border-slate-300'
-                }`}>
-                  {useHotelBooking && <Check className="w-3 h-3 stroke-[3]" />}
-                </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-900">Hotel already booked</div>
-                  <div className="text-[11px] text-slate-500 font-medium">Ocean Breeze Resort (2 Nights)</div>
+                  <div className="text-xs sm:text-sm font-bold text-[#1a2e1a]">Hotel already booked</div>
+                  <div className="text-xs text-[#1a2e1a] font-medium mt-0.5">Ocean Breeze Resort (2 Nights)</div>
                 </div>
+                <span className="text-xs uppercase font-bold text-[#2D6A24] bg-[#84D175]/20 px-2 py-0.5 rounded">
+                  {useHotelBooking ? 'Active' : 'Off'}
+                </span>
               </div>
 
               {/* Food tour item */}
               <div
                 onClick={() => setUseFoodBooking(!useFoodBooking)}
-                className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start gap-3 bg-white ${
+                className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start justify-between bg-white/70 ${
                   useFoodBooking
-                    ? 'border-blue-600 ring-2 ring-blue-500/20 shadow-sm'
-                    : 'border-slate-200 opacity-60'
+                    ? 'border-[#84D175] ring-2 ring-[#84D175]/40 shadow-xs'
+                    : 'border-[#84D175]/25 opacity-60'
                 }`}
               >
-                <div className={`w-4 h-4 rounded mt-0.5 flex items-center justify-center ${
-                  useFoodBooking ? 'bg-blue-600 text-white' : 'border border-slate-300'
-                }`}>
-                  {useFoodBooking && <Check className="w-3 h-3 stroke-[3]" />}
-                </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-900">Food tour previously booked</div>
-                  <div className="text-[11px] text-slate-500 font-medium">Panjim Old Town Culinary Walk</div>
+                  <div className="text-xs sm:text-sm font-bold text-[#1a2e1a]">Food tour previously booked</div>
+                  <div className="text-xs text-[#1a2e1a] font-medium mt-0.5">Panjim Old Town Culinary Walk</div>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* AI Banner Engine */}
-          <div className="rounded-2xl bg-[#0f172a] text-white p-4 flex items-center gap-3 shadow-lg">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shrink-0 font-bold">
-              ⚡
-            </div>
-            <div>
-              <div className="text-xs font-bold text-white">TripCraft AI Builder Engine</div>
-              <div className="text-[11px] text-slate-300">
-                TripCraft AI will combine your preferences, budget and booking history to build your package.
+                <span className="text-xs uppercase font-bold text-[#2D6A24] bg-[#84D175]/20 px-2 py-0.5 rounded">
+                  {useFoodBooking ? 'Active' : 'Off'}
+                </span>
               </div>
             </div>
           </div>
@@ -298,20 +327,16 @@ export default function BuildView({
           <button
             type="submit"
             disabled={building}
-            className="w-full py-4 bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-sm rounded-2xl shadow-xl shadow-blue-600/30 active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
+            className="w-full py-4 bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-bold text-sm sm:text-base rounded-2xl shadow-md shadow-[#84D175]/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
           >
             {building ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Generating Customized Package...</span>
-              </>
+              <span>Generating Customized Package...</span>
             ) : (
-              <>
-                <span>Build My Package →</span>
-              </>
+              <span>Build My Custom Package →</span>
             )}
           </button>
         </form>
+        </div>
       </div>
     </div>
   );

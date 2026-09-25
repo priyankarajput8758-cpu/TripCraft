@@ -1,13 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Sparkles, Clock, MapPin, Mountain, Heart, Landmark, Users, Castle,
+  Clock, MapPin, Mountain, Heart, Landmark, Users, Castle,
   Compass, ArrowRight, Search, Filter, ArrowUpDown, ChevronRight, Check,
   Bot, ShieldCheck, Star, Globe, Plane
 } from 'lucide-react';
 import { t } from '../i18n';
 
 const THEMES_CONFIG = [
-  { id: 'all',        key: 'theme_all',        icon: Sparkles },
+  { id: 'all',        key: 'theme_all',        icon: Compass },
   { id: 'adventure',  key: 'theme_adventure',  icon: Mountain },
   { id: 'honeymoon',  key: 'theme_honeymoon',  icon: Heart },
   { id: 'pilgrimage', key: 'theme_pilgrimage', icon: Landmark },

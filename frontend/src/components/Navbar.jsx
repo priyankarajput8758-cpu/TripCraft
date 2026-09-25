@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Globe, Zap, LogOut, Compass, Sparkles, Layers, Menu, X } from 'lucide-react';
+import { Bot } from 'lucide-react';
 import { t } from '../i18n';
 
 const LANGUAGES = [
@@ -29,7 +29,7 @@ export default function Navbar({
   const currentLang = LANGUAGES.find(l => l.code === currentLanguage) || LANGUAGES[0];
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[#FFF8D2]/95 border-b border-[#84D175]/30 shadow-sm backdrop-blur-md transition-all">
+    <header className="sticky top-0 z-40 w-full bg-[#FFF8D2]/50 backdrop-blur-md border-b border-[#84D175]/25 transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
 
         {/* ── Brand Logo ── */}
@@ -43,44 +43,42 @@ export default function Navbar({
           <img
             src="/logo.png"
             alt="TripCraft"
-            className="h-9 w-auto object-contain rounded-xl shadow-sm bg-white/80 p-0.5"
+            className="h-9 w-auto object-contain rounded-xl shadow-xs bg-white/70 p-0.5"
           />
           <div className="flex items-center gap-1.5">
-            <span className="text-xl font-black tracking-tight text-[#1a2e1a]">TripCraft</span>
+            <span className="text-2xl font-serif font-bold tracking-tight text-[#1a2e1a]">TripCraft</span>
           </div>
         </div>
 
         {/* ── Desktop Center Mode Switcher ── */}
-        <nav className="hidden md:flex items-center gap-1 bg-white/75 p-1 rounded-2xl border border-[#84D175]/30 shadow-xs">
+        <nav className="hidden md:flex items-center gap-1 bg-white/45 backdrop-blur-md p-1 rounded-2xl border border-[#84D175]/30 shadow-xs">
           <button
             onClick={() => onStepChange?.('discover')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-4 py-1.5 rounded-xl text-xs sm:text-sm transition-all cursor-pointer ${
               activeStep === 'discover' || activeStep === 'customize' || activeStep === 'optimize' || activeStep === 'confirm'
-                ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs'
-                : 'text-[#4a5e4a] hover:text-[#1a2e1a] hover:bg-[#FFF8D2]/60'
+                ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs font-bold'
+                : 'text-[#1a2e1a] hover:text-[#1a2e1a] hover:bg-[#FFF8D2]/70 font-semibold'
             }`}
           >
-            <Layers className="w-3.5 h-3.5" />
-            <span>{t('curated_packages', currentLanguage)}</span>
+            {t('curated_packages', currentLanguage)}
           </button>
 
           <button
             onClick={() => onStepChange?.('architect')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-4 py-1.5 rounded-xl text-xs sm:text-sm transition-all cursor-pointer ${
               activeStep === 'architect'
-                ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs'
-                : 'text-[#4a5e4a] hover:text-[#1a2e1a] hover:bg-[#FFF8D2]/60'
+                ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs font-bold'
+                : 'text-[#1a2e1a] hover:text-[#1a2e1a] hover:bg-[#FFF8D2]/70 font-semibold'
             }`}
           >
-            <Compass className="w-3.5 h-3.5" />
-            <span>{t('custom_architect', currentLanguage)}</span>
+            {t('custom_architect', currentLanguage)}
           </button>
 
           <button
             onClick={onOpenAiPlanner}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#1a2e1a] bg-[#84D175]/20 hover:bg-[#84D175]/35 transition-all cursor-pointer border border-[#84D175]/40"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-[#1a2e1a] bg-[#84D175]/35 hover:bg-[#84D175]/50 transition-all cursor-pointer border border-[#84D175]/45"
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#3C8B30]" />
+            <Bot className="w-4 h-4 text-[#2D6A24]" />
             <span>{t('ai_builder', currentLanguage)}</span>
           </button>
         </nav>
@@ -91,31 +89,29 @@ export default function Navbar({
           {/* Live Market Data toggle */}
           <button
             onClick={() => onToggleRealWorld?.(!realWorldEnabled)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
               realWorldEnabled
-                ? 'bg-[#84D175]/25 border-[#84D175] text-[#2D6A24] shadow-xs'
-                : 'bg-white/80 border-[#84D175]/30 text-[#4a5e4a] hover:text-[#1a2e1a]'
+                ? 'bg-[#84D175]/35 border-[#84D175] text-[#2D6A24] shadow-xs'
+                : 'bg-white/50 backdrop-blur-sm border-[#84D175]/35 text-[#1a2e1a] hover:bg-white/80'
             }`}
-            title="Live SerpAPI & OpenTripMap Market Data"
+            title="Live SerpAPI & OpenTripMap Market Rates"
           >
-            <Zap className={`w-3.5 h-3.5 ${realWorldEnabled ? 'text-[#2D6A24] fill-[#2D6A24]' : 'text-[#84D175]'}`} />
-            <span className="hidden lg:inline">{realWorldEnabled ? t('market_active', currentLanguage) : t('market_data', currentLanguage)}</span>
+            <span>{realWorldEnabled ? t('market_active', currentLanguage) : t('market_data', currentLanguage)}</span>
           </button>
 
           {/* Language dropdown */}
           <div className="relative">
             <button
               onClick={() => setLangOpen(!langOpen)}
-              className="flex items-center gap-1.5 bg-white/80 border border-[#84D175]/30 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-[#1a2e1a] hover:border-[#84D175] transition-all cursor-pointer shadow-xs"
+              className="flex items-center gap-1 bg-white/50 backdrop-blur-sm border border-[#84D175]/35 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold text-[#1a2e1a] hover:border-[#84D175] transition-all cursor-pointer shadow-xs"
             >
-              <Globe className="w-3.5 h-3.5 text-[#3C8B30]" />
-              <span className="hidden sm:inline">{currentLang.short}</span>
-              <span className="text-[10px] text-[#4a5e4a]">▼</span>
+              <span>{currentLang.short}</span>
+              <span className="text-[10px] text-[#1a2e1a] ml-0.5">▼</span>
             </button>
 
             {langOpen && (
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white/95 border border-[#84D175]/40 rounded-2xl shadow-xl overflow-hidden z-50 py-1 backdrop-blur-md animate-in">
-                <div className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#4a5e4a] border-b border-[#84D175]/20">
+              <div className="absolute right-0 top-full mt-2 w-48 bg-white/90 backdrop-blur-xl border border-[#84D175]/40 rounded-2xl shadow-xl overflow-hidden z-50 py-1 animate-in">
+                <div className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-[#1a2e1a] border-b border-[#84D175]/20">
                   {t('select_language', currentLanguage)}
                 </div>
                 {LANGUAGES.map((lang) => (
@@ -125,14 +121,14 @@ export default function Navbar({
                       onLanguageChange(lang.code);
                       setLangOpen(false);
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-all cursor-pointer ${
+                    className={`w-full flex items-center justify-between px-3 py-2 text-xs sm:text-sm transition-all cursor-pointer ${
                       lang.code === currentLanguage
-                        ? 'bg-[#84D175]/20 text-[#2D6A24] font-black'
-                        : 'text-[#1a2e1a] hover:bg-[#FFF8D2] font-semibold'
+                        ? 'bg-[#84D175]/25 text-[#2D6A24] font-bold'
+                        : 'text-[#1a2e1a] hover:bg-[#FFF8D2]/70 font-semibold'
                     }`}
                   >
                     <span>{lang.label}</span>
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#84D175]/20 text-[#2D6A24] font-bold">
+                    <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-[#84D175]/20 text-[#2D6A24] font-bold">
                       {lang.short}
                     </span>
                   </button>
@@ -141,49 +137,47 @@ export default function Navbar({
             )}
           </div>
 
-          {/* User Profile & Sign Out / Logout */}
-          <div className="flex items-center gap-1.5 bg-white/80 border border-[#84D175]/30 px-2 sm:px-2.5 py-1 rounded-xl shadow-xs">
-            <div className="w-6 h-6 rounded-full bg-[#84D175] text-[#1a2e1a] font-black text-[11px] flex items-center justify-center shrink-0">
+          {/* User Profile & Logout */}
+          <div className="flex items-center gap-1.5 bg-white/50 backdrop-blur-sm border border-[#84D175]/35 px-2.5 py-1 rounded-xl shadow-xs">
+            <div className="w-6 h-6 rounded-full bg-[#84D175] text-[#1a2e1a] font-bold text-xs flex items-center justify-center shrink-0">
               {user?.name?.[0]?.toUpperCase() || 'P'}
             </div>
             <button
               onClick={onSignOut}
-              className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-[#4a5e4a] hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer text-xs font-bold"
+              className="px-1.5 py-0.5 rounded-lg text-[#1a2e1a] hover:text-rose-600 hover:bg-rose-50/50 transition-colors cursor-pointer text-xs sm:text-sm font-bold"
               title="Sign Out to Landing Page"
             >
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Logout</span>
+              Logout
             </button>
           </div>
 
-          {/* Mobile hamburger button */}
+          {/* Mobile menu button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-xl bg-white/80 border border-[#84D175]/30 text-[#1a2e1a] hover:bg-[#FFF8D2] transition-colors cursor-pointer"
+            className="md:hidden px-3 py-1.5 rounded-xl bg-white/50 backdrop-blur-sm border border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#FFF8D2] transition-colors cursor-pointer text-xs sm:text-sm font-bold"
             aria-label="Toggle Navigation Menu"
           >
-            {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            {mobileMenuOpen ? 'Close' : 'Menu'}
           </button>
         </div>
       </div>
 
       {/* ── Mobile Navigation Drawer ── */}
       {mobileMenuOpen && (
-        <div className="md:hidden px-4 pt-2 pb-4 bg-[#FFF8D2]/95 border-b border-[#84D175]/40 space-y-2 animate-in backdrop-blur-lg">
+        <div className="md:hidden px-4 pt-2 pb-4 bg-[#FFF8D2]/95 backdrop-blur-xl border-b border-[#84D175]/30 space-y-2 animate-in">
           <div className="grid grid-cols-2 gap-2 pt-1">
             <button
               onClick={() => {
                 onStepChange?.('discover');
                 setMobileMenuOpen(false);
               }}
-              className={`flex items-center justify-center gap-2 p-3 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              className={`p-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer text-center ${
                 activeStep === 'discover' || activeStep === 'customize' || activeStep === 'optimize' || activeStep === 'confirm'
                   ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs'
-                  : 'bg-white/80 border border-[#84D175]/30 text-[#1a2e1a]'
+                  : 'bg-white/60 border border-[#84D175]/30 text-[#1a2e1a]'
               }`}
             >
-              <Layers className="w-4 h-4" />
-              <span>{t('curated_packages', currentLanguage)}</span>
+              {t('curated_packages', currentLanguage)}
             </button>
 
             <button
@@ -191,14 +185,13 @@ export default function Navbar({
                 onStepChange?.('architect');
                 setMobileMenuOpen(false);
               }}
-              className={`flex items-center justify-center gap-2 p-3 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              className={`p-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer text-center ${
                 activeStep === 'architect'
                   ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs'
-                  : 'bg-white/80 border border-[#84D175]/30 text-[#1a2e1a]'
+                  : 'bg-white/60 border border-[#84D175]/30 text-[#1a2e1a]'
               }`}
             >
-              <Compass className="w-4 h-4" />
-              <span>{t('custom_architect', currentLanguage)}</span>
+              {t('custom_architect', currentLanguage)}
             </button>
           </div>
 
@@ -207,9 +200,9 @@ export default function Navbar({
               onOpenAiPlanner?.();
               setMobileMenuOpen(false);
             }}
-            className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-xs shadow-md transition-all cursor-pointer"
+            className="w-full p-3.5 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-bold text-sm shadow-md transition-all cursor-pointer text-center flex items-center justify-center gap-2"
           >
-            <Sparkles className="w-4 h-4" />
+            <Bot className="w-4 h-4 text-[#1a2e1a]" />
             <span>{t('ai_builder', currentLanguage)}</span>
           </button>
 
@@ -218,10 +211,9 @@ export default function Navbar({
               onSignOut?.();
               setMobileMenuOpen(false);
             }}
-            className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-white border border-rose-200 text-rose-700 font-bold text-xs shadow-xs hover:bg-rose-50 transition-all cursor-pointer"
+            className="w-full p-3 rounded-xl bg-white/60 border border-rose-200 text-rose-700 font-bold text-xs sm:text-sm shadow-xs hover:bg-rose-50 transition-all cursor-pointer text-center"
           >
-            <LogOut className="w-4 h-4" />
-            <span>Sign Out to Landing Page</span>
+            Sign Out to Landing Page
           </button>
         </div>
       )}

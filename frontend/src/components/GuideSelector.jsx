@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
-import {
-  UserCheck, AlertTriangle, CheckCircle2, Star, Languages, BadgeCheck,
-  ArrowRight, ShieldAlert, Sparkles, Clock
-} from 'lucide-react';
 
 export default function GuideSelector({
   packageId,
@@ -25,7 +21,6 @@ export default function GuideSelector({
 
   const guideList = Array.isArray(guides) ? guides : (guides?.guides || []);
 
-  // Sync guides whenever availableGuides prop updates
   useEffect(() => {
     if (availableGuides) {
       const gList = Array.isArray(availableGuides) ? availableGuides : (availableGuides?.guides || []);
@@ -33,7 +28,6 @@ export default function GuideSelector({
     }
   }, [availableGuides]);
 
-  // Fetch or update available guides when city, language or specialisation changes
   useEffect(() => {
     async function loadGuides() {
       if (!cityId) return;
@@ -57,7 +51,6 @@ export default function GuideSelector({
     loadGuides();
   }, [cityId, preferredLanguage, specialisationFilter]);
 
-  // Check availability whenever selectedGuide or startDate changes (§2.2 Mandatory Enhancement)
   useEffect(() => {
     async function verifyGuide() {
       if (!selectedGuide || !startDate) {
@@ -106,7 +99,6 @@ export default function GuideSelector({
       day_rate: substitute.day_rate,
       currency: substitute.currency
     };
-    // Ensure substitute is incorporated into the local guides dropdown list
     setGuides(prev => {
       const list = Array.isArray(prev) ? prev : (prev?.guides || []);
       if (!list.some(g => g.guide_id === substitute.guide_id)) {
@@ -120,27 +112,22 @@ export default function GuideSelector({
   const guideDisplayName = selectedGuide?.display_name || selectedGuide?.name || 'Local Guide';
 
   return (
-    <div className="bg-[#fffbeb] border-2 border-[#fcd34d] rounded-3xl p-6 space-y-4 shadow-sm text-slate-900">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div className="flex items-center space-x-2.5">
-          <div className="p-2.5 rounded-2xl bg-amber-500/20 text-amber-900 font-bold flex items-center justify-center">
-            <UserCheck className="w-5 h-5 text-amber-900" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              Optional Local Tour Guide
-            </h3>
-            <p className="text-xs text-slate-600">
-              Add a certified local expert matching your preferred language
-            </p>
-          </div>
+    <div className="bg-white/60 backdrop-blur-md border border-[#84D175]/40 rounded-3xl p-6 space-y-4 shadow-xs text-[#1a2e1a]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#84D175]/25 pb-3">
+        <div>
+          <h3 className="text-lg sm:text-xl font-serif font-bold text-[#1a2e1a]">
+            Optional Local Tour Guide
+          </h3>
+          <p className="text-sm sm:text-base text-[#1a2e1a] font-medium">
+            Add a certified local guide speaking your preferred language
+          </p>
         </div>
 
         {/* Filter by Specialisation */}
         <select
           value={specialisationFilter}
           onChange={(e) => setSpecialisationFilter(e.target.value)}
-          className="bg-white border border-amber-300 text-xs font-semibold text-slate-800 rounded-xl px-2.5 py-1.5 focus:outline-none cursor-pointer"
+          className="bg-white/90 backdrop-blur-sm border border-[#84D175]/45 text-sm font-bold text-[#1a2e1a] rounded-xl px-4 py-2.5 focus:outline-none cursor-pointer shadow-xs"
         >
           <option value="">All Specialisations</option>
           <option value="heritage">Heritage</option>
@@ -158,7 +145,7 @@ export default function GuideSelector({
           <select
             value={selectedGuide?.guide_id || ''}
             onChange={(e) => handleGuideChange(e.target.value)}
-            className="w-full bg-white border border-amber-300 rounded-2xl p-3 text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-500 cursor-pointer shadow-xs"
+            className="w-full bg-white/90 backdrop-blur-sm border border-[#84D175]/45 rounded-2xl p-4 text-sm sm:text-base font-bold text-[#1a2e1a] focus:outline-none focus:border-[#84D175] cursor-pointer shadow-xs"
           >
             <option value="">-- No Guide Selected (Self-Guided / {currencySymbol}0) --</option>
             {guideList.map((g) => {
@@ -170,7 +157,7 @@ export default function GuideSelector({
 
               return (
                 <option key={g.guide_id} value={g.guide_id}>
-                  {name} ★ {rating} ({langs}) • {spec} • {currencySymbol}{rate.toLocaleString('en-IN')}/day
+                  {name} (Rating: {rating}) · {langs} · {spec} · {currencySymbol}{rate.toLocaleString('en-IN')}/day
                 </option>
               );
             })}
@@ -180,46 +167,40 @@ export default function GuideSelector({
 
       {/* Selected Guide Details Card */}
       {selectedGuide && (
-        <div className="bg-white border border-amber-200 rounded-2xl p-4 space-y-3">
+        <div className="bg-white/75 backdrop-blur-md border border-[#84D175]/40 rounded-2xl p-5 space-y-3.5">
           <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center space-x-2">
-                <span className="font-bold text-slate-900 text-sm">{guideDisplayName}</span>
-                <span className="flex items-center text-xs text-amber-900 font-bold bg-amber-100 px-2 py-0.5 rounded-full">
-                  <Star className="w-3 h-3 fill-current mr-1 text-amber-500" />
-                  {selectedGuide.rating || '4.9'}
+            <div className="space-y-1.5">
+              <div className="flex items-center space-x-2.5">
+                <span className="font-serif font-bold text-[#1a2e1a] text-xl">{guideDisplayName}</span>
+                <span className="text-xs sm:text-sm text-[#2D6A24] font-bold bg-[#84D175]/30 px-3 py-0.5 rounded-full border border-[#84D175]/40">
+                  Rating: {selectedGuide.rating || '4.9'}
                 </span>
-                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <BadgeCheck className="w-3 h-3" />
+                <span className="text-xs sm:text-sm bg-[#84D175]/25 text-[#2D6A24] font-bold px-3 py-0.5 rounded-full">
                   Certified
                 </span>
               </div>
-              <div className="text-xs text-slate-500 flex items-center space-x-3">
-                <span className="flex items-center">
-                  <Languages className="w-3 h-3 mr-1 text-slate-400" />
-                  {selectedGuide.languages || 'English, Hindi'}
-                </span>
-                <span>•</span>
-                <span className="capitalize font-medium">{selectedGuide.specialisation || 'Heritage'} Guide</span>
+              <div className="text-sm sm:text-base text-[#1a2e1a] flex items-center space-x-2 font-bold">
+                <span>{selectedGuide.languages || 'English, Hindi'}</span>
+                <span>·</span>
+                <span className="capitalize">{selectedGuide.specialisation || 'Heritage'} Guide</span>
               </div>
             </div>
 
             <div className="text-right">
-              <div className="text-sm font-black text-slate-900 font-mono">
+              <div className="text-xl font-serif font-bold text-[#1a2e1a]">
                 {currencySymbol}{parseFloat(selectedGuide.day_rate || 3500).toLocaleString('en-IN')}
-                <span className="text-xs font-normal text-slate-500"> /day</span>
+                <span className="text-xs sm:text-sm font-bold text-[#1a2e1a]"> /day</span>
               </div>
-              <div className="text-[10px] text-slate-400">
+              <div className="text-xs sm:text-sm text-[#1a2e1a] font-semibold">
                 {currencySymbol}{(parseFloat(selectedGuide.day_rate || 3500) * durationDays).toLocaleString('en-IN')} total ({durationDays} days)
               </div>
             </div>
           </div>
 
-          {/* §2.2 Availability Verification Status Box */}
+          {/* §2.2 Availability Verification Status */}
           {checkingAvailability && (
-            <div className="flex items-center space-x-2 text-xs text-amber-700 bg-amber-50 p-2.5 rounded-xl animate-pulse">
-              <Clock className="w-4 h-4 text-amber-600 animate-spin" />
-              <span>Verifying guide calendar across trip dates ({startDate} to Day {durationDays})...</span>
+            <div className="text-sm text-[#2D6A24] bg-[#84D175]/25 p-3 rounded-xl font-bold animate-pulse">
+              Verifying guide calendar across trip dates ({startDate} to Day {durationDays})...
             </div>
           )}
 
@@ -232,55 +213,47 @@ export default function GuideSelector({
             return (
               <div>
                 {isAvailable ? (
-                  <div className="flex items-center space-x-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl font-bold">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>
-                      ✓ Confirmed Available for all {durationDays} day(s) of your itinerary!
-                    </span>
+                  <div className="text-sm text-[#2D6A24] bg-[#84D175]/25 border border-[#84D175]/45 p-3 rounded-xl font-bold">
+                    Confirmed Available for all {durationDays} day(s) of your itinerary.
                   </div>
                 ) : (
-                  /* Clashing Date Refusal & Matching Substitute (§2.2 Mandatory Enhancement) */
-                  <div className="space-y-3 bg-rose-50/80 border border-rose-200 p-3.5 rounded-2xl text-xs">
-                    <div className="flex items-start space-x-2 text-rose-800">
-                      <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                      <div>
-                        <span className="font-bold block text-sm">Selection Refused — Date Clash</span>
-                        <span className="text-rose-700">
-                          <strong>{selectedGuide.display_name || selectedGuide.name}</strong> is unavailable {clashDate ? <>on <span className="font-black underline decoration-rose-500 bg-rose-100/80 px-1.5 py-0.5 rounded text-rose-900">{clashDate}</span></> : 'during the requested itinerary dates'}.
-                        </span>
-                      </div>
+                  /* Clashing Date Refusal & Matching Substitute */
+                  <div className="space-y-3.5 bg-rose-50/90 backdrop-blur-sm border border-rose-300 p-4 rounded-2xl text-sm">
+                    <div className="space-y-1 text-rose-800">
+                      <span className="font-serif font-bold block text-base sm:text-lg">Selection Refused — Date Clash</span>
+                      <span className="text-rose-900 font-semibold leading-relaxed">
+                        <strong>{selectedGuide.display_name || selectedGuide.name}</strong> is unavailable {clashDate ? <>on <span className="font-bold underline decoration-rose-500 bg-rose-100/90 px-2 py-0.5 rounded text-rose-950">{clashDate}</span></> : 'during the requested itinerary dates'}.
+                      </span>
                     </div>
 
-                    {/* Matching Substitute Guide Offer (§2.2) */}
+                    {/* Matching Substitute Guide Offer */}
                     {substitute && (
-                      <div className="bg-white border border-amber-300 rounded-xl p-3 space-y-2 shadow-xs">
+                      <div className="bg-white/90 backdrop-blur-sm border border-[#84D175]/45 rounded-xl p-4 space-y-2.5 shadow-xs">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 flex items-center gap-1">
-                            <Sparkles className="w-3 h-3 text-amber-600" />
+                          <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#2D6A24]">
                             Recommended Matching Substitute
                           </span>
-                          <span className="text-[10px] font-bold text-slate-500">
+                          <span className="text-xs sm:text-sm text-[#1a2e1a] font-bold">
                             Same Language ({substitute.languages}) & Specialisation ({substitute.specialisation})
                           </span>
                         </div>
 
-                        <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center justify-between gap-3">
                           <div>
-                            <div className="font-bold text-slate-900 text-xs">
+                            <div className="font-serif font-bold text-[#1a2e1a] text-lg">
                               {substitute.display_name}
                             </div>
-                            <div className="text-[10px] text-slate-500">
-                              ★ {substitute.rating || '4.9'} • {guideCurrencySymbol}{parseFloat(substitute.day_rate || 3500).toLocaleString('en-IN')}/day
+                            <div className="text-xs sm:text-sm text-[#1a2e1a] font-bold">
+                              Rating: {substitute.rating || '4.9'} · {guideCurrencySymbol}{parseFloat(substitute.day_rate || 3500).toLocaleString('en-IN')}/day
                             </div>
                           </div>
 
                           <button
                             type="button"
                             onClick={() => handleAcceptSubstitute(substitute)}
-                            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-lg transition-all flex items-center space-x-1 cursor-pointer shadow-xs shrink-0"
+                            className="px-5 py-2.5 bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-bold text-xs sm:text-sm rounded-xl transition-all cursor-pointer shadow-xs shrink-0"
                           >
-                            <span>Accept Substitute</span>
-                            <ArrowRight className="w-3 h-3" />
+                            Accept Substitute
                           </button>
                         </div>
                       </div>

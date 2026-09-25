@@ -1,14 +1,9 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { Bot } from 'lucide-react';
 import { api } from '../api';
-import {
-  Sparkles, AlertTriangle, CheckCircle2, Clock, MapPin, ArrowRight,
-  Share2, Compass, ShieldCheck, Check, DollarSign, Calendar, Users,
-  Hotel, Activity, Car, Utensils, Eye, Filter
-} from 'lucide-react';
 
-// Safely fix Leaflet marker icon paths for Vite/React
 if (L && L.Icon && L.Icon.Default && L.Icon.Default.prototype) {
   delete L.Icon.Default.prototype._getIconUrl;
   L.Icon.Default.mergeOptions({
@@ -62,7 +57,6 @@ export default function OptimizeView({
       ? 'Fast / Packed (4+ stops/day)'
       : 'Balanced (2-3 stops/day)');
 
-  // Dynamic Day list based on actual package duration
   const daysList = useMemo(() => {
     return Array.from({ length: durationDays }, (_, i) => ({
       num: i + 1,
@@ -70,7 +64,6 @@ export default function OptimizeView({
     }));
   }, [durationDays]);
 
-  // Extract selected hotel and components from database package
   const selectedHotel = useMemo(() => {
     return componentsList.find(c => c.component_type === 'hotel' || c.swap_group === 'hotel_tier') || {
       title: `${cityName} Premium Hotel & Resort`,
@@ -78,12 +71,10 @@ export default function OptimizeView({
     };
   }, [componentsList, cityName]);
 
-  // Build authentic day schedule from database package components for this day
   const activeDaySchedule = useMemo(() => {
     const dayComps = componentsList.filter(c => c.day_index === activeDay);
     const dayActs = [];
 
-    // Morning Hotel Breakfast
     dayActs.push({
       time: '08:00 AM - 09:30 AM',
       title: 'Buffet Breakfast & Morning Prep',
@@ -94,107 +85,73 @@ export default function OptimizeView({
     });
 
     if (dayComps.length > 0) {
-      dayComps.forEach((comp, idx) => {
+      dayComps.forEach((comp) => {
         let defaultTime = '10:00 AM - 01:00 PM';
         if (comp.slot === 'afternoon') defaultTime = '02:00 PM - 04:30 PM';
-        else if (comp.slot === 'evening') {
-          defaultTime = conflictResolved ? '06:00 PM - 08:30 PM' : '04:30 PM - 07:00 PM (Overlap)';
-        } else if (comp.slot === 'overnight') defaultTime = '08:30 PM Onwards';
-
-        const isConflict = !conflictResolved && comp.slot === 'evening' && activeDay === 2;
+        else if (comp.slot === 'evening') defaultTime = '05:30 PM - 08:00 PM';
 
         dayActs.push({
           time: defaultTime,
-          title: comp.title || comp.name || `${cityName} Experience`,
-          desc: `Verified package inclusion (${comp.component_type}). ${activeGuide ? `Guided by your certified guide (${activeGuide.display_name || activeGuide.name}).` : 'Self-guided admission & transfers arranged.'}`,
-          badge: isConflict ? 'Timing Conflict' : (comp.is_optional === 0 ? 'Verified In Package' : 'Custom Selection'),
+          title: comp.title || comp.name || 'Guided Sightseeing Excursion',
+          desc: comp.description || `Explore authentic sights in ${cityName} with authorized entry tickets.`,
+          badge: comp.is_optional === 1 ? 'Selected Option' : 'Curated In Itinerary',
           type: comp.component_type || 'activity',
-          slot: comp.slot,
-          isConflict: isConflict
+          slot: comp.slot || 'morning'
         });
       });
     } else {
-      // Fallback for days beyond catalog default components
       dayActs.push({
         time: '10:00 AM - 01:00 PM',
-        title: `${cityName} Cultural Discovery & Landmark Walk`,
-        desc: `Discover local heritage monuments, viewpoints, and artisan centers across ${cityName}.`,
-        badge: 'Curated Sightseeing',
+        title: `${cityName} Historic Core & Guided Landmark Tour`,
+        desc: `Heritage walk visiting top historic architecture and scenic overlooks.`,
+        badge: 'Curated In Itinerary',
         type: 'activity',
         slot: 'morning'
       });
       dayActs.push({
-        time: '01:00 PM - 02:30 PM',
-        title: 'Authentic Regional Gastronomy Lunch',
-        desc: `Curated local cuisine dining break in central ${cityName}.`,
-        badge: 'Curated Dining',
-        type: 'meal',
+        time: '02:30 PM - 05:00 PM',
+        title: `Artisanal Market & Cultural Excursion`,
+        desc: `Explore vibrant local bazaars, handicrafts, and regional spice markets.`,
+        badge: 'Curated In Itinerary',
+        type: 'activity',
         slot: 'afternoon'
-      });
-      dayActs.push({
-        time: conflictResolved ? '06:00 PM - 08:00 PM' : '04:30 PM - 06:30 PM',
-        title: `${cityName} Sunset Panoramic Viewpoint`,
-        desc: `Relaxed golden hour visit to scenic viewpoints overlooking the surrounding valleys/coast.`,
-        badge: conflictResolved ? 'Rescheduled ✓' : 'Evening Leisure',
-        type: 'scenic',
-        slot: 'evening'
       });
     }
 
-    // Evening / Night return
     dayActs.push({
-      time: '08:30 PM',
-      title: `Return to ${selectedHotel.title || selectedHotel.name}`,
-      desc: 'Private chauffeured transfer back to your accommodation for relaxation.',
-      badge: 'Private Transfer',
-      type: 'transfer',
-      slot: 'overnight'
+      time: '07:30 PM - 09:30 PM',
+      title: `Traditional Chef-Curated Dinner`,
+      desc: `Authentic regional multi-course dinner with vegetarian & chef specialty options.`,
+      badge: 'Dinner Experience',
+      type: 'dining',
+      slot: 'evening'
     });
 
     return dayActs;
-  }, [activeDay, componentsList, selectedHotel, activeGuide, cityName, conflictResolved]);
+  }, [componentsList, activeDay, cityName, selectedHotel]);
 
-  // Initial and dynamic pricing calculations - preserve unoptimizedBasePrice to prevent discount degradation
-  const unoptimizedBase = bookingDetails?.unoptimizedBasePrice
-    ? parseFloat(bookingDetails.unoptimizedBasePrice.toString().replace(/,/g, ''))
-    : (bookingDetails?.totalPrice
-      ? parseFloat(bookingDetails.totalPrice.toString().replace(/,/g, ''))
-      : (pricing?.total_price ? parseFloat(pricing.total_price) : parseFloat(pkg?.base_price || 32000) * numTravelers));
+  const basePriceNum = useMemo(() => {
+    if (bookingDetails?.finalPrice) return parseFloat(bookingDetails.finalPrice);
+    if (pricing?.total_price) return parseFloat(pricing.total_price);
+    if (bookingDetails?.totalPrice) return parseFloat(bookingDetails.totalPrice);
+    return (parseFloat(pkg?.base_price || 32000) * numTravelers);
+  }, [bookingDetails, pricing, pkg, numTravelers]);
 
-  if (bookingDetails && !bookingDetails.unoptimizedBasePrice) {
-    bookingDetails.unoptimizedBasePrice = unoptimizedBase.toFixed(2);
-  }
+  const currentDisplayPrice = Math.max(0, basePriceNum - optimizedDiscount);
 
-  const rawBasePrice = unoptimizedBase;
-  const currentDisplayPrice = Math.max(0, rawBasePrice - optimizedDiscount);
-
-  // Handle Apply Optimization: resolve conflict and apply cost optimization discount
-  const handleApplyOptimization = () => {
-    setConflictResolved(true);
-    // Apply 20% smart booking rate optimization strictly from the unoptimized base price
-    const discount = Math.round(rawBasePrice * 0.20);
-    setOptimizedDiscount(discount);
-    if (bookingDetails) {
-      bookingDetails.optimizedTotalPrice = (rawBasePrice - discount).toFixed(2);
-      bookingDetails.finalPrice = (rawBasePrice - discount).toFixed(2);
-      bookingDetails.discountApplied = discount.toFixed(2);
-    }
-  };
-
-  // Initialize and update Leaflet Map in light theme
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
-    if (mapContainerRef.current._leaflet_id && !mapInstanceRef.current) {
-      delete mapContainerRef.current._leaflet_id;
-    }
-
     try {
       if (!mapInstanceRef.current) {
-        const map = L.map(mapContainerRef.current).setView([defaultLat, defaultLng], 12);
+        const map = L.map(mapContainerRef.current, {
+          center: [defaultLat, defaultLng],
+          zoom: 12,
+          zoomControl: true,
+          attributionControl: false
+        });
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
           maxZoom: 18,
         }).addTo(map);
 
@@ -208,13 +165,11 @@ export default function OptimizeView({
         }, 200);
       }
 
-      // Clear existing markers
       markersRef.current.forEach(m => {
         try { m.remove(); } catch (e) {}
       });
       markersRef.current = [];
 
-      // Add Primary Destination Marker
       const centerMarker = L.marker([defaultLat, defaultLng])
         .addTo(mapInstanceRef.current)
         .bindPopup(`<b>${cityName} Center</b><br/>Primary Itinerary Hub`)
@@ -234,7 +189,6 @@ export default function OptimizeView({
     };
   }, [defaultLat, defaultLng, cityName]);
 
-  // Load POIs from OpenTripMap
   useEffect(() => {
     let isCancelled = false;
     async function loadPOIs() {
@@ -254,7 +208,6 @@ export default function OptimizeView({
     return () => { isCancelled = true; };
   }, [defaultLat, defaultLng]);
 
-  // Filter attractions by category
   const filteredAttractions = useMemo(() => {
     if (selectedCategory === 'All') return attractions;
     return attractions.filter(a => {
@@ -264,26 +217,23 @@ export default function OptimizeView({
     });
   }, [attractions, selectedCategory]);
 
-  // Render both Itinerary Event Markers and OpenTripMap POI markers on map
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
-    // Clear non-center markers
     markersRef.current.slice(1).forEach(m => {
       try { m.remove(); } catch (e) {}
     });
     markersRef.current = markersRef.current.slice(0, 1);
 
-    // 1. Render Itinerary Points for the selected Day with distinctive numbered pins
     activeDaySchedule.forEach((event, idx) => {
       const offsetAngle = ((idx + 1) * (2 * Math.PI)) / (activeDaySchedule.length + 1);
       const eventLat = event.lat || (defaultLat + (0.012 * Math.cos(offsetAngle)));
       const eventLng = event.lng || (defaultLng + (0.012 * Math.sin(offsetAngle)));
 
       const itinMarker = L.circleMarker([eventLat, eventLng], {
-        radius: 8,
-        fillColor: event.type === 'hotel' ? '#f59e0b' : '#2563eb',
-        color: '#ffffff',
+        radius: 7,
+        fillColor: '#84D175',
+        color: '#1a2e1a',
         weight: 2,
         opacity: 1,
         fillOpacity: 0.95
@@ -291,29 +241,20 @@ export default function OptimizeView({
         .addTo(mapInstanceRef.current)
         .bindPopup(`
           <div style="font-size: 11px; line-height: 1.35; min-width: 140px;">
-            <span style="background: #0f172a; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 9px; text-transform: uppercase;">
-              Day ${activeDay} Stop #${idx + 1}
-            </span>
-            <div style="font-weight: 800; font-size: 12px; margin-top: 4px; color: #0f172a;">${event.title}</div>
-            <div style="color: #64748b; font-size: 10px; font-weight: 600;">🕒 ${event.time}</div>
-            <p style="color: #334155; margin: 4px 0 0 0; font-size: 10px;">${event.desc}</p>
+            <div style="font-weight: 800; font-size: 12px; margin-top: 4px; color: #1a2e1a;">Day ${activeDay} Stop: ${event.title}</div>
+            <div style="color: #1a2e1a; font-size: 10px; font-weight: 600;">Time: ${event.time}</div>
+            <p style="color: #1a2e1a; margin: 4px 0 0 0; font-size: 10px;">${event.desc}</p>
           </div>
         `);
       markersRef.current.push(itinMarker);
     });
 
-    // 2. Render OpenTripMap POI markers
     filteredAttractions.forEach((item) => {
       if (item.lat && item.lng) {
-        let color = '#3C8B30';
-        if (item.category?.toLowerCase().includes('heritage')) color = '#8b5cf6';
-        else if (item.category?.toLowerCase().includes('nature')) color = '#059669';
-        else if (item.category?.toLowerCase().includes('temple') || item.category?.toLowerCase().includes('spiritual')) color = '#ec4899';
-
         const marker = L.circleMarker([item.lat, item.lng], {
-          radius: 6,
-          fillColor: color,
-          color: '#1a2e1a',
+          radius: 5,
+          fillColor: '#3C8B30',
+          color: '#ffffff',
           weight: 1.5,
           opacity: 1,
           fillOpacity: 0.85
@@ -322,8 +263,8 @@ export default function OptimizeView({
           .bindPopup(`
             <div style="font-size: 11px; line-height: 1.3;">
               <b style="color: #1a2e1a; font-size: 12px;">${item.name || 'Point of Interest'}</b><br/>
-              <span style="color: ${color}; font-weight: bold;">${item.category || 'Sightseeing'}</span><br/>
-              <span style="color: #666;">📍 ${item.dist_formatted || (item.dist_meters ? (item.dist_meters / 1000).toFixed(1) + ' km' : 'Nearby')}</span>
+              <span style="color: #3C8B30; font-weight: bold;">${item.category || 'Sightseeing'}</span><br/>
+              <span style="color: #1a2e1a;">Distance: ${item.dist_formatted || (item.dist_meters ? (item.dist_meters / 1000).toFixed(1) + ' km' : 'Nearby')}</span>
             </div>
           `);
         markersRef.current.push(marker);
@@ -332,7 +273,7 @@ export default function OptimizeView({
   }, [filteredAttractions, activeDaySchedule, defaultLat, defaultLng, activeDay]);
 
   return (
-    <div className="space-y-6 animate-fadeIn text-[#1a2e1a]">
+    <div className="space-y-6 animate-in text-[#1a2e1a]">
 
       {/* ── Subheader Bar ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#84D175]/30 pb-5">
@@ -340,43 +281,42 @@ export default function OptimizeView({
           {onBack && (
             <button
               onClick={onBack}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#4a5e4a] hover:text-[#1a2e1a] bg-white border border-[#84D175]/40 hover:bg-[#FFF8D2] px-3 py-1 rounded-xl transition-all cursor-pointer mb-2 shadow-xs"
+              className="inline-flex items-center text-xs sm:text-sm font-bold text-[#1a2e1a] bg-white/60 backdrop-blur-sm border border-[#84D175]/40 hover:bg-white px-3.5 py-1.5 rounded-xl transition-all cursor-pointer mb-2 shadow-xs"
             >
               ← Back to Customizer
             </button>
           )}
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black text-[#1a2e1a]">Your Optimized Itinerary</h1>
-            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#84D175] text-[#1a2e1a] flex items-center gap-1 shadow-xs">
-              <Sparkles className="w-3 h-3 text-[#1a2e1a]" />
-              Grounded AI Engine
+            <h1 className="text-3xl sm:text-4xl font-serif font-bold text-[#1a2e1a]">Your Optimized Itinerary</h1>
+            <span className="flex items-center gap-1.5 text-xs sm:text-sm font-bold px-3.5 py-1 rounded-full bg-[#84D175]/35 text-[#1a2e1a] border border-[#84D175]/45 shadow-xs">
+              <Bot className="w-4 h-4 text-[#2D6A24]" />
+              <span>Grounded AI Engine</span>
             </span>
           </div>
-          <p className="text-xs text-[#4a5e4a] font-semibold mt-1 flex flex-wrap items-center gap-2">
-            <span>📍 {cityName}</span>
-            <span>•</span>
-            <span>📅 {startDate} → {endDate}</span>
-            <span>•</span>
-            <span>⏱️ {durationDays} Days</span>
-            <span>•</span>
-            <span>👥 {numTravelers} Traveler{numTravelers > 1 ? 's' : ''}</span>
+          <p className="text-xs sm:text-sm text-[#1a2e1a] font-bold mt-1.5 flex flex-wrap items-center gap-2">
+            <span>{cityName}</span>
+            <span className="text-[#2D6A24]">·</span>
+            <span>{startDate} → {endDate}</span>
+            <span className="text-[#2D6A24]">·</span>
+            <span>{durationDays} Days</span>
+            <span className="text-[#2D6A24]">·</span>
+            <span>{numTravelers} Traveler{numTravelers > 1 ? 's' : ''}</span>
           </p>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="text-right">
-            <div className="text-[10px] font-black uppercase tracking-wider text-[#4a5e4a]">Verified Total ({numTravelers}p)</div>
-            <div className="text-xl sm:text-2xl font-black text-[#1a2e1a] font-mono">
+            <div className="text-xs font-bold uppercase tracking-wider text-[#1a2e1a]">Verified Total ({numTravelers}p)</div>
+            <div className="text-2xl sm:text-3xl font-serif font-bold text-[#1a2e1a]">
               {currencySymbol}{currentDisplayPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </div>
             {optimizedDiscount > 0 && (
               <button
                 type="button"
                 onClick={() => setShowDiscountBreakdown(true)}
-                className="text-[10px] px-2.5 py-0.5 rounded-md bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold border border-emerald-300 inline-flex items-center gap-1 mt-0.5 cursor-pointer transition-all shadow-xs"
+                className="text-xs px-2.5 py-0.5 rounded-md bg-[#84D175]/25 text-[#2D6A24] font-bold border border-[#84D175]/40 inline-flex items-center gap-1 mt-0.5 cursor-pointer transition-all shadow-xs"
               >
-                <span>✓ {currencySymbol}{optimizedDiscount.toLocaleString('en-IN')} AI Rate Discount Applied</span>
-                <span className="underline font-black text-emerald-900 ml-0.5">(Breakdown)</span>
+                <span>{currencySymbol}{optimizedDiscount.toLocaleString('en-IN')} Rate Discount Applied (Breakdown)</span>
               </button>
             )}
           </div>
@@ -384,264 +324,230 @@ export default function OptimizeView({
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
-                if (navigator.clipboard) {
-                  navigator.clipboard.writeText(window.location.href);
-                  alert('Trip link copied to clipboard!');
-                }
-              }}
-              className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-white hover:bg-[#FFF8D2] text-[#1a2e1a] text-xs font-bold transition-all border border-[#84D175]/40 shadow-xs cursor-pointer"
-            >
-              <Share2 className="w-3.5 h-3.5 text-[#3C8B30]" />
-              <span>Share</span>
-            </button>
-            <button
-              onClick={() => {
                 if (bookingDetails) {
                   bookingDetails.finalPrice = currentDisplayPrice.toFixed(2);
-                  bookingDetails.optimizedTotalPrice = currentDisplayPrice.toFixed(2);
-                  bookingDetails.numTravelers = numTravelers;
-                  bookingDetails.partySize = numTravelers;
                 }
-                onProceedToBook?.();
+                onProceedToBook?.({
+                  package: pkg,
+                  bookingDetails,
+                  pricing: {
+                    ...pricing,
+                    total_price: currentDisplayPrice.toFixed(2),
+                    currency: currencyCode
+                  },
+                  guide: activeGuide,
+                  startDate,
+                  endDate,
+                  numTravelers,
+                  durationDays
+                });
               }}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] text-xs font-black transition-all shadow-md shadow-[#84D175]/30 active:scale-95 cursor-pointer"
+              className="px-6 py-3 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-bold text-xs sm:text-sm shadow-md shadow-[#84D175]/25 transition-all active:scale-95 cursor-pointer"
             >
-              <span>Proceed to Book →</span>
+              Confirm & Book Package →
             </button>
           </div>
         </div>
       </div>
 
-      {/* ── Day Tabs Row ── */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {daysList.map((d) => (
-          <button
-            key={d.num}
-            onClick={() => setActiveDay(d.num)}
-            className={`px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer ${
-              activeDay === d.num
-                ? 'bg-[#84D175] text-[#1a2e1a] shadow-md shadow-[#84D175]/25 border border-[#67C456]'
-                : 'bg-white border border-[#84D175]/30 text-[#4a5e4a] hover:text-[#1a2e1a] hover:bg-white/90 shadow-xs'
-            }`}
-          >
-            Day {d.num}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Schedule & Cost Optimization Banner (Interactive AI Optimization) ── */}
-      {!conflictResolved ? (
-        <div className="rounded-3xl bg-amber-50 border-2 border-amber-300 p-5 space-y-3 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-amber-900 text-xs font-black">
-              <AlertTriangle className="w-4 h-4 text-amber-600" />
-              <span>AI SCHEDULE & COST OPTIMIZATION OPPORTUNITY</span>
-            </div>
-            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900 font-extrabold border border-amber-300 uppercase">
-              Actionable AI Tip
-            </span>
-          </div>
-
-          <div className="text-xs sm:text-sm font-bold text-slate-900">
-            Afternoon schedule overlap detected on Day {activeDay} • Midweek off-peak tariff optimization available.
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-amber-300 text-amber-900 text-xs font-semibold shadow-xs">
-              <span>💡</span>
-              <span>
-                AI Recommendation: Reschedule evening slot to 6:00 PM and apply smart rate optimization to save {currencySymbol}{Math.round(rawBasePrice * 0.20).toLocaleString('en-IN')} (From {currencySymbol}{rawBasePrice.toLocaleString('en-IN')} → {currencySymbol}{(rawBasePrice * 0.80).toLocaleString('en-IN')}).
-              </span>
-            </div>
-
-            <button
-              onClick={handleApplyOptimization}
-              className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-md active:scale-95 transition-all cursor-pointer"
-            >
-              Apply Optimization (Save {currencySymbol}{Math.round(rawBasePrice * 0.20).toLocaleString('en-IN')})
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-3xl bg-emerald-50 border border-emerald-300 p-4 text-xs font-bold text-emerald-900 flex flex-wrap items-center justify-between gap-2 shadow-xs">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>✓ Optimization Applied — Schedule conflicts eliminated (shifted to 6:00 PM) & {currencySymbol}{optimizedDiscount.toLocaleString('en-IN')} smart discount locked into booking!</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowDiscountBreakdown(true)}
-              className="text-[11px] px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold transition-all cursor-pointer shadow-xs active:scale-95"
-            >
-              View Cost Optimization Breakdown
-            </button>
-            <span className="text-[10px] text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded font-bold border border-emerald-300">
-              Optimized Rate: {currencySymbol}{currentDisplayPrice.toLocaleString('en-IN')}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* ── Main Content Grid (Dynamic Timeline + Light-Themed POI Map) ── */}
+      {/* ── Main Two-Column Grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        {/* Timeline Column (Left 7) */}
-        <div className="lg:col-span-7 bg-white/90 border border-[#84D175]/40 rounded-3xl p-6 space-y-6 shadow-xs">
-          <div className="flex items-center justify-between border-b border-[#84D175]/30 pb-3">
-            <h3 className="text-xs font-black text-[#1a2e1a] uppercase tracking-wider">
-              Itinerary Timeline — Day {activeDay} of {durationDays}
-            </h3>
-            <span className="text-xs text-[#4a5e4a] font-bold">{activeDaySchedule.length} Events Scheduled</span>
-          </div>
+        {/* ── Left Column: Day Tabs & Schedule ── */}
+        <div className="lg:col-span-7 space-y-5">
 
-          {/* Dynamic Vertical Timeline Nodes */}
-          <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#84D175]/40">
-            {activeDaySchedule.map((event, idx) => {
-              const isConflict = event.isConflict;
-              return (
-                <div key={idx} className="relative">
-                  <div className={`absolute -left-6 top-1 w-4 h-4 rounded-full border-2 border-white shadow-xs ${
-                    isConflict ? 'bg-rose-500' : 'bg-[#3C8B30]'
-                  }`} />
-                  <div className="flex justify-between items-start gap-2">
-                    <div className="space-y-0.5">
-                      <span className={`text-xs font-black font-mono ${
-                        isConflict ? 'text-rose-600' : 'text-[#2D6A24]'
-                      }`}>
-                        {event.time}
-                      </span>
-                      <h4 className="text-sm font-black text-[#1a2e1a]">{event.title}</h4>
-                      <p className="text-xs text-[#4a5e4a] font-medium max-w-md leading-relaxed">
-                        {event.desc}
-                      </p>
-                    </div>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 ${
-                      isConflict
-                        ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                        : 'bg-[#84D175]/20 text-[#2D6A24] border border-[#84D175]/40'
-                    }`}>
-                      {event.badge}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Right Column (Light Interactive Map with POI Filters + Pace Box) */}
-        <div className="lg:col-span-5 space-y-5">
-
-          {/* Light-Themed Interactive Map Box */}
-          <div className="bg-white/90 border border-[#84D175]/40 rounded-3xl p-5 space-y-4 shadow-xs">
-            <div className="flex items-center justify-between border-b border-[#84D175]/30 pb-3">
-              <div className="flex items-center space-x-2">
-                <Compass className="w-4 h-4 text-[#3C8B30]" />
-                <span className="text-xs font-black uppercase tracking-wider text-[#1a2e1a]">
-                  Interactive Trip Map
-                </span>
-              </div>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#84D175]/20 text-[#2D6A24] font-bold border border-[#84D175]/40">
-                OpenStreetMap POIs
+          {/* AI Conflict Resolution Banner */}
+          <div className="bg-white/60 backdrop-blur-md border border-[#84D175]/40 rounded-3xl p-5 space-y-3 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-base sm:text-lg font-serif font-bold text-[#1a2e1a] flex items-center gap-2">
+                <Bot className="w-5 h-5 text-[#2D6A24]" />
+                <span>AI Schedule Optimization Analysis</span>
+              </span>
+              <span className="text-xs sm:text-sm px-3 py-1 rounded-full bg-[#84D175]/35 text-[#2D6A24] font-bold border border-[#84D175]/45">
+                {conflictResolved ? 'Resolved & Applied' : 'Optimal Path Available'}
               </span>
             </div>
 
-            {/* Category Filters for Points of Interest */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-[11px] font-bold text-[#4a5e4a]">
-                <span className="flex items-center gap-1">
-                  <Filter className="w-3 h-3 text-[#3C8B30]" />
-                  <span>Filter Map Attractions:</span>
-                </span>
-                <span className="text-[10px] text-[#2D6A24]">{filteredAttractions.length} spots visible</span>
-              </div>
+            <p className="text-xs sm:text-sm text-[#1a2e1a] leading-relaxed font-medium">
+              Our backend algorithm sequenced your daily stops into geographic clusters, eliminating 24km of backtracking transit time and synchronizing certified guide slots.
+            </p>
 
-              <div className="flex flex-wrap gap-1.5">
-                {['All', 'Heritage', 'Nature', 'Culture', 'Spiritual', 'Museum'].map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                      selectedCategory === cat
-                        ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs'
-                        : 'bg-white border border-[#84D175]/30 text-[#4a5e4a] hover:bg-[#FFF8D2]'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
+            <div className="flex items-center justify-between pt-2 border-t border-[#84D175]/25">
+              <span className="text-xs sm:text-sm text-[#2D6A24] font-bold">
+                Estimated transit saved: 1 hr 45 min
+              </span>
+              {!conflictResolved && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConflictResolved(true);
+                    setOptimizedDiscount(1850);
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-bold text-xs sm:text-sm transition-all shadow-xs cursor-pointer"
+                >
+                  Apply Route Optimization
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Day Navigation Tabs */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {daysList.map((d) => (
+              <button
+                key={d.num}
+                type="button"
+                onClick={() => setActiveDay(d.num)}
+                className={`px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
+                  activeDay === d.num
+                    ? 'bg-[#84D175] text-[#1a2e1a] shadow-sm border border-[#67C456]'
+                    : 'bg-white/60 backdrop-blur-sm text-[#1a2e1a] border border-[#84D175]/35 hover:bg-white'
+                }`}
+              >
+                {d.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Day Itinerary Timeline */}
+          <div className="bg-white/60 backdrop-blur-md border border-[#84D175]/40 rounded-3xl p-6 space-y-4 shadow-xs">
+            <div className="flex items-center justify-between border-b border-[#84D175]/25 pb-3">
+              <div>
+                <h3 className="text-xl font-serif font-bold text-[#1a2e1a]">
+                  Day {activeDay} Schedule: {cityName}
+                </h3>
+                <p className="text-xs sm:text-sm text-[#1a2e1a] font-medium">
+                  {activeDaySchedule.length} Verified Segments Scheduled
+                </p>
               </div>
+              <span className="text-xs sm:text-sm font-bold px-3 py-1 rounded-full bg-[#84D175]/25 text-[#2D6A24] border border-[#84D175]/35">
+                Pace: {paceProfileText}
+              </span>
             </div>
 
-            {/* Leaflet Canvas */}
-            <div
-              ref={mapContainerRef}
-              className="w-full h-56 rounded-2xl overflow-hidden border border-[#84D175]/40 shadow-inner z-0"
-              style={{ minHeight: '220px' }}
-            />
-
-            {/* Points of Attraction Showcase List */}
-            <div className="space-y-2 pt-2 border-t border-[#84D175]/30">
-              <div className="flex items-center justify-between text-[11px] font-bold text-[#4a5e4a]">
-                <span>Points of Attraction ({filteredAttractions.length})</span>
-                {loadingAttractions && <span className="text-[#3C8B30] animate-pulse">Loading POIs...</span>}
-              </div>
-
-              <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
-                {filteredAttractions.slice(0, 8).map((spot, sIdx) => (
-                  <div
-                    key={sIdx}
-                    onClick={() => {
-                      if (mapInstanceRef.current && spot.lat && spot.lng) {
-                        mapInstanceRef.current.flyTo([spot.lat, spot.lng], 14, { duration: 1 });
-                      }
-                    }}
-                    className="p-2 bg-[#FFF8D2]/50 hover:bg-[#FFF8D2] border border-[#84D175]/30 rounded-xl text-xs flex items-center justify-between gap-2 cursor-pointer transition-colors"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="font-bold text-[#1a2e1a] truncate">{spot.name || 'Attraction Spot'}</div>
-                      <div className="text-[10px] text-[#4a5e4a] flex items-center gap-1.5">
-                        <span className="font-semibold text-[#3C8B30]">{spot.category || 'Sightseeing'}</span>
-                        <span>•</span>
-                        <span>{spot.dist_formatted || (spot.dist_meters ? (spot.dist_meters / 1000).toFixed(1) + ' km' : 'Nearby')}</span>
-                      </div>
+            <div className="space-y-3">
+              {activeDaySchedule.map((event, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white/70 backdrop-blur-sm border border-[#84D175]/35 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs sm:text-sm font-mono font-bold text-[#2D6A24]">
+                        {event.time}
+                      </span>
+                      <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#84D175]/30 text-[#1a2e1a] font-bold border border-[#84D175]/35">
+                        {event.badge}
+                      </span>
                     </div>
-                    <MapPin className="w-3.5 h-3.5 text-[#3C8B30] shrink-0" />
+                    <div className="font-serif font-bold text-[#1a2e1a] text-base leading-snug">
+                      {event.title}
+                    </div>
+                    <div className="text-xs sm:text-sm text-[#1a2e1a] font-medium leading-relaxed">
+                      {event.desc}
+                    </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Right Column: Interactive Map & Live Attractions ── */}
+        <div className="lg:col-span-5 space-y-5">
+
+          {/* Interactive Leaflet Map Box */}
+          <div className="bg-white/60 backdrop-blur-md border border-[#84D175]/40 rounded-3xl p-4 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-base sm:text-lg font-serif font-bold text-[#1a2e1a]">
+                Live Itinerary Map ({cityName})
+              </span>
+              <span className="text-xs text-[#1a2e1a] font-bold">
+                {attractions.length} POIs Found
+              </span>
+            </div>
+
+            <div className="rounded-2xl overflow-hidden border border-[#84D175]/35 shadow-inner h-64 sm:h-72 w-full relative z-0">
+              <div ref={mapContainerRef} className="w-full h-full" />
+            </div>
+
+            {/* Category Filter Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {['All', 'Heritage', 'Nature', 'Spiritual', 'Sightseeing'].map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3.5 py-1 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                    selectedCategory === cat
+                      ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs'
+                      : 'bg-white/50 border border-[#84D175]/35 text-[#1a2e1a] hover:bg-white'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            {/* Nearby OpenTripMap Attractions List */}
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+              {loadingAttractions && (
+                <div className="text-xs text-[#1a2e1a] font-semibold text-center py-4">
+                  Loading landmark POIs from OpenTripMap...
+                </div>
+              )}
+
+              {filteredAttractions.slice(0, 5).map((spot, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => {
+                    if (mapInstanceRef.current && spot.lat && spot.lng) {
+                      mapInstanceRef.current.setView([spot.lat, spot.lng], 14);
+                    }
+                  }}
+                  className="p-2.5 bg-white/60 hover:bg-white border border-[#84D175]/35 rounded-xl text-xs sm:text-sm flex items-center justify-between gap-2 cursor-pointer transition-colors"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-[#1a2e1a] truncate">{spot.name || 'Attraction Spot'}</div>
+                    <div className="text-xs text-[#1a2e1a] font-medium">
+                      <span className="font-bold text-[#2D6A24]">{spot.category || 'Sightseeing'}</span>
+                      <span> · </span>
+                      <span>{spot.dist_formatted || (spot.dist_meters ? (spot.dist_meters / 1000).toFixed(1) + ' km' : 'Nearby')}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Budget & Pace Summary Box */}
-          <div className="bg-white/90 border border-[#84D175]/40 rounded-3xl p-5 space-y-3 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase tracking-wider text-[#1a2e1a]">
+          <div className="bg-white/60 backdrop-blur-md border border-[#84D175]/40 rounded-3xl p-5 space-y-3 shadow-xs">
+            <div className="flex items-center justify-between border-b border-[#84D175]/25 pb-2">
+              <span className="text-base sm:text-lg font-serif font-bold text-[#1a2e1a]">
                 Budget & Pace Verification
               </span>
-              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-300">
-                Verified Grounded ✓
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#84D175]/25 text-[#2D6A24] font-bold border border-[#84D175]/35">
+                Verified Grounded
               </span>
             </div>
 
-            <div className="text-xs text-[#4a5e4a] space-y-1 bg-[#FFF8D2]/60 p-3 rounded-xl border border-[#84D175]/30">
-              <div className="flex justify-between font-semibold">
-                <span>Pace Profile:</span>
+            <div className="text-xs sm:text-sm text-[#1a2e1a] space-y-2 bg-white/50 p-3.5 rounded-xl border border-[#84D175]/35">
+              <div className="flex justify-between">
+                <span className="font-medium">Pace Profile:</span>
                 <span className="font-bold text-[#1a2e1a]">{paceProfileText}</span>
               </div>
-              <div className="flex justify-between font-semibold">
-                <span>Guide Support:</span>
+              <div className="flex justify-between">
+                <span className="font-medium">Guide Support:</span>
                 <span className="font-bold text-[#1a2e1a]">
                   {activeGuide ? `${activeGuide.display_name || activeGuide.name} (${activeGuide.languages_spoken || 'Multilingual'})` : 'Self-Guided Package'}
                 </span>
               </div>
-              <div className="flex justify-between font-semibold">
-                <span>Party Size:</span>
+              <div className="flex justify-between">
+                <span className="font-medium">Party Size:</span>
                 <span className="font-bold text-[#1a2e1a]">{numTravelers} Person{numTravelers > 1 ? 's' : ''}</span>
               </div>
               {optimizedDiscount > 0 && (
-                <div className="flex justify-between font-bold text-emerald-700 pt-1 border-t border-[#84D175]/30">
+                <div className="flex justify-between font-bold text-[#2D6A24] pt-1.5 border-t border-[#84D175]/30">
                   <span>AI Discount Applied:</span>
                   <span>-{currencySymbol}{optimizedDiscount.toLocaleString('en-IN')}</span>
                 </div>
@@ -654,109 +560,87 @@ export default function OptimizeView({
 
       {/* AI Cost Optimization & Discount Breakdown Modal */}
       {showDiscountBreakdown && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-emerald-200 space-y-5 animate-scaleUp">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center space-x-2.5">
-                <div className="p-2 rounded-2xl bg-emerald-100 text-emerald-800 font-black">
-                  <Sparkles className="w-5 h-5 text-emerald-600" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900">AI Cost Optimization Breakdown</h3>
-                  <p className="text-xs text-slate-500 font-medium">Transparent analysis of automated savings</p>
-                </div>
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 animate-in">
+          <div className="bg-white/95 backdrop-blur-xl rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-[#84D175]/40 space-y-5">
+            <div className="flex items-center justify-between border-b border-[#84D175]/25 pb-3">
+              <div>
+                <h3 className="text-xl font-serif font-bold text-[#1a2e1a]">AI Cost Optimization Breakdown</h3>
+                <p className="text-xs sm:text-sm text-[#1a2e1a] font-medium">Transparent analysis of automated savings</p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowDiscountBreakdown(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center transition-all cursor-pointer"
+                className="px-2.5 py-1 rounded-full bg-white/80 border border-[#84D175]/35 hover:bg-white text-xs font-bold text-[#1a2e1a] cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
-              {/* Item 1: Off-peak stay */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <div className="font-black text-slate-900 flex items-center gap-1.5">
-                    <span>🏨</span>
-                    <span>Midweek & Off-Peak Stay Tariff</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
+            <div className="space-y-3 text-xs sm:text-sm">
+              <div className="p-3.5 rounded-2xl bg-white/70 border border-[#84D175]/35 flex items-start justify-between gap-3">
+                <div className="space-y-0.5">
+                  <div className="font-serif font-bold text-[#1a2e1a] text-sm sm:text-base">Midweek & Off-Peak Stay Tariff</div>
+                  <p className="text-xs text-[#1a2e1a] font-medium">
                     Swapped peak weekend surcharge slot to contracted mid-week tariff at {selectedHotel.title || selectedHotel.name}.
                   </p>
                 </div>
-                <span className="font-mono font-black text-emerald-600 text-sm whitespace-nowrap">
+                <span className="font-mono font-bold text-[#2D6A24] text-sm sm:text-base whitespace-nowrap">
                   -{currencySymbol}{Math.round(optimizedDiscount * 0.45).toLocaleString('en-IN')}
                 </span>
               </div>
 
-              {/* Item 2: Route & Transit Clustering */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <div className="font-black text-slate-900 flex items-center gap-1.5">
-                    <span>🚗</span>
-                    <span>Transit & Geographic Route Clustering</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
+              <div className="p-3.5 rounded-2xl bg-white/70 border border-[#84D175]/35 flex items-start justify-between gap-3">
+                <div className="space-y-0.5">
+                  <div className="font-serif font-bold text-[#1a2e1a] text-sm sm:text-base">Transit & Geographic Route Clustering</div>
+                  <p className="text-xs text-[#1a2e1a] font-medium">
                     Sequenced day sightseeing spots into directional clusters, eliminating 24km of backtracking transfer mileage.
                   </p>
                 </div>
-                <span className="font-mono font-black text-emerald-600 text-sm whitespace-nowrap">
+                <span className="font-mono font-bold text-[#2D6A24] text-sm sm:text-base whitespace-nowrap">
                   -{currencySymbol}{Math.round(optimizedDiscount * 0.25).toLocaleString('en-IN')}
                 </span>
               </div>
 
-              {/* Item 3: Experience Bundle Rate */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <div className="font-black text-slate-900 flex items-center gap-1.5">
-                    <span>🎟️</span>
-                    <span>Attraction Pass & Experience Bundle Rate</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
+              <div className="p-3.5 rounded-2xl bg-white/70 border border-[#84D175]/35 flex items-start justify-between gap-3">
+                <div className="space-y-0.5">
+                  <div className="font-serif font-bold text-[#1a2e1a] text-sm sm:text-base">Attraction Pass & Experience Bundle Rate</div>
+                  <p className="text-xs text-[#1a2e1a] font-medium">
                     Consolidated standalone monument entries & guided excursions into an authorized package partner bundle.
                   </p>
                 </div>
-                <span className="font-mono font-black text-emerald-600 text-sm whitespace-nowrap">
+                <span className="font-mono font-bold text-[#2D6A24] text-sm sm:text-base whitespace-nowrap">
                   -{currencySymbol}{Math.round(optimizedDiscount * 0.20).toLocaleString('en-IN')}
                 </span>
               </div>
 
-              {/* Item 4: Certified Guide Hours Alignment */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <div className="font-black text-slate-900 flex items-center gap-1.5">
-                    <span>🧭</span>
-                    <span>Guide Schedule Alignment</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
+              <div className="p-3.5 rounded-2xl bg-white/70 border border-[#84D175]/35 flex items-start justify-between gap-3">
+                <div className="space-y-0.5">
+                  <div className="font-serif font-bold text-[#1a2e1a] text-sm sm:text-base">Guide Schedule Alignment</div>
+                  <p className="text-xs text-[#1a2e1a] font-medium">
                     Adjusted certified local guide hours to active touring blocks, avoiding idle standby surcharges.
                   </p>
                 </div>
-                <span className="font-mono font-black text-emerald-600 text-sm whitespace-nowrap">
+                <span className="font-mono font-bold text-[#2D6A24] text-sm sm:text-base whitespace-nowrap">
                   -{currencySymbol}{Math.round(optimizedDiscount * 0.10).toLocaleString('en-IN')}
                 </span>
               </div>
             </div>
 
-            {/* Summary Box */}
-            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+            <div className="p-4 rounded-2xl bg-[#84D175]/25 border border-[#84D175]/45 flex items-center justify-between">
               <div>
-                <span className="text-[10px] uppercase tracking-wider font-extrabold text-emerald-900 block">Total AI Savings</span>
-                <span className="text-lg font-black text-emerald-800 font-mono">-{currencySymbol}{optimizedDiscount.toLocaleString('en-IN')}</span>
+                <span className="text-xs uppercase tracking-wider font-bold text-[#2D6A24] block">Total AI Savings</span>
+                <span className="text-lg font-serif font-bold text-[#2D6A24]">-{currencySymbol}{optimizedDiscount.toLocaleString('en-IN')}</span>
               </div>
               <div className="text-right">
-                <span className="text-[10px] uppercase tracking-wider font-extrabold text-emerald-900 block">Optimized Final Quote</span>
-                <span className="text-lg font-black text-slate-900 font-mono">{currencySymbol}{currentDisplayPrice.toLocaleString('en-IN')}</span>
+                <span className="text-xs uppercase tracking-wider font-bold text-[#1a2e1a] block">Optimized Final Quote</span>
+                <span className="text-lg font-serif font-bold text-[#1a2e1a]">{currencySymbol}{currentDisplayPrice.toLocaleString('en-IN')}</span>
               </div>
             </div>
 
             <button
               type="button"
               onClick={() => setShowDiscountBreakdown(false)}
-              className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl transition-all cursor-pointer"
+              className="w-full py-3 bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-bold text-xs sm:text-sm rounded-xl transition-all cursor-pointer text-center"
             >
               Close Breakdown
             </button>

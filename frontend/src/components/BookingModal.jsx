@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
 import { api } from '../api';
-import {
-  CheckCircle2, X, CreditCard, Calendar, User, Mail, Phone, ShieldCheck,
-  Download, Clock, MapPin, UserCheck, Hotel, Activity, Car, Home, Star, Sparkles
-} from 'lucide-react';
 
 export default function BookingModal({
   isOpen,
@@ -21,7 +17,6 @@ export default function BookingModal({
   const [bookingConfirmed, setBookingConfirmed] = useState(null);
   const [error, setError] = useState(null);
 
-  // Sync travelers count when bookingDetails changes
   React.useEffect(() => {
     if (bookingDetails) {
       const count = Number(bookingDetails.numTravelers || bookingDetails.partySize || 2);
@@ -38,12 +33,10 @@ export default function BookingModal({
   const endDate = bookingDetails.endDate;
   const durationDays = bookingDetails.durationDays || pkg?.duration_days || 3;
   const selectedComponents = bookingDetails.selectedComponents || {};
-  const addOnTotal = Number(bookingDetails.addOnTotal || 0);
 
   const pkgTitle = pkg?.name || pkg?.title || bookingDetails.packageName || 'Custom Tour Itinerary';
   const guideName = guide?.display_name || guide?.name;
 
-  // Compute baseline per-traveler rate to scale dynamically
   const initialTotalRaw = parseFloat(
     (bookingDetails.optimizedTotalPrice || bookingDetails.totalPrice || bookingDetails.total || pricing?.total_price || pkg?.base_price || 32000)
       .toString()
@@ -115,30 +108,25 @@ export default function BookingModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0C2D45]/70 backdrop-blur-md animate-in print:p-0 print:bg-white print:static print:inset-auto">
-      <div className="relative w-full max-w-xl bg-[#FFF8D2]/95 border border-[#84D175]/40 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-[#1a2e1a] backdrop-blur-xl print:max-w-full print:border-none print:shadow-none print:bg-white print:max-h-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0C2D45]/60 backdrop-blur-md animate-in print:p-0 print:bg-white print:static print:inset-auto">
+      <div className="relative w-full max-w-xl bg-[#FFF8D2]/90 border border-[#84D175]/35 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-[#1a2e1a] backdrop-blur-2xl print:max-w-full print:border-none print:shadow-none print:bg-white print:max-h-none">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#84D175]/30 bg-white/75 shrink-0 print:hidden no-print">
-          <div className="flex items-center space-x-2.5">
-            <div className="p-2 rounded-xl bg-[#84D175] text-[#1a2e1a] shadow-sm font-black">
-              {bookingConfirmed ? <CheckCircle2 className="w-5 h-5 text-[#1a2e1a]" /> : <CreditCard className="w-5 h-5" />}
-            </div>
-            <div>
-              <h2 className="text-base font-black text-[#1a2e1a]">
-                {bookingConfirmed ? 'Booking Confirmed' : 'Review & Confirm Booking'}
-              </h2>
-              <p className="text-xs text-[#4a5e4a] font-medium">
-                {bookingConfirmed
-                  ? 'Your custom tour package is locked and verified'
-                  : 'Review your personalized itinerary and passenger details'}
-              </p>
-            </div>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#84D175]/30 bg-white/50 shrink-0 print:hidden no-print">
+          <div>
+            <h2 className="text-2xl font-serif font-bold text-[#1a2e1a]">
+              {bookingConfirmed ? 'Booking Confirmed' : 'Review & Confirm Booking'}
+            </h2>
+            <p className="text-xs sm:text-sm text-[#1a2e1a] font-medium mt-0.5">
+              {bookingConfirmed
+                ? 'Your custom tour package is locked and verified'
+                : 'Review your personalized itinerary and passenger details'}
+            </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl text-[#4a5e4a] hover:text-[#1a2e1a] hover:bg-[#84D175]/20 transition-all cursor-pointer"
+            className="px-3 py-1.5 rounded-full text-xs sm:text-sm font-bold text-[#1a2e1a] hover:bg-[#84D175]/30 transition-all cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            ✕
           </button>
         </div>
 
@@ -147,44 +135,40 @@ export default function BookingModal({
           {bookingConfirmed ? (
             /* === BOOKING CONFIRMED STATE === */
             <div id="booking-confirmed-receipt" className="space-y-5 printable-receipt">
-              <div className="text-center py-4 space-y-3">
-                <div className="relative mx-auto w-16 h-16">
-                  <div className="w-16 h-16 rounded-full bg-[#84D175]/30 text-[#2D6A24] border border-[#84D175] flex items-center justify-center shadow-md animate-bounce print:animate-none">
-                    <CheckCircle2 className="w-9 h-9" />
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-xl font-black text-[#1a2e1a]">
-                    Reservation Successfully Confirmed!
-                  </h3>
-                  <p className="text-xs text-[#4a5e4a] mt-1 font-medium">
-                    Booking ID:{' '}
-                    <span className="font-mono font-black text-[#2D6A24] text-sm bg-white/80 px-2 py-0.5 rounded border border-[#84D175]/40">
-                      {bookingConfirmed.booking_id || bookingConfirmed.id}
-                    </span>
-                  </p>
-                </div>
+              <div className="text-center py-4 space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#2D6A24] bg-[#84D175]/30 px-3.5 py-1 rounded-full border border-[#84D175]/40">
+                  Confirmed
+                </span>
+                <h3 className="text-2xl sm:text-3xl font-serif font-bold text-[#1a2e1a]">
+                  Reservation Successfully Confirmed!
+                </h3>
+                <p className="text-xs sm:text-sm text-[#1a2e1a] font-medium">
+                  Booking ID:{' '}
+                  <span className="font-mono font-bold text-[#2D6A24] text-sm bg-white px-2.5 py-0.5 rounded border border-[#84D175]/45">
+                    {bookingConfirmed.booking_id || bookingConfirmed.id}
+                  </span>
+                </p>
               </div>
 
               {/* Trip Summary Card */}
-              <div className="bg-white/85 border border-[#84D175]/40 rounded-2xl p-4 space-y-2 shadow-xs">
+              <div className="bg-white/75 backdrop-blur-md border border-[#84D175]/45 rounded-2xl p-4 space-y-2 shadow-xs">
                 <div className="flex justify-between items-start">
                   <div>
-                    <div className="text-xs font-black text-[#1a2e1a]">{pkgTitle}</div>
-                    <div className="text-[11px] text-[#4a5e4a]">
+                    <div className="text-base font-serif font-bold text-[#1a2e1a]">{pkgTitle}</div>
+                    <div className="text-xs sm:text-sm text-[#1a2e1a] font-medium mt-0.5">
                       {dateRange} · {durationDays} Days · {activeTravelerCount} Traveler{activeTravelerCount > 1 ? 's' : ''}
                     </div>
                     {guide && (
-                      <div className="text-[11px] text-[#2D6A24] font-bold mt-0.5 flex items-center gap-1">
-                        <UserCheck className="w-3 h-3" /> Guide: {guideName}
+                      <div className="text-xs sm:text-sm text-[#2D6A24] font-bold mt-1">
+                        Guide: {guideName}
                       </div>
                     )}
                   </div>
                   <div className="text-right">
-                    <div className="text-base font-black text-[#2D6A24] font-mono">
+                    <div className="text-xl font-serif font-bold text-[#2D6A24]">
                       {currencySymbol}{bookingConfirmed.total_amount ? parseFloat(bookingConfirmed.total_amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : totalPrice}
                     </div>
-                    <div className="text-[10px] text-[#4a5e4a]">Tax Inclusive (5% GST)</div>
+                    <div className="text-xs text-[#1a2e1a] font-medium">Tax Inclusive (5% GST)</div>
                   </div>
                 </div>
               </div>
@@ -193,16 +177,14 @@ export default function BookingModal({
               <div className="grid grid-cols-2 gap-3 pt-2 print:hidden no-print">
                 <button
                   onClick={onClose}
-                  className="flex items-center justify-center gap-2 py-2.5 bg-white/80 hover:bg-white text-[#1a2e1a] border border-[#84D175]/30 font-bold text-xs rounded-xl transition-all cursor-pointer shadow-xs"
+                  className="py-3 bg-white/80 hover:bg-white text-[#1a2e1a] border border-[#84D175]/40 font-bold text-xs sm:text-sm rounded-xl transition-all cursor-pointer shadow-xs text-center"
                 >
-                  <Home className="w-3.5 h-3.5 text-[#3C8B30]" />
                   Back to Dashboard
                 </button>
                 <button
                   onClick={() => window.print()}
-                  className="flex items-center justify-center gap-2 py-2.5 bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-xs rounded-xl transition-all cursor-pointer shadow-md shadow-[#84D175]/30"
+                  className="py-3 bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-bold text-xs sm:text-sm rounded-xl transition-all cursor-pointer shadow-md shadow-[#84D175]/25 text-center"
                 >
-                  <Download className="w-3.5 h-3.5" />
                   Print Receipt
                 </button>
               </div>
@@ -211,32 +193,32 @@ export default function BookingModal({
             /* === CHECKOUT FORM === */
             <form onSubmit={handleConfirmBooking} className="space-y-4">
               {/* Trip Snapshot Banner */}
-              <div className="bg-white/85 border border-[#84D175]/40 rounded-2xl p-4 space-y-2 shadow-xs">
+              <div className="bg-white/75 backdrop-blur-md border border-[#84D175]/45 rounded-2xl p-4 space-y-2 shadow-xs">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-black text-[#1a2e1a] text-sm">{pkgTitle}</div>
-                    <div className="text-[#4a5e4a] text-[11px] mt-0.5 font-semibold">
+                    <div className="font-serif font-bold text-[#1a2e1a] text-lg">{pkgTitle}</div>
+                    <div className="text-[#1a2e1a] text-xs sm:text-sm mt-0.5 font-medium">
                       {dateRange} · {durationDays} Days · {durationNights} Nights
                     </div>
                     {guide && (
-                      <div className="text-[#2D6A24] text-[11px] font-bold flex items-center gap-1 mt-0.5">
-                        <UserCheck className="w-3 h-3" /> Guide: {guideName}
+                      <div className="text-[#2D6A24] text-xs sm:text-sm font-bold mt-1">
+                        Guide: {guideName}
                       </div>
                     )}
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-black text-[#2D6A24] font-mono">
+                    <div className="text-2xl font-serif font-bold text-[#2D6A24]">
                       {currencySymbol}{totalPrice}
                     </div>
-                    <div className="text-[10px] text-[#4a5e4a] font-medium">All Taxes Included (5% GST)</div>
+                    <div className="text-xs text-[#1a2e1a] font-medium">All Taxes Included (5% GST)</div>
                   </div>
                 </div>
               </div>
 
               {/* Traveler Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-black text-[#4a5e4a] uppercase tracking-wider mb-1">
+                  <label className="block text-xs sm:text-sm font-bold text-[#1a2e1a] uppercase tracking-wider mb-1.5">
                     Lead Passenger Name
                   </label>
                   <input
@@ -244,12 +226,12 @@ export default function BookingModal({
                     value={leadPassengerName}
                     onChange={(e) => setLeadPassengerName(e.target.value)}
                     required
-                    className="w-full bg-white border border-[#84D175]/40 rounded-xl px-3 py-2 text-xs font-bold text-[#1a2e1a] focus:outline-none focus:border-[#84D175] focus:ring-2 focus:ring-[#84D175]/20"
+                    className="w-full bg-white/80 border border-[#84D175]/45 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-[#1a2e1a] focus:outline-none focus:border-[#84D175]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-black text-[#4a5e4a] uppercase tracking-wider mb-1">
+                  <label className="block text-xs sm:text-sm font-bold text-[#1a2e1a] uppercase tracking-wider mb-1.5">
                     Number of Travelers
                   </label>
                   <input
@@ -259,12 +241,12 @@ export default function BookingModal({
                     value={numTravelers}
                     onChange={(e) => setNumTravelers(e.target.value)}
                     required
-                    className="w-full bg-white border border-[#84D175]/40 rounded-xl px-3 py-2 text-xs font-bold text-[#1a2e1a] focus:outline-none focus:border-[#84D175] focus:ring-2 focus:ring-[#84D175]/20"
+                    className="w-full bg-white/80 border border-[#84D175]/45 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-[#1a2e1a] focus:outline-none focus:border-[#84D175]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-black text-[#4a5e4a] uppercase tracking-wider mb-1">
+                  <label className="block text-xs sm:text-sm font-bold text-[#1a2e1a] uppercase tracking-wider mb-1.5">
                     Email Address
                   </label>
                   <input
@@ -272,12 +254,12 @@ export default function BookingModal({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full bg-white border border-[#84D175]/40 rounded-xl px-3 py-2 text-xs font-bold text-[#1a2e1a] focus:outline-none focus:border-[#84D175] focus:ring-2 focus:ring-[#84D175]/20"
+                    className="w-full bg-white/80 border border-[#84D175]/45 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-[#1a2e1a] focus:outline-none focus:border-[#84D175]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-black text-[#4a5e4a] uppercase tracking-wider mb-1">
+                  <label className="block text-xs sm:text-sm font-bold text-[#1a2e1a] uppercase tracking-wider mb-1.5">
                     Phone Number
                   </label>
                   <input
@@ -285,13 +267,13 @@ export default function BookingModal({
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     required
-                    className="w-full bg-white border border-[#84D175]/40 rounded-xl px-3 py-2 text-xs font-bold text-[#1a2e1a] focus:outline-none focus:border-[#84D175] focus:ring-2 focus:ring-[#84D175]/20"
+                    className="w-full bg-white/80 border border-[#84D175]/45 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-[#1a2e1a] focus:outline-none focus:border-[#84D175]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-black text-[#4a5e4a] uppercase tracking-wider mb-1">
+                <label className="block text-xs sm:text-sm font-bold text-[#1a2e1a] uppercase tracking-wider mb-1.5">
                   Special Requests (Optional)
                 </label>
                 <textarea
@@ -299,12 +281,12 @@ export default function BookingModal({
                   onChange={(e) => setSpecialRequests(e.target.value)}
                   rows={2}
                   placeholder="E.g., Vegetarian meals, ground floor room, airport pickup"
-                  className="w-full bg-white border border-[#84D175]/40 rounded-xl p-2.5 text-xs font-bold text-[#1a2e1a] focus:outline-none focus:border-[#84D175] focus:ring-2 focus:ring-[#84D175]/20"
+                  className="w-full bg-white/80 border border-[#84D175]/45 rounded-xl p-3 text-xs sm:text-sm font-semibold text-[#1a2e1a] focus:outline-none focus:border-[#84D175]"
                 />
               </div>
 
               {error && (
-                <div className="p-3 bg-rose-50 border border-rose-200 text-xs text-rose-700 rounded-xl font-semibold">
+                <div className="p-3.5 bg-rose-50/90 border border-rose-300 text-xs sm:text-sm text-rose-800 rounded-xl font-bold">
                   {error}
                 </div>
               )}
@@ -312,24 +294,17 @@ export default function BookingModal({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 px-4 bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-sm rounded-xl shadow-lg shadow-[#84D175]/30 transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-60 active:scale-[0.98]"
+                className="w-full py-4 px-5 bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-bold text-sm sm:text-base rounded-xl shadow-md shadow-[#84D175]/25 transition-all flex items-center justify-center cursor-pointer disabled:opacity-60 active:scale-[0.98]"
               >
                 {loading ? (
-                  <>
-                    <Clock className="w-4 h-4 animate-spin text-[#1a2e1a]" />
-                    <span>Processing Secure Reservation...</span>
-                  </>
+                  <span>Processing Secure Reservation...</span>
                 ) : (
-                  <>
-                    <CreditCard className="w-4 h-4 text-[#1a2e1a]" />
-                    <span>Confirm & Book — {currencySymbol}{totalPrice}</span>
-                  </>
+                  <span>Confirm & Book — {currencySymbol}{totalPrice}</span>
                 )}
               </button>
 
-              <div className="flex items-center justify-center gap-1.5 text-[11px] text-[#4a5e4a] font-medium">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#2D6A24]" />
-                <span>Idempotency-protected · Instant confirmation · Decimal precision</span>
+              <div className="text-center text-xs text-[#1a2e1a] font-medium">
+                Idempotency-protected · Instant confirmation · Decimal precision
               </div>
             </form>
           )}
