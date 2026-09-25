@@ -179,31 +179,31 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
           </div>
 
           {/* Navigation Links (Translucent Frosted Capsule) */}
-          <nav className="hidden md:flex items-center gap-1 bg-white/30 backdrop-blur-md p-1 rounded-2xl border border-[#84D175]/25 shadow-xs">
+          <nav className="hidden md:flex items-center gap-1.5 bg-white/40 backdrop-blur-md p-1.5 rounded-2xl border border-[#84D175]/30 shadow-xs">
             <button
               onClick={onGetStarted}
-              className="px-4 py-1.5 rounded-xl text-xs font-semibold text-[#1a2e1a] hover:bg-[#84D175]/25 transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl text-sm font-bold text-[#1a2e1a] hover:bg-[#84D175]/30 hover:text-[#1a2e1a] transition-all cursor-pointer"
             >
               Curated Packages
             </button>
 
             <button
               onClick={onGetStarted}
-              className="px-4 py-1.5 rounded-xl text-xs font-semibold text-[#1a2e1a] hover:bg-[#84D175]/25 transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl text-sm font-bold text-[#1a2e1a] hover:bg-[#84D175]/30 hover:text-[#1a2e1a] transition-all cursor-pointer"
             >
               Custom Architect
             </button>
 
             <a
               href="#destinations"
-              className="px-4 py-1.5 rounded-xl text-xs font-semibold text-[#4a5e4a] hover:text-[#1a2e1a] hover:bg-white/40 transition-all"
+              className="px-4 py-2 rounded-xl text-sm font-bold text-[#1a2e1a] hover:bg-[#84D175]/30 hover:text-[#1a2e1a] transition-all"
             >
               Destinations
             </a>
 
             <a
               href="#how"
-              className="px-4 py-1.5 rounded-xl text-xs font-semibold text-[#4a5e4a] hover:text-[#1a2e1a] hover:bg-white/40 transition-all"
+              className="px-4 py-2 rounded-xl text-sm font-bold text-[#1a2e1a] hover:bg-[#84D175]/30 hover:text-[#1a2e1a] transition-all"
             >
               How It Works
             </a>
@@ -213,13 +213,13 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
           <div className="flex items-center gap-2.5">
             <button
               onClick={onSignIn}
-              className="px-4 py-2 rounded-xl bg-white/40 backdrop-blur-sm border border-[#84D175]/30 text-[#1a2e1a] font-semibold text-xs hover:bg-white/60 transition-all shadow-xs cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-white/60 backdrop-blur-sm border border-[#84D175]/35 text-[#1a2e1a] font-bold text-sm hover:bg-[#84D175]/30 hover:text-[#1a2e1a] transition-all shadow-xs cursor-pointer"
             >
               Sign In
             </button>
             <button
               onClick={onGetStarted}
-              className="px-5 py-2 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-bold text-xs transition-all shadow-md shadow-[#84D175]/20 cursor-pointer active:scale-95"
+              className="px-5 py-2.5 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-bold text-sm transition-all shadow-md shadow-[#84D175]/20 cursor-pointer active:scale-95"
             >
               Start Building
             </button>
