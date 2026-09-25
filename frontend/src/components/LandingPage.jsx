@@ -179,47 +179,47 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
           </div>
 
           {/* Navigation Links (Translucent Frosted Capsule) */}
-          <nav className="hidden md:flex items-center gap-1.5 bg-white/40 backdrop-blur-md p-1.5 rounded-2xl border border-[#84D175]/30 shadow-xs">
+          <nav className="hidden md:flex items-center gap-1 lg:gap-1.5 bg-white/40 backdrop-blur-md p-1 lg:p-1.5 rounded-2xl border border-[#84D175]/30 shadow-xs">
             <button
               onClick={onGetStarted}
-              className="px-4 py-2 rounded-xl text-sm font-bold text-[#1a2e1a] hover:bg-[#84D175]/30 hover:text-[#1a2e1a] transition-all cursor-pointer"
+              className="px-2.5 lg:px-4 py-1.5 lg:py-2 rounded-xl text-xs lg:text-sm font-bold text-[#1a2e1a] hover:bg-[#84D175]/30 hover:text-[#1a2e1a] transition-all cursor-pointer whitespace-nowrap"
             >
               Curated Packages
             </button>
 
             <button
               onClick={onGetStarted}
-              className="px-4 py-2 rounded-xl text-sm font-bold text-[#1a2e1a] hover:bg-[#84D175]/30 hover:text-[#1a2e1a] transition-all cursor-pointer"
+              className="px-2.5 lg:px-4 py-1.5 lg:py-2 rounded-xl text-xs lg:text-sm font-bold text-[#1a2e1a] hover:bg-[#84D175]/30 hover:text-[#1a2e1a] transition-all cursor-pointer whitespace-nowrap"
             >
               Custom Architect
             </button>
 
             <a
               href="#destinations"
-              className="px-4 py-2 rounded-xl text-sm font-bold text-[#1a2e1a] hover:bg-[#84D175]/30 hover:text-[#1a2e1a] transition-all"
+              className="px-2.5 lg:px-4 py-1.5 lg:py-2 rounded-xl text-xs lg:text-sm font-bold text-[#1a2e1a] hover:bg-[#84D175]/30 hover:text-[#1a2e1a] transition-all whitespace-nowrap"
             >
               Destinations
             </a>
 
             <a
               href="#how"
-              className="px-4 py-2 rounded-xl text-sm font-bold text-[#1a2e1a] hover:bg-[#84D175]/30 hover:text-[#1a2e1a] transition-all"
+              className="px-2.5 lg:px-4 py-1.5 lg:py-2 rounded-xl text-xs lg:text-sm font-bold text-[#1a2e1a] hover:bg-[#84D175]/30 hover:text-[#1a2e1a] transition-all whitespace-nowrap"
             >
               How It Works
             </a>
           </nav>
 
           {/* Right Action CTAs */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-1.5 lg:gap-2.5 shrink-0">
             <button
               onClick={onSignIn}
-              className="px-4 py-2 rounded-xl bg-white/60 backdrop-blur-sm border border-[#84D175]/35 text-[#1a2e1a] font-bold text-sm hover:bg-[#84D175]/30 hover:text-[#1a2e1a] transition-all shadow-xs cursor-pointer"
+              className="px-3 lg:px-4 py-1.5 lg:py-2 rounded-xl bg-white/60 backdrop-blur-sm border border-[#84D175]/35 text-[#1a2e1a] font-bold text-xs lg:text-sm hover:bg-[#84D175]/30 hover:text-[#1a2e1a] transition-all shadow-xs cursor-pointer whitespace-nowrap"
             >
               Sign In
             </button>
             <button
               onClick={onGetStarted}
-              className="px-5 py-2.5 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-bold text-sm transition-all shadow-md shadow-[#84D175]/20 cursor-pointer active:scale-95"
+              className="px-3.5 lg:px-5 py-1.5 lg:py-2.5 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-bold text-xs lg:text-sm transition-all shadow-md shadow-[#84D175]/20 cursor-pointer active:scale-95 whitespace-nowrap"
             >
               Start Building
             </button>

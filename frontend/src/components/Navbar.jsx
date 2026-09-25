@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { Bot } from 'lucide-react';
+import { Bot, LogOut } from 'lucide-react';
 import { t } from '../i18n';
 
 const LANGUAGES = [
   { code: 'en', label: 'English', short: 'EN' },
-  { code: 'ta', label: 'Tamil (தமிழ்)', short: 'TA' },
-  { code: 'hi', label: 'Hindi (हिन्दी)', short: 'HI' },
-  { code: 'te', label: 'Telugu (తెలుగు)', short: 'TE' },
-  { code: 'kn', label: 'Kannada (ಕನ್ನಡ)', short: 'KN' },
-  { code: 'mr', label: 'Marathi (मराठी)', short: 'MR' },
-  { code: 'bn', label: 'Bengali (বাংলা)', short: 'BN' },
-  { code: 'gu', label: 'Gujarati (ગુજરાતી)', short: 'GU' },
+  { code: 'hi', label: 'Hindi (हिन्दी)', short: 'हि' },
+  { code: 'ta', label: 'Tamil (தமிழ்)', short: 'த' },
+  { code: 'te', label: 'Telugu (తెలుగు)', short: 'తె' },
+  { code: 'kn', label: 'Kannada (ಕನ್ನಡ)', short: 'ಕ' },
+  { code: 'mr', label: 'Marathi (मराठी)', short: 'म' },
+  { code: 'bn', label: 'Bengali (বাংলা)', short: 'বা' },
+  { code: 'gu', label: 'Gujarati (ગુજરાતી)', short: 'ગુ' },
 ];
 
 export default function Navbar({
@@ -38,27 +38,27 @@ export default function Navbar({
     <header className="sticky top-0 z-40 w-full bg-[#FFF8D2]/90 backdrop-blur-md border-b border-[#84D175]/30 shadow-xs transition-all">
       <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 h-18 sm:h-20 relative flex items-center justify-between">
 
-        {/* ── Left (Desktop): Brand Logo (Redirects to Landing Page) ── */}
+        {/* ── Left (Desktop/Tablet): Brand Logo (Redirects to Landing Page) ── */}
         <div
-          className="hidden md:flex items-center gap-3 shrink-0 cursor-pointer select-none group"
+          className="hidden md:flex items-center gap-2 lg:gap-3 shrink-0 cursor-pointer select-none group"
           onClick={handleLogoClick}
           title="Go to Landing Page"
         >
           <img
             src="/logo.png"
             alt="TripCraft"
-            className="h-10 sm:h-11 w-auto object-contain rounded-xl shadow-xs bg-white/70 p-0.5 group-hover:scale-105 transition-transform"
+            className="h-8 lg:h-11 w-auto object-contain rounded-xl shadow-xs bg-white/70 p-0.5 group-hover:scale-105 transition-transform"
           />
-          <span className="text-2xl sm:text-3xl font-serif font-black tracking-tight text-[#1a2e1a]">
+          <span className="text-xl lg:text-3xl font-serif font-black tracking-tight text-[#1a2e1a]">
             TripCraft
           </span>
         </div>
 
-        {/* ── Center Navigation Menu (Desktop): Mathematically Centered ── */}
-        <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1.5 bg-white/60 backdrop-blur-md p-1.5 rounded-2xl border border-[#84D175]/35 shadow-xs">
+        {/* ── Center Navigation Menu (Desktop/Tablet): Mathematically Centered & Responsive ── */}
+        <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 lg:gap-1.5 bg-white/60 backdrop-blur-md p-1 lg:p-1.5 rounded-2xl border border-[#84D175]/35 shadow-xs">
           <button
             onClick={() => onStepChange?.('discover')}
-            className={`px-4 sm:px-5 py-2 rounded-xl text-sm sm:text-base font-bold transition-all cursor-pointer ${
+            className={`px-2.5 lg:px-5 py-1.5 lg:py-2 rounded-xl text-xs lg:text-base font-bold transition-all cursor-pointer whitespace-nowrap ${
               activeStep === 'discover' || activeStep === 'customize' || activeStep === 'optimize' || activeStep === 'confirm'
                 ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs'
                 : 'text-[#1a2e1a] hover:bg-[#84D175]/30 hover:text-[#1a2e1a]'
@@ -69,7 +69,7 @@ export default function Navbar({
 
           <button
             onClick={() => onStepChange?.('architect')}
-            className={`px-4 sm:px-5 py-2 rounded-xl text-sm sm:text-base font-bold transition-all cursor-pointer ${
+            className={`px-2.5 lg:px-5 py-1.5 lg:py-2 rounded-xl text-xs lg:text-base font-bold transition-all cursor-pointer whitespace-nowrap ${
               activeStep === 'architect'
                 ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs'
                 : 'text-[#1a2e1a] hover:bg-[#84D175]/30 hover:text-[#1a2e1a]'
@@ -80,19 +80,19 @@ export default function Navbar({
 
           <button
             onClick={onOpenAiPlanner}
-            className="flex items-center gap-2 px-4 sm:px-5 py-2 rounded-xl text-sm sm:text-base font-bold text-[#1a2e1a] bg-[#84D175]/35 hover:bg-[#84D175]/50 transition-all cursor-pointer border border-[#84D175]/45"
+            className="flex items-center gap-1.5 lg:gap-2 px-2.5 lg:px-5 py-1.5 lg:py-2 rounded-xl text-xs lg:text-base font-bold text-[#1a2e1a] bg-[#84D175]/35 hover:bg-[#84D175]/50 transition-all cursor-pointer border border-[#84D175]/45 whitespace-nowrap"
           >
-            <Bot className="w-5 h-5 text-[#2D6A24]" />
+            <Bot className="w-4 h-4 lg:w-5 lg:h-5 text-[#2D6A24]" />
             <span>{t('ai_builder', currentLanguage)}</span>
           </button>
         </nav>
 
-        {/* ── Right (Desktop): Market Data, Language, Logout (Unified Hover) ── */}
-        <div className="hidden md:flex items-center gap-2.5">
+        {/* ── Right (Desktop/Tablet): Market Data, Language, Logout Symbol ── */}
+        <div className="hidden md:flex items-center gap-1.5 lg:gap-2.5 shrink-0">
           {/* Live Market Data toggle */}
           <button
             onClick={() => onToggleRealWorld?.(!realWorldEnabled)}
-            className={`px-3.5 py-2 rounded-xl text-sm sm:text-base font-bold border transition-all cursor-pointer ${
+            className={`px-2.5 lg:px-3.5 py-1.5 lg:py-2 rounded-xl text-xs lg:text-base font-bold border transition-all cursor-pointer whitespace-nowrap ${
               realWorldEnabled
                 ? 'bg-[#84D175]/35 border-[#84D175] text-[#2D6A24] shadow-xs hover:bg-[#84D175]/50'
                 : 'bg-white/60 border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30'
@@ -106,7 +106,7 @@ export default function Navbar({
           <div className="relative">
             <button
               onClick={() => setLangOpen(!langOpen)}
-              className="bg-white/60 border border-[#84D175]/35 px-3.5 py-2 rounded-xl text-sm sm:text-base font-bold text-[#1a2e1a] hover:bg-[#84D175]/30 transition-all cursor-pointer shadow-xs"
+              className="bg-white/60 border border-[#84D175]/35 px-2.5 lg:px-3.5 py-1.5 lg:py-2 rounded-xl text-xs lg:text-base font-bold text-[#1a2e1a] hover:bg-[#84D175]/30 transition-all cursor-pointer shadow-xs min-w-[38px] text-center"
             >
               <span>{currentLang.short}</span>
             </button>
@@ -139,17 +139,18 @@ export default function Navbar({
             )}
           </div>
 
-          {/* Logout Button */}
+          {/* Logout Symbol Button */}
           <button
             onClick={onSignOut}
-            className="px-4 py-2 rounded-xl bg-white/60 border border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30 transition-all cursor-pointer text-sm sm:text-base font-bold shadow-xs"
+            className="p-1.5 lg:p-2.5 rounded-xl bg-white/60 border border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30 transition-all cursor-pointer shadow-xs flex items-center justify-center shrink-0"
             title="Sign Out to Landing Page"
+            aria-label="Logout"
           >
-            Logout
+            <LogOut className="w-4 h-4 lg:w-5 lg:h-5 text-[#1a2e1a]" />
           </button>
         </div>
 
-        {/* ── Mobile Layout (< md): Centered Logo, Menu on Left, Logout on Right Corner ── */}
+        {/* ── Mobile Layout (< md): Centered Logo, Menu on Left, Logout Symbol on Right Corner ── */}
         <div className="flex md:hidden items-center justify-between w-full">
           {/* Mobile Left: Menu Toggle Button */}
           <button
@@ -176,13 +177,14 @@ export default function Navbar({
             </span>
           </div>
 
-          {/* Mobile Right Corner: Logout Button (Profile picture removed for space) */}
+          {/* Mobile Right Corner: Logout Symbol Button */}
           <button
             onClick={onSignOut}
-            className="px-3 py-1.5 rounded-xl bg-white/70 border border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30 transition-all cursor-pointer text-sm font-bold shadow-xs"
+            className="p-2 rounded-xl bg-white/70 border border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30 transition-all cursor-pointer shadow-xs flex items-center justify-center"
             title="Sign Out to Landing Page"
+            aria-label="Logout"
           >
-            Logout
+            <LogOut className="w-4 h-4 text-[#1a2e1a]" />
           </button>
         </div>
 
@@ -278,6 +280,18 @@ export default function Navbar({
               )}
             </div>
           </div>
+
+          {/* Mobile Drawer Sign Out */}
+          <button
+            onClick={() => {
+              onSignOut?.();
+              setMobileMenuOpen(false);
+            }}
+            className="w-full p-2.5 rounded-xl bg-white/70 border border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30 font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+          >
+            <LogOut className="w-4 h-4 text-[#1a2e1a]" />
+            <span>Sign Out</span>
+          </button>
         </div>
       )}
 
