@@ -144,7 +144,7 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-[#FFF8D2] text-[#1a2e1a] overflow-x-hidden selection:bg-[#84D175] selection:text-[#1a2e1a] font-sans">
+    <div className="relative min-h-screen w-full bg-[#FFF8D2] text-[#1a2e1a] overflow-x-hidden selection:bg-[#84D175] selection:text-[#1a2e1a] font-sans flex flex-col items-center">
 
       {/* ── Translucent Tourism Background Scenic Overlay ── */}
       <div
@@ -160,8 +160,8 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
       </div>
 
       {/* ── Top Navigation Bar (Seamlessly Blended with Background) ── */}
-      <header className="sticky top-0 z-50 w-full bg-[#FFF8D2]/30 backdrop-blur-md border-b border-[#84D175]/20 transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-50 w-full bg-[#FFF8D2]/30 backdrop-blur-md border-b border-[#84D175]/20 transition-all flex justify-center">
+        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
 
           {/* Brand Logo */}
           <div
@@ -229,7 +229,7 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
       </header>
 
       {/* ── HERO ── */}
-      <section className="relative z-10 pt-16 sm:pt-24 pb-20 px-5 text-center max-w-5xl mx-auto space-y-8">
+      <section className="relative z-10 pt-16 sm:pt-24 pb-20 px-5 text-center max-w-5xl w-full mx-auto space-y-8 flex flex-col items-center justify-center">
         {/* Royal Heritage Hero Title */}
         <h1 className="text-5xl sm:text-7xl lg:text-8xl font-serif font-bold text-[#1a2e1a] tracking-tight leading-[1.04]">
           Your Dream Trip,<br></br>{' '}
@@ -306,7 +306,7 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
       </section>
 
       {/* ── HOW IT WORKS (ANCHOR: #how) ── */}
-      <section id="how" className="relative z-10 py-16 px-5 max-w-7xl mx-auto space-y-12">
+      <section id="how" className="relative z-10 py-16 px-5 max-w-7xl w-full mx-auto space-y-12">
         <div className="text-center space-y-2">
           <h2 className="text-4xl sm:text-5xl font-serif font-bold text-[#1a2e1a] tracking-tight">How TripCraft Works</h2>
           <p className="text-xs sm:text-sm text-[#4a5e4a] font-normal max-w-lg mx-auto">
@@ -344,7 +344,7 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
       </section>
 
       {/* ── DESTINATIONS (ANCHOR: #destinations) ── */}
-      <section id="destinations" className="relative z-10 py-16 px-5 max-w-7xl mx-auto space-y-10">
+      <section id="destinations" className="relative z-10 py-16 px-5 max-w-7xl w-full mx-auto space-y-10">
         <div className="text-center space-y-2">
           <h2 className="text-4xl sm:text-5xl font-serif font-bold text-[#1a2e1a] tracking-tight">Popular Destinations</h2>
           <p className="text-xs sm:text-sm text-[#4a5e4a] font-normal max-w-lg mx-auto">Explore top customizable holiday packages tailored across India</p>
@@ -379,7 +379,7 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
       </section>
 
       {/* ── FEATURES: WHY TRIPCRAFT (Pure Editorial Typography & Translucent Cards) ── */}
-      <section id="features" className="relative z-10 py-16 px-5 max-w-7xl mx-auto space-y-12">
+      <section id="features" className="relative z-10 py-16 px-5 max-w-7xl w-full mx-auto space-y-12">
         <div className="text-center space-y-2">
           <h2 className="text-4xl sm:text-5xl font-serif font-bold text-[#1a2e1a] tracking-tight">Why TripCraft</h2>
           <p className="text-xs sm:text-sm text-[#4a5e4a] font-normal max-w-lg mx-auto">Engineered for bespoke dynamic tour packages with strict backend algorithms</p>
@@ -402,8 +402,8 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="relative z-10 border-t border-[#84D175]/25 bg-white/40 backdrop-blur-md py-8 px-5 text-xs text-[#4a5e4a] font-normal">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      <footer className="relative z-10 border-t border-[#84D175]/25 bg-white/40 backdrop-blur-md py-8 px-5 text-xs text-[#4a5e4a] font-normal w-full flex justify-center">
+        <div className="max-w-7xl w-full mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <span>TripCraft © 2026 · Dynamic Tour Package Architect (PS-04)</span>
           <div className="flex items-center gap-4 text-[#2D6A24] font-semibold">
             <span>Decimal Pricing Engine</span>

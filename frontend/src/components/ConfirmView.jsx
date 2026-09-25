@@ -125,7 +125,7 @@ export default function ConfirmView({
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 animate-in text-[#1a2e1a] pb-12">
+    <div className="max-w-4xl w-full mx-auto space-y-6 animate-in text-[#1a2e1a] pb-12">
 
       {/* ── Top Confirmation Banner (Translucent Frosted Card) ── */}
       <div className="bg-white/65 backdrop-blur-md border border-[#84D175]/40 rounded-3xl p-6 sm:p-8 text-center space-y-3 shadow-xs">

@@ -144,7 +144,7 @@ export default function DiscoverView({
   const handleExplore = onExploreCatalog || onStartBuild;
 
   return (
-    <div className="space-y-10 animate-in">
+    <div className="space-y-10 animate-in w-full max-w-7xl mx-auto">
 
       {/* ── 1. Top Hero Banner ── */}
       <div className="relative overflow-hidden rounded-3xl p-8 sm:p-12 shadow-xl border border-[#84D175]/35 min-h-[380px] sm:min-h-[440px] flex items-center">

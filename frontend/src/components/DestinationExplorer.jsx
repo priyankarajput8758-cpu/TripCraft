@@ -566,7 +566,7 @@ export default function DestinationExplorer({
   });
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-8 animate-fadeIn w-full max-w-7xl mx-auto">
       {/* Hero Search & Geocoding Bar with 10s Rotating Background Images */}
       <div className="relative overflow-hidden rounded-3xl p-6 sm:p-10 shadow-xl border border-[#84D175]/40 text-[#1a2e1a] min-h-[320px] flex items-center">
         

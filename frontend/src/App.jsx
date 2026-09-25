@@ -314,7 +314,7 @@ export default function App() {
 
   /* ── Main App Shell ── */
   return (
-    <div className="min-h-screen bg-[#FFF8D2] text-[#1a2e1a] flex flex-col font-display selection:bg-[#84D175] selection:text-[#1a2e1a]">
+    <div className="min-h-screen w-full bg-[#FFF8D2] text-[#1a2e1a] flex flex-col items-center justify-between font-display selection:bg-[#84D175] selection:text-[#1a2e1a]">
 
       {/* Top Stepper Navigation */}
       <Navbar
@@ -329,11 +329,11 @@ export default function App() {
         onStepChange={navigateToStep}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 flex flex-col">
 
         {/* Language Fallback Notice */}
         {languageNotice && (
-          <div className="bg-amber-950/40 border border-amber-500/30 rounded-2xl px-4 py-3 text-xs text-amber-300 flex items-center gap-2 shadow-md">
+          <div className="bg-amber-950/40 border border-amber-500/30 rounded-2xl px-4 py-3 text-xs text-amber-300 flex items-center gap-2 shadow-md w-full">
             <Globe className="w-4 h-4 text-amber-400 shrink-0" />
             <span>{languageNotice}</span>
           </div>
@@ -491,8 +491,8 @@ export default function App() {
       />
 
       {/* Footer */}
-      <footer className="border-t border-[#84D175]/30 bg-white/70 backdrop-blur-sm py-8 text-xs text-[#4a5e4a]">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 font-medium">
+      <footer className="w-full border-t border-[#84D175]/30 bg-white/70 backdrop-blur-sm py-8 text-xs text-[#4a5e4a] flex justify-center">
+        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 font-medium">
           <span>TripCraft · KogniVera Hackathon 2026 · Team CodeBlooded · BMSCE</span>
           <div className="flex items-center gap-4 text-[#3C8B30] font-bold">
             <span>Decimal Pricing Engine</span>

@@ -273,7 +273,7 @@ export default function OptimizeView({
   }, [filteredAttractions, activeDaySchedule, defaultLat, defaultLng, activeDay]);
 
   return (
-    <div className="space-y-6 animate-in text-[#1a2e1a]">
+    <div className="space-y-6 animate-in text-[#1a2e1a] w-full max-w-7xl mx-auto">
 
       {/* ── Subheader Bar ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#84D175]/30 pb-5">

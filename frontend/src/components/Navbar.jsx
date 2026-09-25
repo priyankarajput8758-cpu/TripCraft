@@ -29,8 +29,8 @@ export default function Navbar({
   const currentLang = LANGUAGES.find(l => l.code === currentLanguage) || LANGUAGES[0];
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[#FFF8D2]/50 backdrop-blur-md border-b border-[#84D175]/25 transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+    <header className="sticky top-0 z-40 w-full bg-[#FFF8D2]/50 backdrop-blur-md border-b border-[#84D175]/25 transition-all flex justify-center">
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
 
         {/* ── Brand Logo ── */}
         <div

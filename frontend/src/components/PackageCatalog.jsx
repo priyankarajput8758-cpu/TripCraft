@@ -172,7 +172,7 @@ export default function PackageCatalog({
   }, [allPackages, selectedCity, selectedTheme, searchQuery, sortBy]);
 
   return (
-    <div className="space-y-8 animate-fadeIn text-slate-900 pb-12">
+    <div className="space-y-8 animate-fadeIn text-slate-900 pb-12 w-full max-w-7xl mx-auto">
 
       {/* ── Header Bar ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">

@@ -95,7 +95,7 @@ export default function BuildView({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-in">
+    <div className="max-w-4xl w-full mx-auto space-y-6 animate-in">
       {/* Top Back Button */}
       {onBack && (
         <button
