@@ -596,8 +596,7 @@ export default function DestinationExplorer({
                   {HERO_TOURISM_IMAGES[heroImageIdx].tag}
                 </span>
                 {externalSupplyMode && (
-                  <span className="px-3 py-1 rounded-full bg-amber-400/30 text-amber-900 border border-amber-400/50 text-xs sm:text-sm font-bold flex items-center gap-1.5">
-                    <Zap className="w-4 h-4 text-amber-800" />
+                  <span className="px-3 py-1 rounded-full bg-amber-400/30 text-amber-900 border border-amber-400/50 text-xs sm:text-sm font-bold flex items-center">
                     Live Google Hotels Active
                   </span>
                 )}
