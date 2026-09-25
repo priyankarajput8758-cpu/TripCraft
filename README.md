@@ -9,27 +9,24 @@
 
 * **Team Name:** CodeBlooded
 * **Problem Statement:** PS-04 — Dynamic Tour Packages (PackagePro / TripCraft)
+* **College:** BMS College of Engineering
 * **Build Window:** 24 Sep 09:00 → 25 Sep 09:00 IST (24 Hours)
 * **Team Members & Roles:**
-  * **Divyansh Duggad (Lead):** Backend, Business Logics, Decimal Pricing & Grounded AI
-  * **Navya Agrawal:** Design & User Experience
+  * **Divyansh Duggad:** Backend & AI
+  * **Navya Agrawal:** Design
   * **Priyanka Rajput:** Frontend & UI
-  * **Priyanshi Singh:** Pitch Lead & Demo Flow
+  * **Priyanshi Singh:** Pitch Lead
 
 ---
 
 ## 2. What We Built
 
-* **Curated Package Explorer:** Browse curated packages across themes (Spiritual, Adventure, Honeymoon, Heritage, Wildlife, Luxury) with transparent itemized inclusions and base pricing.
-* **Live Decimal Customization Studio:** Swapping any component (hotel tier, activities, transfers, optional add-ons) updates itinerary structure and package total price **live** using strict `Decimal` math.
-* **Tour-Guide as a First-Class Component:** Local tour guides selectable with BCP-47 language spoken, specialisation (heritage, food, trekking, wildlife, etc.), daily rates, and peak multipliers directly driving the total.
-* **✦ Mandatory Guide Availability Check & Refusal Flow (§2.2):** Adding a guide whose dates clash refuses the selection with the **exact clashing date named**, automatically proposes a **same-language, same-specialisation substitute guide**, and **reprices the package live** with the rate delta.
-* **Server-Side Multilingual Filtering (§8):** Preferences filter packages (`languages_offered`) and tour guides (`languages`) using standard BCP-47 tags (e.g. `ta`, `hi`, `en-IN`), with graceful fallback and clear notices.
-* **Autonomous Custom Destination Architect (Any City / 90km Radius):** Free-form geocoding via OpenStreetMap Nominatim + OpenTripMap tourist landmark discovery up to a **90km radius** for any destination (e.g. Chikmagalur, Ooty, Wayanad, Coorg, Hampi, Varanasi) on an interactive Leaflet map canvas with detailed spot cards and distance calculation.
-* **Day-Wise Multi-Select Experience Matrix:** Allows travellers to choose multiple activities/experiences per day (checkboxes) and select hotels/stays per night (radio buttons) across a flexible 1–7 day duration with pace preferences (Relaxed, Balanced, Packed).
-* **Gemini Schedule Optimization, Void Filling & Imagery:** Automatically fills activity voids with authentic local spots, resolves timing and sunset conflicts, attaches rich cover and attraction photography, and provides cost optimization insights (weekday vs weekend hotel tariffs).
-* **Real-World Pricing & Live Google Hotels Selection:** Toggle external supply mode to select real-world live hotels via SerpAPI Google Hotels with live INR pricing and booking links.
-* **Multilingual Translation Engine (Azure Translator v3.0):** Neural machine translation across Indian regional languages (Tamil, Hindi, Telugu, Kannada, Marathi, Bengali, Gujarati, Malayalam) via Microsoft Azure Cognitive Services Translator Text API v3.0 with batch processing and Gemini AI fallback.
+* **Interactive Package Customization Studio with Live Decimal Repricing:** Swapping any component (hotel tier, activities, transfers, or optional add-ons) updates itinerary structure and package total price **live** using strict Python `Decimal` arithmetic recomputed from scratch.
+* **First-Class Tour Guide Selection:** Local tour guides selectable as primary package components by language (BCP-47), specialisation (heritage, food, trekking, wildlife, etc.), daily rates, and peak multipliers directly driving the total.
+* **✦ Mandatory Guide Availability Check & Substitute Flow (§2.2):** Selecting an unavailable guide refuses the pick naming the **exact clashing date**, automatically proposes a **same-language, same-specialisation substitute guide**, and **reprices the package live** with the rate delta.
+* **Server-Side Multilingual Filtering & Regional Translation:** Separate UI and guide language preferences using standard BCP-47 tags (`hi`, `ta`, `te`, `kn`, `mr`, `bn`, `gu`) driving server-side package and guide recommendations, with native script toggles and Azure Translator v3.0 regional localization.
+* **Autonomous Custom Destination Architect (90km Geo Radius):** Geocoding via OpenStreetMap + OpenTripMap tourist discovery up to a **90km radius** for any destination on an interactive Leaflet map canvas with day-wise multi-selection of experiences and stays.
+* **Grounded AI Package Synthesizer & Live Google Hotels:** Gemini Flash balances schedules, fills voids, and resolves timing conflicts without entity hallucinations; optional SerpAPI Google Hotels integration delivers live real-world room rates with verified zero-float Decimal pricing.
 
 ---
 
@@ -69,19 +66,21 @@
 
 ## 4. Data Model
 
-Conforms strictly to **v1.1.0-rc1** of the shared data model (`01_YOUR_DATA_MODEL.md`):
+Conforms strictly to **v1.1.0-rc1** of the shared canonical data model (`01_YOUR_DATA_MODEL.md`):
 
-* **Canonical Tables Used (20 core + 1 reference):**
+* **Canonical Tables Used (D1–D9 Domains, 21 tables, 28,103 rows):**
   * `tour_packages`, `package_components`, `tour_guides`, `guide_availability`, `user_preferences`, `users`, `trips`, `itineraries`, `itinerary_items`, `bookings`, `cities`, `countries`, `currencies`, `hotels`, `hotel_room_types`, `hotel_media`, `transfers`, `categories`, `languages`, `price_history`, `amenities`.
 * **Additive Schema Extension (Documented in `data-model/DATA_MODEL.md`):**
-  * **`package_selections`**: Stores a traveller's selected component choices per `swap_group` for a trip/itinerary, preserving catalog immutability.
+  * **`package_selections`**: Persists a traveller's selected component choices per `swap_group` for a trip/itinerary, preserving catalog immutability.
 * **Rules R1–R8 Enforced in Code:**
   * **R1 (Additive Only):** No canonical column renamed or dropped.
   * **R2 (Opaque IDs):** Prefixed strings (`pkg_...`, `cmp_...`, `gui_...`, `sel_...`).
   * **R3 (Decimal Money):** Zero float arithmetic. All money handled via Python `Decimal` and serialized as 2-place strings.
   * **R4 (ISO-8601):** Timezone-aware timestamps (`_at`) and zoneless dates (`_date`).
+  * **R5 (Enums):** Lowercase snake_case values validated against `data/enums.json`.
   * **R6 (BCP-47 Languages):** Languages stored and matched exclusively via BCP-47 tags (`ta`, `hi`, `en-IN`).
-  * **R8 (Soft Deletion):** Status state transitions.
+  * **R7 (WGS-84 Geography):** 6-decimal-place latitude and longitude coordinates.
+  * **R8 (Soft Deletion):** State transitions (`active`, `cancelled`, `replaced`); no hard deletes.
 
 ---
 
@@ -89,7 +88,7 @@ Conforms strictly to **v1.1.0-rc1** of the shared data model (`01_YOUR_DATA_MODE
 
 | Feature | Mechanism | Grounding & Guardrails | Evaluation Metric |
 |---|---|---|---|
-| **AI Trip Builder** | Natural language constraint parser + Gemini Flash model with multi-model fallback (`gemini-2.5-flash`, `gemini-1.5-flash`, `gemini-3.8-flash`) | Ranks & selects verified package and component IDs from SQLite DB. Never invents entities, prices, or dates. | Preference & budget match accuracy |
+| **AI Trip Builder** | Natural language constraint parser + Gemini Flash model with multi-model fallback (`gemini-2.5-flash`, `gemini-1.5-flash`) | Ranks & selects verified package and component IDs from SQLite DB. Never invents entities, prices, or dates. | Preference & budget match accuracy |
 | **Guide Matching Engine** | Multi-attribute scoring on languages (BCP-47), specialisations, ratings, and date availability | Verified against `tour_guides` and `guide_availability` calendar | Match accuracy & zero-clash guarantee |
 | **Smart Add-on Recommender** | Contextual relevance matching between itinerary theme and optional `package_components` | Validated against active optional component rows | Add-on acceptance rate |
 | **Explanation Generator** | Gemini Prompt Pipeline | Explains selected components and price breakdown using verified facts only | Rationale relevance & factual consistency |
@@ -112,17 +111,23 @@ cd kv-hack2026-codeblooded
 cp .env.example .env
 ```
 
-### 3. Quickstart: Unified Single-Command Run (Recommended)
-Launch both the FastAPI Backend and the React Frontend simultaneously with a single command:
+### 3. Database Verification & Seeding
+The canonical SQLite database is pre-indexed and ready at `data/PS-04.db`. Conformance can be verified anytime:
+```bash
+python PackagePro/tools/validate_conformance.py data/PS-04.db
+```
+
+### 4. Quickstart: Unified Single-Command Run (Recommended)
+Launch both the FastAPI Backend and the React Frontend simultaneously with a single command from the project root:
 ```bash
 python run.py
 # Or from npm at root:
 npm run dev
 ```
 * **Frontend UI:** `http://localhost:5173`
-* **Backend API:** `http://localhost:8000` (Swagger Docs: `http://localhost:8000/docs`)
+* **Backend API:** `http://localhost:8000` (Swagger Interactive Docs: `http://localhost:8000/docs`)
 
-### 4. Running Backend & Frontend Independently
+### 5. Running Backend & Frontend Independently
 Both services maintain isolated dependency requirements (`backend/requirements.txt` and `frontend/package.json`) and can run independently without version conflicts:
 
 **Backend (FastAPI):**
@@ -143,18 +148,18 @@ npm run dev
 
 ## 7. Demo Path (Terminal MVP Outcome)
 
-1. **Browse & Filter:** Open the app, set language preference to **Tamil (`ta`)** or **Hindi (`hi`)**, and observe server-side package and guide filtering.
+1. **Browse & Filter:** Open `http://localhost:5173`, switch language preference to **Tamil (`த`)** or **Hindi (`हि`)**, and observe server-side package and guide filtering.
 2. **Select Package:** Click on a curated package (e.g. *Tirupati Honeymoon* or *Varanasi Heritage*).
 3. **Customize Components:**
-   * Swap hotel tier from Standard to Luxury $\to$ observe live itinerary update and exact Decimal price increase.
-   * Toggle optional activities (e.g. Temple VIP Darshan, Evening Aarti Boat) $\to$ price recalculates live.
+   * Swap hotel tier from Standard to Luxury $\to$ observe live itinerary update and exact Decimal price recalculation.
+   * Toggle optional activities (e.g. Temple VIP Darshan, Evening Aarti Boat) $\to$ price recalculates live with signed deltas.
 4. **✦ Trigger Guide Clash & Substitution Flow (§2.2):**
    * Select a tour guide for a date known to have a clash (e.g. `2026-09-01`).
    * See the refusal alert appear: *"Guide 'Nisha Verma' is unavailable on 2026-09-01"*.
    * View the recommended **substitute guide** matching the **same language and same specialisation**.
    * Click **"Accept Substitute"** $\to$ the substitute replaces the guide and the total reprices live with the price delta.
 5. **Custom Destination Architect (Any City):**
-   * Switch to the **"Custom Destination Architect"** tab.
+   * Switch to the **"Custom Architect"** tab.
    * Type any destination (e.g. `Chikmagalur`, `Wayanad`, `Coorg`, `Hampi`).
    * See OpenStreetMap + OpenTripMap discover all nearby POIs on the Leaflet map.
    * Select day-wise experiences (checkboxes) and hotels (radio buttons) across a 1–7 day duration.
