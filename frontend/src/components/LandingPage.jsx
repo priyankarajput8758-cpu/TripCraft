@@ -62,7 +62,7 @@ const HOW_IT_WORKS_STEPS = [
 
 const STATS = [
   { value: '60+',  label: 'Curated Packages' },
-  { value: '21',   label: 'Destinations'     },
+  { value: '50+',   label: 'Destinations'     },
   { value: '100%', label: 'Decimal Precision'},
   { value: 'Live', label: 'Guide Availability'},
 ];
@@ -201,10 +201,7 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
       {/* ── HOW IT WORKS (ANCHOR: #how) ── */}
       <section id="how" className="relative z-10 py-16 px-5 max-w-7xl mx-auto space-y-12">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 border border-[#84D175]/30 text-[#3C8B30] text-[11px] font-bold uppercase tracking-wider">
-            <Compass className="w-3.5 h-3.5 text-[#84D175]" />
-            <span>Step-by-Step Experience</span>
-          </div>
+        
           <h2 className="text-3xl sm:text-4xl font-black text-[#1a2e1a] tracking-tight">How TripCraft Works</h2>
           <p className="text-xs sm:text-sm text-[#4a5e4a] font-medium max-w-lg mx-auto">
             From initial discovery to live decimal repricing and verified guide booking in 4 intuitive steps.
@@ -244,10 +241,6 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
       {/* ── DESTINATIONS (ANCHOR: #destinations) ── */}
       <section id="destinations" className="relative z-10 py-16 px-5 max-w-7xl mx-auto space-y-10">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 border border-[#84D175]/30 text-[#3C8B30] text-[11px] font-bold uppercase tracking-wider">
-            <Compass className="w-3.5 h-3.5 text-[#84D175]" />
-            <span>Handpicked Destinations</span>
-          </div>
           <h2 className="text-3xl sm:text-4xl font-black text-[#1a2e1a] tracking-tight">Popular Destinations</h2>
           <p className="text-xs sm:text-sm text-[#4a5e4a] font-medium max-w-lg mx-auto">Explore top customizable holiday packages tailored across India</p>
         </div>
@@ -285,10 +278,6 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
       {/* ── FEATURES (ANCHOR: #features) ── */}
       <section id="features" className="relative z-10 py-16 px-5 max-w-7xl mx-auto space-y-12">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 border border-[#84D175]/30 text-[#3C8B30] text-[11px] font-bold uppercase tracking-wider">
-            <Layers className="w-3.5 h-3.5 text-[#84D175]" />
-            <span>Platform Capabilities</span>
-          </div>
           <h2 className="text-3xl sm:text-4xl font-black text-[#1a2e1a] tracking-tight">Why TripCraft</h2>
           <p className="text-xs sm:text-sm text-[#4a5e4a] font-medium max-w-lg mx-auto">Engineered for modern customizable travel with strict backend algorithms</p>
         </div>
