@@ -16,14 +16,14 @@ const THEMES_CONFIG = [
 ];
 
 const THEME_BADGES = {
-  adventure:  { labelKey: 'theme_adventure',  bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
-  honeymoon:  { labelKey: 'theme_honeymoon',  bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
-  pilgrimage: { labelKey: 'theme_pilgrimage', bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
-  family:     { labelKey: 'theme_family',     bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
-  heritage:   { labelKey: 'theme_heritage',   bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
-  wildlife:   { labelKey: 'theme_all',        bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
-  food_trail: { labelKey: 'theme_all',        bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
-  wellness:   { labelKey: 'theme_all',        bg: 'bg-[#84D175] text-[#1a2e1a] font-bold' },
+  adventure:  { labelKey: 'theme_adventure',  bg: 'bg-[#84D175] text-[#1a2e1a] font-extrabold border border-[#67C456] shadow-sm' },
+  honeymoon:  { labelKey: 'theme_honeymoon',  bg: 'bg-[#84D175] text-[#1a2e1a] font-extrabold border border-[#67C456] shadow-sm' },
+  pilgrimage: { labelKey: 'theme_pilgrimage', bg: 'bg-[#84D175] text-[#1a2e1a] font-extrabold border border-[#67C456] shadow-sm' },
+  family:     { labelKey: 'theme_family',     bg: 'bg-[#84D175] text-[#1a2e1a] font-extrabold border border-[#67C456] shadow-sm' },
+  heritage:   { labelKey: 'theme_heritage',   bg: 'bg-[#84D175] text-[#1a2e1a] font-extrabold border border-[#67C456] shadow-sm' },
+  wildlife:   { labelKey: 'theme_all',        bg: 'bg-[#84D175] text-[#1a2e1a] font-extrabold border border-[#67C456] shadow-sm' },
+  food_trail: { labelKey: 'theme_all',        bg: 'bg-[#84D175] text-[#1a2e1a] font-extrabold border border-[#67C456] shadow-sm' },
+  wellness:   { labelKey: 'theme_all',        bg: 'bg-[#84D175] text-[#1a2e1a] font-extrabold border border-[#67C456] shadow-sm' },
 };
 
 const THEME_FALLBACK_IMAGES = {
@@ -34,7 +34,7 @@ const THEME_FALLBACK_IMAGES = {
   heritage: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/4/41/East_facade_Hawa_Mahal_Jaipur_from_ground_level_%28July_2022%29_-_img_01.jpg/960px-East_facade_Hawa_Mahal_Jaipur_from_ground_level_%28July_2022%29_-_img_01.jpg',
   wildlife: 'https://images.unsplash.com/photo-1561731216-c3a4d99437d5?auto=format&fit=crop&w=600&q=80',
   food_trail: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80',
-  wellness: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80',
+  wellness: 'https://images.unsplash.com/photo-1588598198321-9735fd52455b?auto=format&fit=crop&w=600&q=80',
 };
 
 const CITY_LANDMARK_IMAGES = {
@@ -100,7 +100,9 @@ const CITY_LANDMARK_IMAGES = {
   bali: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80', // Ulun Danu
   kathmandu: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80', // Pashupatinath
   kandy: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4e/Temple_of_the_Tooth_%28Sri_Dalada_Maligawa%29.jpg/960px-Temple_of_the_Tooth_%28Sri_Dalada_Maligawa%29.jpg', // Temple of Tooth
-  colombo: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d3/Colombo_Lotus_Tower_2022.jpg/960px-Colombo_Lotus_Tower_2022.jpg', // Colombo Lotus Tower
+  colombo: 'https://images.unsplash.com/photo-1588598198321-9735fd52455b?auto=format&fit=crop&w=800&q=80', // Colombo Lotus Tower & Skyline
+  'colombo wellness': 'https://images.unsplash.com/photo-1588598198321-9735fd52455b?auto=format&fit=crop&w=800&q=80',
+  'colombo wellness-7days': 'https://images.unsplash.com/photo-1588598198321-9735fd52455b?auto=format&fit=crop&w=800&q=80',
   doha: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80', // Museum of Islamic Art
   'kuala lumpur': 'https://images.unsplash.com/photo-1508964942454-1a56651d54ac?auto=format&fit=crop&w=800&q=80', // Petronas Towers
   thimphu: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80', // Buddha Dordenma
