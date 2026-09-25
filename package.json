@@ -1,0 +1,13 @@
+{
+  "name": "tripcraft-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TripCraft (PackagePro) - Dynamic Tour Packages Workspace",
+  "scripts": {
+    "start": "python run.py",
+    "dev": "python run.py",
+    "backend": "cd backend && uvicorn src.main:app --reload --port 8000",
+    "frontend": "cd frontend && npm run dev",
+    "test": "pytest -v tests/"
+  }
+}

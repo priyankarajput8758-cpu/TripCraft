@@ -112,26 +112,32 @@ cd kv-hack2026-codeblooded
 cp .env.example .env
 ```
 
-### 3. Backend Setup & Run
+### 3. Quickstart: Unified Single-Command Run (Recommended)
+Launch both the FastAPI Backend and the React Frontend simultaneously with a single command:
 ```bash
-# Install backend dependencies
+python run.py
+# Or from npm at root:
+npm run dev
+```
+* **Frontend UI:** `http://localhost:5173`
+* **Backend API:** `http://localhost:8000` (Swagger Docs: `http://localhost:8000/docs`)
+
+### 4. Running Backend & Frontend Independently
+Both services maintain isolated dependency requirements (`backend/requirements.txt` and `frontend/package.json`) and can run independently without version conflicts:
+
+**Backend (FastAPI):**
+```bash
 cd backend
 pip install -r requirements.txt
-
-# Run the backend API server
 uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 ```
-Backend API will be live at: `http://localhost:8000`  
-Swagger API Docs available at: `http://localhost:8000/docs`
 
-### 4. Frontend Setup & Run
+**Frontend (React + Vite):**
 ```bash
-# In a new terminal
 cd frontend
 npm install
 npm run dev
 ```
-Open web app in browser: `http://localhost:5173`
 
 ---
 
