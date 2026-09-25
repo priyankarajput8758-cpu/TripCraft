@@ -60,7 +60,7 @@ export default function AIAssistantModal({
         destination: aiResult.destination_name || 'Destination',
         duration: aiResult.duration_days || parseInt(duration) || 3,
         budget: aiResult.target_budget || (budget ? parseFloat(budget) : null),
-        language: aiResult.preferred_language || currentLanguage,
+        language: currentLanguage || 'en',
         customRequests: aiResult.user_custom_requests || promptText,
         customPackage: aiResult.custom_package
       });

@@ -123,7 +123,7 @@ export default function DestinationExplorer({
   const [appliedSuggestions, setAppliedSuggestions] = useState({});
 
   // Translation state
-  const [selectedLang, setSelectedLang] = useState(initialState?.language || preferredLanguage || 'en');
+  const [selectedLang, setSelectedLang] = useState(preferredLanguage || 'en');
   const [translatedTripTitle, setTranslatedTripTitle] = useState(null);
   const [originalEnglishTrip, setOriginalEnglishTrip] = useState(initialState?.customPackage || null);
   const [translating, setTranslating] = useState(false);
@@ -135,10 +135,15 @@ export default function DestinationExplorer({
 
   // Sync language with external parent prop
   useEffect(() => {
-    if (preferredLanguage && preferredLanguage !== selectedLang) {
+    if (preferredLanguage) {
       setSelectedLang(preferredLanguage);
       if (synthesizedTrip) {
-        handleTranslate(preferredLanguage);
+        if (preferredLanguage !== 'en') {
+          handleTranslate(preferredLanguage);
+        } else if (originalEnglishTrip) {
+          setSynthesizedTrip(originalEnglishTrip);
+          setTranslatedTripTitle(null);
+        }
       }
     }
   }, [preferredLanguage]);
@@ -168,7 +173,9 @@ export default function DestinationExplorer({
       if (initialState.customRequests) {
         setUserCustomRequests(initialState.customRequests);
       }
-      if (initialState.language) {
+      if (preferredLanguage) {
+        setSelectedLang(preferredLanguage);
+      } else if (initialState.language) {
         setSelectedLang(initialState.language);
       }
       if (initialState.customPackage) {
@@ -869,11 +876,11 @@ export default function DestinationExplorer({
 
       {/* Day-Wise Multi-Select Experience Matrix Studio */}
       <div className="bg-white/95 border border-[#84D175]/35 rounded-3xl p-6 sm:p-8 space-y-6 shadow-sm text-[#1a2e1a]">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#84D175]/30 pb-5">
-          <div className="space-y-1">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-[#84D175]/30 pb-5">
+          <div className="space-y-1 min-w-0 flex-1 break-words">
             <h3 className="text-xl font-black text-[#1a2e1a] flex items-center gap-2.5">
-              <Calendar className="w-5 h-5 text-[#2D6A24]" />
-              {t('day_wise_matrix_title', selectedLang)}
+              <Calendar className="w-5 h-5 text-[#2D6A24] shrink-0" />
+              <span>{t('day_wise_matrix_title', selectedLang)}</span>
             </h3>
             <p className="text-sm text-[#4a5e4a] font-medium">
               {t('day_wise_matrix_sub', selectedLang)}
@@ -881,7 +888,7 @@ export default function DestinationExplorer({
           </div>
 
           {/* Duration, Party Size & Pace Controls */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
             {/* Party Size Selector */}
             <div className="flex items-center space-x-2 bg-white px-3 py-1.5 rounded-xl border border-[#84D175]/40 shadow-2xs">
               <span className="text-xs font-bold text-[#4a5e4a]">Travelers:</span>
@@ -926,14 +933,16 @@ export default function DestinationExplorer({
                 <button
                   key={p.id}
                   onClick={() => setPacePreference(p.id)}
-                  className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer truncate max-w-[130px] text-center ${
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer whitespace-nowrap text-center ${
+                    selectedLang !== 'en' ? 'text-[11px]' : 'text-xs'
+                  } ${
                     pacePreference === p.id
                       ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs font-black'
                       : 'text-[#4a5e4a] hover:text-[#1a2e1a]'
                   }`}
                   title={p.label}
                 >
-                  <span className="truncate block">{p.label}</span>
+                  <span className="block">{p.label}</span>
                 </button>
               ))}
             </div>
@@ -951,7 +960,7 @@ export default function DestinationExplorer({
             </div>
 
             {/* Radio Toggle: Same Stay Throughout vs Different Stays */}
-            <div className="flex items-center space-x-4 bg-white p-2 rounded-xl border border-[#84D175]/30 text-xs font-bold text-[#1a2e1a] shadow-2xs">
+            <div className="flex flex-wrap items-center gap-3 bg-white p-2.5 rounded-xl border border-[#84D175]/30 text-xs font-bold text-[#1a2e1a] shadow-2xs">
               <label className="flex items-center space-x-2 cursor-pointer text-[#1a2e1a] hover:text-[#2D6A24]">
                 <input
                   type="radio"
@@ -961,7 +970,7 @@ export default function DestinationExplorer({
                   onChange={() => setStayMode('same')}
                   className="accent-[#2D6A24] w-4 h-4 cursor-pointer"
                 />
-                <span>Same Stay Throughout Trip</span>
+                <span className="whitespace-normal leading-tight">{t('stay_same_label', selectedLang)}</span>
               </label>
 
               <label className="flex items-center space-x-2 cursor-pointer text-[#1a2e1a] hover:text-[#2D6A24]">
@@ -973,7 +982,7 @@ export default function DestinationExplorer({
                   onChange={() => setStayMode('different')}
                   className="accent-[#2D6A24] w-4 h-4 cursor-pointer"
                 />
-                <span>Different Stays Per Day</span>
+                <span className="whitespace-normal leading-tight">{t('stay_diff_label', selectedLang)}</span>
               </label>
             </div>
           </div>
@@ -1545,20 +1554,20 @@ export default function DestinationExplorer({
           </div>
 
           {/* Decimal Financial Breakdown & Booking Action */}
-          <div className="bg-[#0C2D45] border border-[#84D175]/35 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 text-[#FFF8D2] shadow-xl">
-            <div className="space-y-2">
+          <div className="bg-[#0C2D45] border border-[#84D175]/35 rounded-2xl p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6 text-[#FFF8D2] shadow-xl">
+            <div className="space-y-2 min-w-0 flex-1">
               <span className="text-[11px] font-bold text-[#D3E8D0] uppercase tracking-wider block">
                 Total Synthesized Package Price (Decimal Precision for {numTravelers} Traveler{numTravelers > 1 ? 's' : ''}):
               </span>
               <div className="flex flex-wrap items-baseline gap-3">
-                <span className="text-3xl font-black text-white font-mono">
+                <span className="text-3xl font-black text-white font-mono shrink-0">
                   ₹{parseFloat(synthesizedTrip.estimated_pricing?.grand_total || '32000.00').toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </span>
                 <span className="text-xs text-white font-bold bg-[#84D175]/30 px-2.5 py-1 rounded-lg border border-[#84D175]/40">
                   Includes {Math.ceil(numTravelers / 2)} Hotel Room(s) + Transfers + 5% GST
                 </span>
               </div>
-              <div className="text-[11px] text-[#D3E8D0] flex flex-wrap gap-4 font-mono pt-1">
+              <div className="text-[11px] text-[#D3E8D0] flex flex-wrap gap-x-4 gap-y-1 font-mono pt-1">
                 <span>Stays: ₹{synthesizedTrip.estimated_pricing?.hotel_total || '14000.00'}</span>
                 <span>•</span>
                 <span>Activities ({numTravelers}p): ₹{synthesizedTrip.estimated_pricing?.activities_total || '9000.00'}</span>
@@ -1579,7 +1588,7 @@ export default function DestinationExplorer({
                 hotelName: stayMode === 'same' ? masterHotel.name : 'Custom Multi-Stay Plan',
                 selectedHotel: stayMode === 'same' ? masterHotel : undefined
               })}
-              className="px-8 py-3.5 bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-sm rounded-xl shadow-lg shadow-[#84D175]/30 transition-all cursor-pointer flex items-center gap-2 shrink-0 active:scale-95"
+              className="px-8 py-3.5 bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-sm rounded-xl shadow-lg shadow-[#84D175]/30 transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 active:scale-95 w-full sm:w-auto"
             >
               <span>Book Custom Package</span>
               <ArrowRight className="w-4 h-4" />

@@ -640,7 +640,7 @@ Return ONLY a valid JSON object strictly matching this schema:
         }
         req_lang = preferred_language or 'en'
         for lang_name, code in LANG_MAP.items():
-            if lang_name in prompt_lower:
+            if f"in {lang_name}" in prompt_lower or f"{lang_name} language" in prompt_lower or f"{lang_name} itinerary" in prompt_lower or f"{lang_name} version" in prompt_lower:
                 req_lang = code
                 break
 
@@ -736,8 +736,6 @@ Return a JSON object:
                             req_days = int(ai_extract["duration_days"])
                         if not req_budget and ai_extract.get("budget"):
                             req_budget = float(ai_extract["budget"])
-                        if req_lang == 'en' and ai_extract.get("language"):
-                            req_lang = str(ai_extract["language"]).strip().lower()
                 except Exception as e:
                     logger.debug(f"Gemini parameter extraction fallback: {e}")
 
