@@ -294,10 +294,14 @@ export default function App() {
     navigateToStep('architect');
   };
 
+  const handleGoToLanding = () => {
+    setShowLanding(true);
+  };
+
   const activePackage = packageDetailData?.package;
 
   /* ── Prelogin / Landing Page (If explicit landing view is triggered) ── */
-  if (showLanding && !user) {
+  if (showLanding) {
     return (
       <>
         <LandingPage onGetStarted={handleGetStarted} onSignIn={handleSignIn} />
@@ -325,6 +329,7 @@ export default function App() {
         onToggleRealWorld={setRealWorldEnabled}
         user={user}
         onSignOut={handleSignOut}
+        onGoToLanding={handleGoToLanding}
         activeStep={activeStep}
         onStepChange={navigateToStep}
       />

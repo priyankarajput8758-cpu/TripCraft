@@ -21,6 +21,7 @@ export default function Navbar({
   onToggleRealWorld,
   user,
   onSignOut,
+  onGoToLanding,
   activeStep,
   onStepChange,
 }) {
@@ -28,36 +29,39 @@ export default function Navbar({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const currentLang = LANGUAGES.find(l => l.code === currentLanguage) || LANGUAGES[0];
 
-  return (
-    <header className="sticky top-0 z-40 w-full bg-[#FFF8D2]/50 backdrop-blur-md border-b border-[#84D175]/25 transition-all flex justify-center">
-      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+  const handleLogoClick = () => {
+    onGoToLanding?.();
+    setMobileMenuOpen(false);
+  };
 
-        {/* ── Brand Logo ── */}
+  return (
+    <header className="sticky top-0 z-40 w-full bg-[#FFF8D2]/90 backdrop-blur-md border-b border-[#84D175]/30 shadow-xs transition-all">
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 h-18 sm:h-20 relative flex items-center justify-between">
+
+        {/* ── Left (Desktop): Brand Logo (Redirects to Landing Page) ── */}
         <div
-          className="flex items-center gap-2.5 shrink-0 cursor-pointer select-none"
-          onClick={() => {
-            onStepChange?.('discover');
-            setMobileMenuOpen(false);
-          }}
+          className="hidden md:flex items-center gap-3 shrink-0 cursor-pointer select-none group"
+          onClick={handleLogoClick}
+          title="Go to Landing Page"
         >
           <img
             src="/logo.png"
             alt="TripCraft"
-            className="h-9 w-auto object-contain rounded-xl shadow-xs bg-white/70 p-0.5"
+            className="h-10 sm:h-11 w-auto object-contain rounded-xl shadow-xs bg-white/70 p-0.5 group-hover:scale-105 transition-transform"
           />
-          <div className="flex items-center gap-1.5">
-            <span className="text-2xl font-serif font-bold tracking-tight text-[#1a2e1a]">TripCraft</span>
-          </div>
+          <span className="text-2xl sm:text-3xl font-serif font-black tracking-tight text-[#1a2e1a]">
+            TripCraft
+          </span>
         </div>
 
-        {/* ── Desktop Center Mode Switcher ── */}
-        <nav className="hidden md:flex items-center gap-1 bg-white/45 backdrop-blur-md p-1 rounded-2xl border border-[#84D175]/30 shadow-xs">
+        {/* ── Center Navigation Menu (Desktop): Mathematically Centered ── */}
+        <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1.5 bg-white/60 backdrop-blur-md p-1.5 rounded-2xl border border-[#84D175]/35 shadow-xs">
           <button
             onClick={() => onStepChange?.('discover')}
-            className={`px-4 py-1.5 rounded-xl text-xs sm:text-sm transition-all cursor-pointer ${
+            className={`px-4 sm:px-5 py-2 rounded-xl text-sm sm:text-base font-bold transition-all cursor-pointer ${
               activeStep === 'discover' || activeStep === 'customize' || activeStep === 'optimize' || activeStep === 'confirm'
-                ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs font-bold'
-                : 'text-[#1a2e1a] hover:text-[#1a2e1a] hover:bg-[#FFF8D2]/70 font-semibold'
+                ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs'
+                : 'text-[#1a2e1a] hover:bg-[#84D175]/30 hover:text-[#1a2e1a]'
             }`}
           >
             {t('curated_packages', currentLanguage)}
@@ -65,10 +69,10 @@ export default function Navbar({
 
           <button
             onClick={() => onStepChange?.('architect')}
-            className={`px-4 py-1.5 rounded-xl text-xs sm:text-sm transition-all cursor-pointer ${
+            className={`px-4 sm:px-5 py-2 rounded-xl text-sm sm:text-base font-bold transition-all cursor-pointer ${
               activeStep === 'architect'
-                ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs font-bold'
-                : 'text-[#1a2e1a] hover:text-[#1a2e1a] hover:bg-[#FFF8D2]/70 font-semibold'
+                ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs'
+                : 'text-[#1a2e1a] hover:bg-[#84D175]/30 hover:text-[#1a2e1a]'
             }`}
           >
             {t('custom_architect', currentLanguage)}
@@ -76,23 +80,22 @@ export default function Navbar({
 
           <button
             onClick={onOpenAiPlanner}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-[#1a2e1a] bg-[#84D175]/35 hover:bg-[#84D175]/50 transition-all cursor-pointer border border-[#84D175]/45"
+            className="flex items-center gap-2 px-4 sm:px-5 py-2 rounded-xl text-sm sm:text-base font-bold text-[#1a2e1a] bg-[#84D175]/35 hover:bg-[#84D175]/50 transition-all cursor-pointer border border-[#84D175]/45"
           >
-            <Bot className="w-4 h-4 text-[#2D6A24]" />
+            <Bot className="w-5 h-5 text-[#2D6A24]" />
             <span>{t('ai_builder', currentLanguage)}</span>
           </button>
         </nav>
 
-        {/* ── Actions (right) ── */}
-        <div className="flex items-center gap-2 sm:gap-2.5">
-
+        {/* ── Right (Desktop): Market Data, Language, Logout (Unified Hover) ── */}
+        <div className="hidden md:flex items-center gap-2.5">
           {/* Live Market Data toggle */}
           <button
             onClick={() => onToggleRealWorld?.(!realWorldEnabled)}
-            className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
+            className={`px-3.5 py-2 rounded-xl text-sm sm:text-base font-bold border transition-all cursor-pointer ${
               realWorldEnabled
-                ? 'bg-[#84D175]/35 border-[#84D175] text-[#2D6A24] shadow-xs'
-                : 'bg-white/50 backdrop-blur-sm border-[#84D175]/35 text-[#1a2e1a] hover:bg-white/80'
+                ? 'bg-[#84D175]/35 border-[#84D175] text-[#2D6A24] shadow-xs hover:bg-[#84D175]/50'
+                : 'bg-white/60 border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30'
             }`}
             title="Live SerpAPI & OpenTripMap Market Rates"
           >
@@ -103,15 +106,14 @@ export default function Navbar({
           <div className="relative">
             <button
               onClick={() => setLangOpen(!langOpen)}
-              className="flex items-center gap-1 bg-white/50 backdrop-blur-sm border border-[#84D175]/35 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold text-[#1a2e1a] hover:border-[#84D175] transition-all cursor-pointer shadow-xs"
+              className="bg-white/60 border border-[#84D175]/35 px-3.5 py-2 rounded-xl text-sm sm:text-base font-bold text-[#1a2e1a] hover:bg-[#84D175]/30 transition-all cursor-pointer shadow-xs"
             >
               <span>{currentLang.short}</span>
-              <span className="text-[10px] text-[#1a2e1a] ml-0.5">▼</span>
             </button>
 
             {langOpen && (
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white/90 backdrop-blur-xl border border-[#84D175]/40 rounded-2xl shadow-xl overflow-hidden z-50 py-1 animate-in">
-                <div className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-[#1a2e1a] border-b border-[#84D175]/20">
+              <div className="absolute right-0 top-full mt-2 w-52 bg-white/95 backdrop-blur-xl border border-[#84D175]/40 rounded-2xl shadow-xl overflow-hidden z-50 py-1.5 animate-in">
+                <div className="px-3.5 py-2 text-xs font-bold uppercase tracking-wider text-[#1a2e1a] border-b border-[#84D175]/20">
                   {t('select_language', currentLanguage)}
                 </div>
                 {LANGUAGES.map((lang) => (
@@ -121,14 +123,14 @@ export default function Navbar({
                       onLanguageChange(lang.code);
                       setLangOpen(false);
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-xs sm:text-sm transition-all cursor-pointer ${
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 text-sm sm:text-base transition-all cursor-pointer ${
                       lang.code === currentLanguage
                         ? 'bg-[#84D175]/25 text-[#2D6A24] font-bold'
-                        : 'text-[#1a2e1a] hover:bg-[#FFF8D2]/70 font-semibold'
+                        : 'text-[#1a2e1a] hover:bg-[#84D175]/30 font-semibold'
                     }`}
                   >
                     <span>{lang.label}</span>
-                    <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-[#84D175]/20 text-[#2D6A24] font-bold">
+                    <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#84D175]/20 text-[#2D6A24] font-bold">
                       {lang.short}
                     </span>
                   </button>
@@ -137,44 +139,68 @@ export default function Navbar({
             )}
           </div>
 
-          {/* User Profile & Logout */}
-          <div className="flex items-center gap-1.5 bg-white/50 backdrop-blur-sm border border-[#84D175]/35 px-2.5 py-1 rounded-xl shadow-xs">
-            <div className="w-6 h-6 rounded-full bg-[#84D175] text-[#1a2e1a] font-bold text-xs flex items-center justify-center shrink-0">
-              {user?.name?.[0]?.toUpperCase() || 'P'}
-            </div>
-            <button
-              onClick={onSignOut}
-              className="px-1.5 py-0.5 rounded-lg text-[#1a2e1a] hover:text-rose-600 hover:bg-rose-50/50 transition-colors cursor-pointer text-xs sm:text-sm font-bold"
-              title="Sign Out to Landing Page"
-            >
-              Logout
-            </button>
-          </div>
+          {/* Logout Button */}
+          <button
+            onClick={onSignOut}
+            className="px-4 py-2 rounded-xl bg-white/60 border border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30 transition-all cursor-pointer text-sm sm:text-base font-bold shadow-xs"
+            title="Sign Out to Landing Page"
+          >
+            Logout
+          </button>
+        </div>
 
-          {/* Mobile menu button */}
+        {/* ── Mobile Layout (< md): Centered Logo, Menu on Left, Logout on Right Corner ── */}
+        <div className="flex md:hidden items-center justify-between w-full">
+          {/* Mobile Left: Menu Toggle Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden px-3 py-1.5 rounded-xl bg-white/50 backdrop-blur-sm border border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#FFF8D2] transition-colors cursor-pointer text-xs sm:text-sm font-bold"
+            className="px-3 py-1.5 rounded-xl bg-white/70 border border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30 transition-all cursor-pointer text-sm font-bold shadow-xs"
             aria-label="Toggle Navigation Menu"
           >
             {mobileMenuOpen ? 'Close' : 'Menu'}
           </button>
+
+          {/* Mobile Center: Centered Logo & Brand */}
+          <div
+            className="flex items-center gap-2 cursor-pointer select-none"
+            onClick={handleLogoClick}
+            title="Go to Landing Page"
+          >
+            <img
+              src="/logo.png"
+              alt="TripCraft"
+              className="h-8 w-auto object-contain rounded-xl shadow-xs bg-white/70 p-0.5"
+            />
+            <span className="text-xl font-serif font-black tracking-tight text-[#1a2e1a]">
+              TripCraft
+            </span>
+          </div>
+
+          {/* Mobile Right Corner: Logout Button (Profile picture removed for space) */}
+          <button
+            onClick={onSignOut}
+            className="px-3 py-1.5 rounded-xl bg-white/70 border border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30 transition-all cursor-pointer text-sm font-bold shadow-xs"
+            title="Sign Out to Landing Page"
+          >
+            Logout
+          </button>
         </div>
+
       </div>
 
       {/* ── Mobile Navigation Drawer ── */}
       {mobileMenuOpen && (
-        <div className="md:hidden px-4 pt-2 pb-4 bg-[#FFF8D2]/95 backdrop-blur-xl border-b border-[#84D175]/30 space-y-2 animate-in">
-          <div className="grid grid-cols-2 gap-2 pt-1">
+        <div className="md:hidden px-4 pt-3 pb-5 bg-[#FFF8D2]/95 backdrop-blur-xl border-b border-[#84D175]/35 space-y-2.5 animate-in">
+          <div className="grid grid-cols-2 gap-2.5">
             <button
               onClick={() => {
                 onStepChange?.('discover');
                 setMobileMenuOpen(false);
               }}
-              className={`p-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer text-center ${
+              className={`p-3 rounded-xl text-base font-bold transition-all cursor-pointer text-center ${
                 activeStep === 'discover' || activeStep === 'customize' || activeStep === 'optimize' || activeStep === 'confirm'
                   ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs'
-                  : 'bg-white/60 border border-[#84D175]/30 text-[#1a2e1a]'
+                  : 'bg-white/70 border border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30'
               }`}
             >
               {t('curated_packages', currentLanguage)}
@@ -185,10 +211,10 @@ export default function Navbar({
                 onStepChange?.('architect');
                 setMobileMenuOpen(false);
               }}
-              className={`p-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer text-center ${
+              className={`p-3 rounded-xl text-base font-bold transition-all cursor-pointer text-center ${
                 activeStep === 'architect'
                   ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs'
-                  : 'bg-white/60 border border-[#84D175]/30 text-[#1a2e1a]'
+                  : 'bg-white/70 border border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30'
               }`}
             >
               {t('custom_architect', currentLanguage)}
@@ -200,21 +226,58 @@ export default function Navbar({
               onOpenAiPlanner?.();
               setMobileMenuOpen(false);
             }}
-            className="w-full p-3.5 rounded-xl bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-bold text-sm shadow-md transition-all cursor-pointer text-center flex items-center justify-center gap-2"
+            className="w-full p-3.5 rounded-xl bg-[#84D175]/35 hover:bg-[#84D175]/50 text-[#1a2e1a] font-bold text-base shadow-sm transition-all cursor-pointer text-center flex items-center justify-center gap-2 border border-[#84D175]/45"
           >
-            <Bot className="w-4 h-4 text-[#1a2e1a]" />
+            <Bot className="w-5 h-5 text-[#2D6A24]" />
             <span>{t('ai_builder', currentLanguage)}</span>
           </button>
 
-          <button
-            onClick={() => {
-              onSignOut?.();
-              setMobileMenuOpen(false);
-            }}
-            className="w-full p-3 rounded-xl bg-white/60 border border-rose-200 text-rose-700 font-bold text-xs sm:text-sm shadow-xs hover:bg-rose-50 transition-all cursor-pointer text-center"
-          >
-            Sign Out to Landing Page
-          </button>
+          {/* Mobile Market Data & Language Selection */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <button
+              onClick={() => onToggleRealWorld?.(!realWorldEnabled)}
+              className={`p-3 rounded-xl text-sm font-bold border transition-all cursor-pointer text-center ${
+                realWorldEnabled
+                  ? 'bg-[#84D175]/35 border-[#84D175] text-[#2D6A24]'
+                  : 'bg-white/70 border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30'
+              }`}
+            >
+              {realWorldEnabled ? t('market_active', currentLanguage) : t('market_data', currentLanguage)}
+            </button>
+
+            <div className="relative">
+              <button
+                onClick={() => setLangOpen(!langOpen)}
+                className="w-full p-3 rounded-xl bg-white/70 border border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30 font-bold text-sm text-center transition-all cursor-pointer"
+              >
+                {currentLang.label} ({currentLang.short})
+              </button>
+
+              {langOpen && (
+                <div className="absolute left-0 right-0 top-full mt-2 bg-white/95 backdrop-blur-xl border border-[#84D175]/40 rounded-2xl shadow-xl overflow-hidden z-50 py-1.5 animate-in">
+                  {LANGUAGES.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => {
+                        onLanguageChange(lang.code);
+                        setLangOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3.5 py-2 text-sm font-semibold transition-all cursor-pointer ${
+                        lang.code === currentLanguage
+                          ? 'bg-[#84D175]/25 text-[#2D6A24] font-bold'
+                          : 'text-[#1a2e1a] hover:bg-[#84D175]/30'
+                      }`}
+                    >
+                      <span>{lang.label}</span>
+                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#84D175]/20 text-[#2D6A24] font-bold">
+                        {lang.short}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
