@@ -601,10 +601,10 @@ export default function DestinationExplorer({
                   </span>
                 )}
               </div>
-              <h2 className="text-3xl sm:text-4xl font-serif font-bold text-[#1a2e1a] tracking-tight">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-[#1a2e1a] tracking-tight break-words">
                 {t('custom_architect_title', selectedLang)}
               </h2>
-              <p className="text-sm sm:text-base text-[#1a2e1a] max-w-2xl leading-relaxed font-medium">
+              <p className="text-sm sm:text-base text-[#1a2e1a] max-w-2xl leading-relaxed font-medium break-words">
                 {t('custom_architect_desc', selectedLang)}
               </p>
             </div>
@@ -917,7 +917,7 @@ export default function DestinationExplorer({
             </div>
 
             {/* Pace Selector */}
-            <div className="flex items-center space-x-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
+            <div className="flex flex-wrap items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
               {[
                 { id: 'relaxed', label: t('relaxed_pace', selectedLang) },
                 { id: 'balanced', label: t('balanced_pace', selectedLang) },
@@ -926,13 +926,14 @@ export default function DestinationExplorer({
                 <button
                   key={p.id}
                   onClick={() => setPacePreference(p.id)}
-                  className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer truncate max-w-[130px] text-center ${
                     pacePreference === p.id
                       ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs font-black'
                       : 'text-[#4a5e4a] hover:text-[#1a2e1a]'
                   }`}
+                  title={p.label}
                 >
-                  {p.label}
+                  <span className="truncate block">{p.label}</span>
                 </button>
               ))}
             </div>
@@ -1260,12 +1261,12 @@ export default function DestinationExplorer({
         </div>
         {/* Synthesize Action Banner */}
         <div className="bg-[#0C2D45] border border-[#84D175]/40 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl text-[#FFF8D2]">
-          <div className="space-y-1">
+          <div className="space-y-1 min-w-0 flex-1">
             <h4 className="text-sm font-black text-white flex items-center gap-2">
-              <Bot className="w-4 h-4 text-[#84D175]" />
-              <span>{t('ready_synthesize_heading', selectedLang)}</span>
+              <Bot className="w-4 h-4 text-[#84D175] shrink-0" />
+              <span className="break-words">{t('ready_synthesize_heading', selectedLang)}</span>
             </h4>
-            <p className="text-xs text-[#D3E8D0]">
+            <p className="text-xs text-[#D3E8D0] break-words">
               {t('gemini_resolve_clashes', selectedLang).replace('{travelers}', numTravelers)}
             </p>
           </div>
@@ -1273,7 +1274,7 @@ export default function DestinationExplorer({
           <button
             onClick={handleSynthesizeCustomTrip}
             disabled={synthesizing}
-            className="px-8 py-3.5 bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-sm rounded-xl transition-all shadow-xl shadow-[#84D175]/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95"
+            className="px-6 py-3.5 bg-[#84D175] hover:bg-[#67C456] text-[#1a2e1a] font-black text-xs sm:text-sm rounded-xl transition-all shadow-xl shadow-[#84D175]/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95 shrink-0 self-stretch sm:self-center"
           >
             {synthesizing ? (
               <>

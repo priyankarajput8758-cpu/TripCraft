@@ -267,11 +267,11 @@ export default function CustomizerStudio({
 
           {/* 1. Party Size & Calendar Date Settings Bar */}
           <div className="bg-white/60 backdrop-blur-md border border-[#84D175]/35 rounded-3xl p-5 space-y-4 shadow-xs">
-            <div className="flex items-center justify-between border-b border-[#84D175]/25 pb-3">
-              <h3 className="text-lg sm:text-xl font-serif font-bold text-[#1a2e1a]">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#84D175]/25 pb-3">
+              <h3 className="text-lg sm:text-xl font-serif font-bold text-[#1a2e1a] min-w-0 break-words">
                 {t('trip_dates_party_size', preferredLanguage)}
               </h3>
-              <span className="text-xs sm:text-sm font-bold text-[#2D6A24] bg-[#84D175]/30 px-3 py-1 rounded-full border border-[#84D175]/40">
+              <span className="text-xs sm:text-sm font-bold text-[#2D6A24] bg-[#84D175]/30 px-3 py-1 rounded-full border border-[#84D175]/40 shrink-0">
                 {t('live_repricing_active', preferredLanguage)}
               </span>
             </div>
@@ -351,11 +351,11 @@ export default function CustomizerStudio({
 
             return (
               <div key={groupName} className="bg-white/60 backdrop-blur-md border border-[#84D175]/35 rounded-3xl p-6 space-y-4 shadow-xs">
-                <div className="flex items-center justify-between border-b border-[#84D175]/25 pb-3">
-                  <h3 className="text-lg sm:text-xl font-serif font-bold text-[#1a2e1a]">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#84D175]/25 pb-3">
+                  <h3 className="text-lg sm:text-xl font-serif font-bold text-[#1a2e1a] min-w-0 break-words">
                     {typeLabel}
                   </h3>
-                  <span className="text-xs sm:text-sm font-bold text-[#1a2e1a]">
+                  <span className="text-xs sm:text-sm font-bold text-[#1a2e1a] shrink-0">
                     {isHotelGroup && selectedMarketHotel ? 'Custom Live Stay Active' : `${items.length} Choice${items.length > 1 ? 's' : ''} Available`}
                   </span>
                 </div>
@@ -566,16 +566,16 @@ export default function CustomizerStudio({
         {/* ── Right Column: Sticky Live Price Summary ── */}
         <div className="lg:col-span-4 space-y-5">
           <div className="sticky top-20 bg-white/75 backdrop-blur-md border border-[#84D175]/45 rounded-3xl p-6 shadow-xl space-y-5">
-            <div className="flex items-center justify-between border-b border-[#84D175]/25 pb-3">
-              <div className="space-y-0.5">
-                <h3 className="text-lg sm:text-xl font-serif font-bold text-[#1a2e1a]">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#84D175]/25 pb-3">
+              <div className="space-y-0.5 min-w-0 flex-1">
+                <h3 className="text-lg sm:text-xl font-serif font-bold text-[#1a2e1a] truncate" title={t('live_repricing_quote', preferredLanguage)}>
                   {t('live_repricing_quote', preferredLanguage)}
                 </h3>
-                <span className="text-xs sm:text-sm text-[#1a2e1a] font-bold">
+                <span className="text-xs sm:text-sm text-[#1a2e1a] font-bold block truncate">
                   {numTravelers} Traveler{numTravelers > 1 ? 's' : ''} · Exact Decimal
                 </span>
               </div>
-              <span className={`text-xs sm:text-sm px-3 py-1 rounded-full font-bold ${
+              <span className={`text-xs sm:text-sm px-3 py-1 rounded-full font-bold shrink-0 ${
                 isRepricing ? 'bg-amber-100 text-amber-900 animate-pulse' : 'bg-[#84D175]/30 text-[#2D6A24] border border-[#84D175]/40'
               }`}>
                 {isRepricing ? 'Recalculating...' : 'Decimal Verified'}

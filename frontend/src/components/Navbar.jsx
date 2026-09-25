@@ -36,77 +36,93 @@ export default function Navbar({
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[#FFF8D2]/90 backdrop-blur-md border-b border-[#84D175]/30 shadow-xs transition-all">
-      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 h-18 sm:h-20 relative flex items-center justify-between">
+      <div className="max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 h-18 sm:h-20 flex items-center justify-between gap-2 lg:gap-4">
 
-        {/* ── Left (Desktop/Tablet): Brand Logo (Redirects to Landing Page) ── */}
+        {/* ── Left (Desktop/Tablet): Brand Logo (Locked Box) ── */}
         <div
-          className="hidden md:flex items-center gap-2 lg:gap-3 shrink-0 cursor-pointer select-none group"
+          className="hidden md:flex items-center gap-2 lg:gap-2.5 shrink-0 cursor-pointer select-none group min-w-fit"
           onClick={handleLogoClick}
           title="Go to Landing Page"
         >
           <img
             src="/logo.png"
             alt="TripCraft"
-            className="h-8 lg:h-11 w-auto object-contain rounded-xl shadow-xs bg-white/70 p-0.5 group-hover:scale-105 transition-transform"
+            className="h-8 lg:h-10 w-auto object-contain rounded-xl shadow-xs bg-white/70 p-0.5 group-hover:scale-105 transition-transform shrink-0"
           />
-          <span className="text-xl lg:text-3xl font-serif font-black tracking-tight text-[#1a2e1a]">
+          <span className="text-xl lg:text-2xl font-serif font-black tracking-tight text-[#1a2e1a] shrink-0">
             TripCraft
           </span>
         </div>
 
-        {/* ── Center Navigation Menu (Desktop/Tablet): Mathematically Centered & Responsive ── */}
-        <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 lg:gap-1.5 bg-white/60 backdrop-blur-md p-1 lg:p-1.5 rounded-2xl border border-[#84D175]/35 shadow-xs">
+        {/* ── Center Navigation Menu: Locked Button Sizes with Auto-Fitting Text (No Overlap) ── */}
+        <nav className="hidden md:flex items-center justify-center gap-1 lg:gap-1.5 bg-white/60 backdrop-blur-md p-1 lg:p-1.5 rounded-2xl border border-[#84D175]/35 shadow-xs shrink min-w-0 max-w-lg lg:max-w-xl mx-auto">
+          {/* Curated Packages */}
           <button
             onClick={() => onStepChange?.('discover')}
-            className={`px-2.5 lg:px-5 py-1.5 lg:py-2 rounded-xl text-xs lg:text-base font-bold transition-all cursor-pointer whitespace-nowrap ${
+            className={`w-28 sm:w-36 lg:w-44 py-1.5 lg:py-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center text-center shrink-0 ${
+              currentLanguage === 'en' ? 'text-xs lg:text-sm' : 'text-[11px] sm:text-xs lg:text-[13px] leading-tight'
+            } ${
               activeStep === 'discover' || activeStep === 'customize' || activeStep === 'optimize' || activeStep === 'confirm'
                 ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs'
                 : 'text-[#1a2e1a] hover:bg-[#84D175]/30 hover:text-[#1a2e1a]'
             }`}
+            title={t('curated_packages', currentLanguage)}
           >
-            {t('curated_packages', currentLanguage)}
+            <span className="truncate block w-full px-1">{t('curated_packages', currentLanguage)}</span>
           </button>
 
+          {/* Custom Architect */}
           <button
             onClick={() => onStepChange?.('architect')}
-            className={`px-2.5 lg:px-5 py-1.5 lg:py-2 rounded-xl text-xs lg:text-base font-bold transition-all cursor-pointer whitespace-nowrap ${
+            className={`w-28 sm:w-36 lg:w-44 py-1.5 lg:py-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center text-center shrink-0 ${
+              currentLanguage === 'en' ? 'text-xs lg:text-sm' : 'text-[11px] sm:text-xs lg:text-[13px] leading-tight'
+            } ${
               activeStep === 'architect'
                 ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs'
                 : 'text-[#1a2e1a] hover:bg-[#84D175]/30 hover:text-[#1a2e1a]'
             }`}
+            title={t('custom_architect', currentLanguage)}
           >
-            {t('custom_architect', currentLanguage)}
+            <span className="truncate block w-full px-1">{t('custom_architect', currentLanguage)}</span>
           </button>
 
+          {/* AI Builder */}
           <button
             onClick={onOpenAiPlanner}
-            className="flex items-center gap-1.5 lg:gap-2 px-2.5 lg:px-5 py-1.5 lg:py-2 rounded-xl text-xs lg:text-base font-bold text-[#1a2e1a] bg-[#84D175]/35 hover:bg-[#84D175]/50 transition-all cursor-pointer border border-[#84D175]/45 whitespace-nowrap"
+            className={`w-28 sm:w-36 lg:w-44 py-1.5 lg:py-2 rounded-xl font-bold text-[#1a2e1a] bg-[#84D175]/35 hover:bg-[#84D175]/50 transition-all cursor-pointer border border-[#84D175]/45 flex items-center justify-center gap-1.5 shrink-0 ${
+              currentLanguage === 'en' ? 'text-xs lg:text-sm' : 'text-[11px] sm:text-xs lg:text-[13px] leading-tight'
+            }`}
+            title={t('ai_builder', currentLanguage)}
           >
-            <Bot className="w-4 h-4 lg:w-5 lg:h-5 text-[#2D6A24]" />
-            <span>{t('ai_builder', currentLanguage)}</span>
+            <Bot className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-[#2D6A24] shrink-0" />
+            <span className="truncate block px-0.5">{t('ai_builder', currentLanguage)}</span>
           </button>
         </nav>
 
         {/* ── Right (Desktop/Tablet): Market Data, Language, Logout Symbol ── */}
-        <div className="hidden md:flex items-center gap-1.5 lg:gap-2.5 shrink-0">
-          {/* Live Market Data toggle */}
+        <div className="hidden md:flex items-center gap-1.5 lg:gap-2 shrink-0">
+          {/* Live Market Data toggle (Locked Width with Truncate) */}
           <button
             onClick={() => onToggleRealWorld?.(!realWorldEnabled)}
-            className={`px-2.5 lg:px-3.5 py-1.5 lg:py-2 rounded-xl text-xs lg:text-base font-bold border transition-all cursor-pointer whitespace-nowrap ${
+            className={`w-24 sm:w-28 lg:w-32 py-1.5 lg:py-2 rounded-xl font-bold border transition-all cursor-pointer flex items-center justify-center text-center shrink-0 ${
+              currentLanguage === 'en' ? 'text-xs lg:text-sm' : 'text-[11px] sm:text-xs'
+            } ${
               realWorldEnabled
                 ? 'bg-[#84D175]/35 border-[#84D175] text-[#2D6A24] shadow-xs hover:bg-[#84D175]/50'
                 : 'bg-white/60 border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30'
             }`}
-            title="Live SerpAPI & OpenTripMap Market Rates"
+            title={realWorldEnabled ? t('market_active', currentLanguage) : t('market_data', currentLanguage)}
           >
-            <span>{realWorldEnabled ? t('market_active', currentLanguage) : t('market_data', currentLanguage)}</span>
+            <span className="truncate block w-full px-1">
+              {realWorldEnabled ? t('market_active', currentLanguage) : t('market_data', currentLanguage)}
+            </span>
           </button>
 
           {/* Language dropdown */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <button
               onClick={() => setLangOpen(!langOpen)}
-              className="bg-white/60 border border-[#84D175]/35 px-2.5 lg:px-3.5 py-1.5 lg:py-2 rounded-xl text-xs lg:text-base font-bold text-[#1a2e1a] hover:bg-[#84D175]/30 transition-all cursor-pointer shadow-xs min-w-[38px] text-center"
+              className="bg-white/60 border border-[#84D175]/35 px-2.5 lg:px-3 py-1.5 lg:py-2 rounded-xl text-xs lg:text-sm font-bold text-[#1a2e1a] hover:bg-[#84D175]/30 transition-all cursor-pointer shadow-xs min-w-[38px] text-center"
             >
               <span>{currentLang.short}</span>
             </button>
@@ -155,7 +171,7 @@ export default function Navbar({
           {/* Mobile Left: Menu Toggle Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="px-3 py-1.5 rounded-xl bg-white/70 border border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30 transition-all cursor-pointer text-sm font-bold shadow-xs"
+            className="px-3 py-1.5 rounded-xl bg-white/70 border border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30 transition-all cursor-pointer text-sm font-bold shadow-xs shrink-0"
             aria-label="Toggle Navigation Menu"
           >
             {mobileMenuOpen ? 'Close' : 'Menu'}
@@ -163,16 +179,16 @@ export default function Navbar({
 
           {/* Mobile Center: Centered Logo & Brand */}
           <div
-            className="flex items-center gap-2 cursor-pointer select-none"
+            className="flex items-center gap-2 cursor-pointer select-none truncate px-2"
             onClick={handleLogoClick}
             title="Go to Landing Page"
           >
             <img
               src="/logo.png"
               alt="TripCraft"
-              className="h-8 w-auto object-contain rounded-xl shadow-xs bg-white/70 p-0.5"
+              className="h-8 w-auto object-contain rounded-xl shadow-xs bg-white/70 p-0.5 shrink-0"
             />
-            <span className="text-xl font-serif font-black tracking-tight text-[#1a2e1a]">
+            <span className="text-xl font-serif font-black tracking-tight text-[#1a2e1a] truncate">
               TripCraft
             </span>
           </div>
@@ -180,7 +196,7 @@ export default function Navbar({
           {/* Mobile Right Corner: Logout Symbol Button */}
           <button
             onClick={onSignOut}
-            className="p-2 rounded-xl bg-white/70 border border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30 transition-all cursor-pointer shadow-xs flex items-center justify-center"
+            className="p-2 rounded-xl bg-white/70 border border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30 transition-all cursor-pointer shadow-xs flex items-center justify-center shrink-0"
             title="Sign Out to Landing Page"
             aria-label="Logout"
           >
@@ -193,19 +209,20 @@ export default function Navbar({
       {/* ── Mobile Navigation Drawer ── */}
       {mobileMenuOpen && (
         <div className="md:hidden px-4 pt-3 pb-5 bg-[#FFF8D2]/95 backdrop-blur-xl border-b border-[#84D175]/35 space-y-2.5 animate-in">
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => {
                 onStepChange?.('discover');
                 setMobileMenuOpen(false);
               }}
-              className={`p-3 rounded-xl text-base font-bold transition-all cursor-pointer text-center ${
+              className={`p-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer text-center truncate ${
                 activeStep === 'discover' || activeStep === 'customize' || activeStep === 'optimize' || activeStep === 'confirm'
                   ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs'
                   : 'bg-white/70 border border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30'
               }`}
+              title={t('curated_packages', currentLanguage)}
             >
-              {t('curated_packages', currentLanguage)}
+              <span className="truncate block">{t('curated_packages', currentLanguage)}</span>
             </button>
 
             <button
@@ -213,13 +230,14 @@ export default function Navbar({
                 onStepChange?.('architect');
                 setMobileMenuOpen(false);
               }}
-              className={`p-3 rounded-xl text-base font-bold transition-all cursor-pointer text-center ${
+              className={`p-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer text-center truncate ${
                 activeStep === 'architect'
                   ? 'bg-[#84D175] text-[#1a2e1a] shadow-xs'
                   : 'bg-white/70 border border-[#84D175]/35 text-[#1a2e1a] hover:bg-[#84D175]/30'
               }`}
+              title={t('custom_architect', currentLanguage)}
             >
-              {t('custom_architect', currentLanguage)}
+              <span className="truncate block">{t('custom_architect', currentLanguage)}</span>
             </button>
           </div>
 
@@ -228,10 +246,11 @@ export default function Navbar({
               onOpenAiPlanner?.();
               setMobileMenuOpen(false);
             }}
-            className="w-full p-3.5 rounded-xl bg-[#84D175]/35 hover:bg-[#84D175]/50 text-[#1a2e1a] font-bold text-base shadow-sm transition-all cursor-pointer text-center flex items-center justify-center gap-2 border border-[#84D175]/45"
+            className="w-full p-3 rounded-xl bg-[#84D175]/35 hover:bg-[#84D175]/50 text-[#1a2e1a] font-bold text-sm shadow-sm transition-all cursor-pointer text-center flex items-center justify-center gap-2 border border-[#84D175]/45"
+            title={t('ai_builder', currentLanguage)}
           >
-            <Bot className="w-5 h-5 text-[#2D6A24]" />
-            <span>{t('ai_builder', currentLanguage)}</span>
+            <Bot className="w-4 h-4 text-[#2D6A24] shrink-0" />
+            <span className="truncate">{t('ai_builder', currentLanguage)}</span>
           </button>
 
           {/* Mobile Market Data & Language Selection */}
