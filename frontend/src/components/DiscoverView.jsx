@@ -12,14 +12,14 @@ const THEMES_CONFIG = [
 ];
 
 const THEME_BADGES = {
-  adventure:  { labelKey: 'theme_adventure',  bg: 'bg-[#84D175]/35 text-[#1a2e1a] font-bold border border-[#84D175]/50' },
-  honeymoon:  { labelKey: 'theme_honeymoon',  bg: 'bg-[#84D175]/35 text-[#1a2e1a] font-bold border border-[#84D175]/50' },
-  pilgrimage: { labelKey: 'theme_pilgrimage', bg: 'bg-[#84D175]/35 text-[#1a2e1a] font-bold border border-[#84D175]/50' },
-  family:     { labelKey: 'theme_family',     bg: 'bg-[#84D175]/35 text-[#1a2e1a] font-bold border border-[#84D175]/50' },
-  heritage:   { labelKey: 'theme_heritage',   bg: 'bg-[#84D175]/35 text-[#1a2e1a] font-bold border border-[#84D175]/50' },
-  wildlife:   { labelKey: 'theme_all',        bg: 'bg-[#84D175]/35 text-[#1a2e1a] font-bold border border-[#84D175]/50' },
-  food_trail: { labelKey: 'theme_all',        bg: 'bg-[#84D175]/35 text-[#1a2e1a] font-bold border border-[#84D175]/50' },
-  wellness:   { labelKey: 'theme_all',        bg: 'bg-[#84D175]/35 text-[#1a2e1a] font-bold border border-[#84D175]/50' },
+  adventure:  { labelKey: 'theme_adventure',  bg: 'bg-[#84D175] text-[#1a2e1a] font-extrabold border border-[#67C456] shadow-sm' },
+  honeymoon:  { labelKey: 'theme_honeymoon',  bg: 'bg-[#84D175] text-[#1a2e1a] font-extrabold border border-[#67C456] shadow-sm' },
+  pilgrimage: { labelKey: 'theme_pilgrimage', bg: 'bg-[#84D175] text-[#1a2e1a] font-extrabold border border-[#67C456] shadow-sm' },
+  family:     { labelKey: 'theme_family',     bg: 'bg-[#84D175] text-[#1a2e1a] font-extrabold border border-[#67C456] shadow-sm' },
+  heritage:   { labelKey: 'theme_heritage',   bg: 'bg-[#84D175] text-[#1a2e1a] font-extrabold border border-[#67C456] shadow-sm' },
+  wildlife:   { labelKey: 'theme_all',        bg: 'bg-[#84D175] text-[#1a2e1a] font-extrabold border border-[#67C456] shadow-sm' },
+  food_trail: { labelKey: 'theme_all',        bg: 'bg-[#84D175] text-[#1a2e1a] font-extrabold border border-[#67C456] shadow-sm' },
+  wellness:   { labelKey: 'theme_all',        bg: 'bg-[#84D175] text-[#1a2e1a] font-extrabold border border-[#67C456] shadow-sm' },
 };
 
 const THEME_FALLBACK_IMAGES = {
@@ -30,7 +30,7 @@ const THEME_FALLBACK_IMAGES = {
   heritage: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/4/41/East_facade_Hawa_Mahal_Jaipur_from_ground_level_%28July_2022%29_-_img_01.jpg/960px-East_facade_Hawa_Mahal_Jaipur_from_ground_level_%28July_2022%29_-_img_01.jpg',
   wildlife: 'https://images.unsplash.com/photo-1561731216-c3a4d99437d5?auto=format&fit=crop&w=600&q=80',
   food_trail: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80',
-  wellness: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80',
+  wellness: 'https://images.unsplash.com/photo-1588598198321-9735fd52455b?auto=format&fit=crop&w=600&q=80',
 };
 
 const CITY_LANDMARK_IMAGES = {
@@ -87,6 +87,9 @@ const CITY_LANDMARK_IMAGES = {
   shillong: 'https://images.unsplash.com/photo-1626014303757-646654714152?auto=format&fit=crop&w=800&q=80',
   gangtok: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/99/Rumtek_Monastery_alias_Dharma_Chakra_Centre_near_Gangtok%2C_East_Sikkim_09.jpg/960px-Rumtek_Monastery_alias_Dharma_Chakra_Centre_near_Gangtok%2C_East_Sikkim_09.jpg',
   raipur: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b7/Arieal_View_from_Maa_Bamleshwari_Devi_Temple_on_a_hilltop.JPG/960px-Arieal_View_from_Maa_Bamleshwari_Devi_Temple_on_a_hilltop.JPG',
+  colombo: 'https://images.unsplash.com/photo-1588598198321-9735fd52455b?auto=format&fit=crop&w=800&q=80',
+  'colombo wellness': 'https://images.unsplash.com/photo-1588598198321-9735fd52455b?auto=format&fit=crop&w=800&q=80',
+  'colombo wellness-7days': 'https://images.unsplash.com/photo-1588598198321-9735fd52455b?auto=format&fit=crop&w=800&q=80',
 };
 
 const HERO_TOURISM_IMAGES = [
@@ -249,7 +252,7 @@ export default function DiscoverView({
                 className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
                   isActive
                     ? 'bg-[#84D175] text-[#1a2e1a] shadow-md shadow-[#84D175]/25 border border-[#67C456]'
-                    : 'bg-white/60 backdrop-blur-sm text-[#1a2e1a] border border-[#84D175]/35 hover:bg-[#84D175]/20'
+                    : 'bg-white/90 text-[#1a2e1a] border border-[#84D175]/50 hover:bg-[#84D175]/30 shadow-xs'
                 }`}
               >
                 {t(key, language)}

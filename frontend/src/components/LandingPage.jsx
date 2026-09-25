@@ -146,20 +146,11 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
   return (
     <div className="relative min-h-screen w-full bg-[#FFF8D2] text-[#1a2e1a] overflow-x-hidden selection:bg-[#84D175] selection:text-[#1a2e1a] font-sans flex flex-col items-center">
 
-      {/* ── Translucent Tourism Background Scenic Overlay (10-Second Auto-Rotating Cross-Fade Animation) ── */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {LANDING_HERO_SLIDES.map((slide, idx) => (
-          <div
-            key={`bg-${slide.url}`}
-            className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out mix-blend-multiply ${
-              idx === landingHeroIdx
-                ? 'opacity-30 scale-100'
-                : 'opacity-0 scale-105'
-            }`}
-            style={{ backgroundImage: `url('${slide.url}')` }}
-          />
-        ))}
-      </div>
+      {/* ── Translucent Tourism Background Scenic Overlay (Static) ── */}
+      <div
+        className="fixed inset-0 pointer-events-none bg-cover bg-center opacity-30 mix-blend-multiply z-0 scale-105"
+        style={{ backgroundImage: `url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=80')` }}
+      />
 
       {/* ── Subtle Background Blobs ── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
