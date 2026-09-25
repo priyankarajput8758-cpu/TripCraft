@@ -146,11 +146,20 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
   return (
     <div className="relative min-h-screen w-full bg-[#FFF8D2] text-[#1a2e1a] overflow-x-hidden selection:bg-[#84D175] selection:text-[#1a2e1a] font-sans flex flex-col items-center">
 
-      {/* ── Translucent Tourism Background Scenic Overlay ── */}
-      <div
-        className="fixed inset-0 pointer-events-none bg-cover bg-center opacity-30 mix-blend-multiply z-0 scale-105"
-        style={{ backgroundImage: `url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=80')` }}
-      />
+      {/* ── Translucent Tourism Background Scenic Overlay (10-Second Auto-Rotating Cross-Fade Animation) ── */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {LANDING_HERO_SLIDES.map((slide, idx) => (
+          <div
+            key={`bg-${slide.url}`}
+            className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out mix-blend-multiply ${
+              idx === landingHeroIdx
+                ? 'opacity-30 scale-100'
+                : 'opacity-0 scale-105'
+            }`}
+            style={{ backgroundImage: `url('${slide.url}')` }}
+          />
+        ))}
+      </div>
 
       {/* ── Subtle Background Blobs ── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
@@ -260,10 +269,10 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
         </div>
 
         {/* Interactive 10-Second Auto-Rotating Tourism Showcase */}
-        <div className="relative overflow-hidden rounded-3xl border border-[#84D175]/30 shadow-2xl h-64 sm:h-80 max-w-4xl mx-auto my-8">
+        <div className="relative overflow-hidden rounded-3xl border border-[#84D175]/35 shadow-2xl h-72 sm:h-96 w-full max-w-4xl mx-auto my-8">
           {LANDING_HERO_SLIDES.map((slide, idx) => (
             <div
-              key={slide.url}
+              key={`showcase-${slide.url}`}
               className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out ${
                 idx === landingHeroIdx
                   ? 'opacity-100 scale-100 z-0'
@@ -274,18 +283,18 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
           ))}
 
           {/* Translucent Frosted Glass Caption Box */}
-          <div className="absolute bottom-4 left-4 right-4 sm:right-auto z-10 bg-white/60 backdrop-blur-md border border-[#84D175]/35 rounded-2xl px-4 py-2.5 shadow-lg flex items-center justify-between gap-4">
+          <div className="absolute bottom-4 left-4 right-4 sm:right-auto z-10 bg-white/70 backdrop-blur-md border border-[#84D175]/40 rounded-2xl px-5 py-3 shadow-xl flex items-center justify-between gap-4">
             <div className="text-left">
-              <div className="text-xs font-serif font-bold text-[#1a2e1a]">{LANDING_HERO_SLIDES[landingHeroIdx].title}</div>
-              <div className="text-[10px] font-semibold tracking-wider uppercase text-[#2D6A24]">{LANDING_HERO_SLIDES[landingHeroIdx].tag}</div>
+              <div className="text-sm font-serif font-bold text-[#1a2e1a]">{LANDING_HERO_SLIDES[landingHeroIdx].title}</div>
+              <div className="text-xs font-bold tracking-wider uppercase text-[#2D6A24]">{LANDING_HERO_SLIDES[landingHeroIdx].tag}</div>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 ml-2">
               {LANDING_HERO_SLIDES.map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setLandingHeroIdx(idx)}
-                  className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                    idx === landingHeroIdx ? 'w-4 bg-[#84D175]' : 'w-1.5 bg-[#1a2e1a]/30'
+                  className={`h-2 rounded-full transition-all cursor-pointer ${
+                    idx === landingHeroIdx ? 'w-5 bg-[#84D175]' : 'w-2 bg-[#1a2e1a]/30 hover:bg-[#1a2e1a]/60'
                   }`}
                   aria-label={`Slide ${idx + 1}`}
                 />
